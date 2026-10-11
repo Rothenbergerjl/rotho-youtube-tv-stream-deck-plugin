@@ -1,0 +1,35 @@
+{
+  "name": "@rotho/plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stream Deck plugin that shows YouTube TV tabs on keys and solos their audio.",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.rotho.yttv-multiview\"",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "validate": "streamdeck validate com.rotho.yttv-multiview.sdPlugin",
+    "sd:link": "streamdeck link com.rotho.yttv-multiview.sdPlugin",
+    "sd:pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force --no-update-check && prettier --write --log-level warn com.rotho.yttv-multiview.sdPlugin/manifest.json",
+    "fake-extension": "node test/fake-extension.ts"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "catalog:",
+    "@rotho/shared": "workspace:*",
+    "ws": "catalog:"
+  },
+  "devDependencies": {
+    "@elgato/cli": "catalog:",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-terser": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
+    "@types/node": "catalog:",
+    "@types/ws": "catalog:",
+    "rollup": "catalog:",
+    "tslib": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
