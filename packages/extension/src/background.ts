@@ -10,16 +10,19 @@ import {
   type TabInfo,
   toStateMessage,
 } from "./engine";
+import { isPageTitleMessage } from "./page-title";
 
 const STORAGE_KEY = "engine";
 const KEEPALIVE_ALARM = "keepalive";
 
 let state: EngineState = initialState;
 
+// Titles come only from the content script: document.title is "Home - YouTube TV" on every
+// watch page, so the tab's own title is ignored.
 const toTabInfo = (tab: chrome.tabs.Tab): TabInfo | null =>
   tab.id === undefined || tab.id === chrome.tabs.TAB_ID_NONE
     ? null
-    : { tabId: tab.id, url: tab.url ?? tab.pendingUrl, title: tab.title };
+    : { tabId: tab.id, url: tab.url ?? tab.pendingUrl };
 
 const connection = new PluginConnection({
   url: `ws://127.0.0.1:${WS_PORT}`,
@@ -73,12 +76,31 @@ chrome.tabs.onCreated.addListener((tab) => {
 });
 
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
-  if (changeInfo.url === undefined && changeInfo.title === undefined) return;
+  if (changeInfo.url === undefined) return;
   const info = toTabInfo(tab);
   if (info) dispatch({ type: "tabUpdated", tab: info });
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => dispatch({ type: "tabRemoved", tabId }));
+
+// Program titles reported by the content script (src/content.ts).
+chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  if (sender.id !== chrome.runtime.id || !sender.tab || !isPageTitleMessage(message)) return;
+  const info = toTabInfo(sender.tab);
+  if (info) dispatch({ type: "tabUpdated", tab: { ...info, title: message.title } });
+});
+
+// Content scripts are not injected into tabs that were already open when the extension was
+// installed or reloaded, so inject them by hand.
+chrome.runtime.onInstalled.addListener(async () => {
+  const tabs = await chrome.tabs.query({ url: "https://tv.youtube.com/*" });
+  for (const tab of tabs) {
+    if (tab.id === undefined) continue;
+    chrome.scripting
+      .executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
+      .catch((err) => console.warn("[yttv-multiview] inject failed", tab.id, err));
+  }
+});
 
 // The worker sleeps when idle and nothing is connected. The alarm wakes it periodically
 // so it can reconnect after the Stream Deck app starts.

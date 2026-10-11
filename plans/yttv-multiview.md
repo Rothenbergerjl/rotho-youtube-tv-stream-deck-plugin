@@ -276,19 +276,77 @@ Completed 2026-10-11 on branch `1-yttv-multiview`.
 **Next:** Phase 3 (title extraction). It needs a live YouTube TV game tab open in Chrome.
 
 ## Phase 3: Matchup title extraction
-Status: Not started
+Status: Complete
 
-- [ ] With the user's live YouTube TV game tab open, use Claude in Chrome (read-only: `get_page_text`/`read_page`/`javascript_tool` reading `document.title` and DOM) to find where the matchup/channel text lives; record findings (selectors, title format examples) in the Phase Summary
-- [ ] `packages/shared/src/title.ts`: pure `formatMatchup(raw: string): string` that shortens to fit a 72×72 key (e.g. "Chiefs at Bills" → "KC @ BUF" via an NFL team abbreviation table; otherwise trims the " - YouTube TV" suffix and truncates to 2 lines of ~8 chars) with table-driven unit tests from the real examples
-- [ ] If the DOM has better text than `document.title`: add a content script (`https://tv.youtube.com/*`) that reports the matchup text to the service worker on load and on change (`MutationObserver` on the relevant node, debounced); otherwise use `tab.title` from `chrome.tabs.onUpdated`
-- [ ] Feed titles into the engine's `title-changed` event
+- [x] With the user's live YouTube TV game tab open, use Claude in Chrome (read-only: `get_page_text`/`read_page`/`javascript_tool` reading `document.title` and DOM) to find where the matchup/channel text lives; record findings (selectors, title format examples) in the Phase Summary
+- [x] `packages/shared/src/title.ts`: pure `formatMatchup(raw: string): string` that shortens to fit a 72×72 key (e.g. "Chiefs at Bills" → "KC @ BUF" via an NFL team abbreviation table; otherwise trims the " - YouTube TV" suffix and truncates to 2 lines of ~8 chars) with table-driven unit tests from the real examples
+- [x] If the DOM has better text than `document.title`: add a content script (`https://tv.youtube.com/*`) that reports the matchup text to the service worker on load and on change (`MutationObserver` on the relevant node, debounced); otherwise use `tab.title` from `chrome.tabs.onUpdated`
+- [x] Feed titles into the engine's `title-changed` event
 
 ### Verification Plan
 - `pnpm test` passes including `title.test.ts` with ≥5 real-world examples captured from the live tab
 - `pnpm --filter @rotho/extension build` succeeds; if a content script was added, `dist/manifest.json` lists it under `content_scripts`
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`.
+
+**Live-page findings** (Claude in Chrome, read-only, on the user's game tab)
+- **`document.title` is always `"Home - YouTube TV"`** on a watch page, even during a game. The
+  tab title is useless, so the planned fallback to the tab title was dropped.
+- **Program title** lives in the player header:
+  `h1.ypc-video-title > ytu-endpoint > a > yt-formatted-string.ypc-video-title-text`, e.g.
+  "San Francisco 49ers at Seattle Seahawks" (sibling text "LIVE").
+- **Mini player** repeats it in `ytu-mini-player-info .ymp-primary-text`.
+- **`navigator.mediaSession.metadata.title` and `.artist`** are the channel name ("FOX 59"),
+  not the game.
+- **Other real formats** seen in home tiles: "Monday Night Football with Peyton and Eli: Buffalo
+  Bills at Los Angeles Rams", "Prime Vision Alt Cast: Seattle Seahawks at Denver Broncos", "CBS 4
+  News at 6", "WRTV News at 6:00", "NFL GameDay Live".
+
+**What exists now**
+- `@rotho/shared/src/title.ts`:
+  - `formatMatchup(raw)` finds `<team> at|@|vs|v <team>` anywhere in the title, using full NFL
+    names or nicknames (case-insensitive, whole words). It returns `"AWAY @ HOME"`, or `"A vs B"`
+    when the title says vs.
+  - Anything else is whitespace-normalised, has a trailing " - YouTube TV" removed, and is cut
+    to `MAX_TITLE_LENGTH` = 16 characters with "…".
+  - Splitting into two lines for the key is left to the Phase 4 renderer.
+- `@rotho/extension/src/page-title.ts`:
+  - `TITLE_SELECTORS`: the player h1 title text, then the h1, then the mini player.
+  - `extractPageTitle(root, mediaSessionTitle)` falls back to the channel name, then `""`.
+  - Also defines the `PageTitleMessage` type and `isPageTitleMessage`.
+- `@rotho/extension/src/content.ts`:
+  - Runs on `https://tv.youtube.com/*` at `document_idle`.
+  - A MutationObserver on the whole document, **throttled** to 500ms (a debounce would never
+    fire because the player mutates the DOM constantly), sends `{type:"pageTitle", title}` only
+    when the title changes.
+  - It disconnects itself if the extension context is gone.
+  - Built by esbuild as an **IIFE**, because content scripts aren't modules.
+- `background.ts` changes:
+  - `toTabInfo` no longer passes the tab title, and `onUpdated` only reacts to URL changes.
+  - `runtime.onMessage` turns content-script reports, checked against our own extension ID and
+    a sender tab, into `tabUpdated` events with `title`.
+  - The engine is unchanged; titles persist in session storage, so a worker restart keeps them.
+- **Added `scripting` permission + `runtime.onInstalled` injection** of `content.js` into
+  YouTube TV tabs that were already open. Chrome doesn't inject declared content scripts into
+  existing tabs on install or reload. Manifest permissions are now
+  `["tabs","storage","alarms","scripting"]`, and the manifest test checks `content_scripts`.
+- The protocol still carries the **raw** title; the plugin calls `formatMatchup` when drawing
+  keys (Phase 4).
+
+**Verification results (all passed)**
+- `pnpm test`: shared 37 tests (17 in `title.test.ts`, including 8 real titles captured from the
+  live tab), extension 40, plugin 2.
+- `pnpm --filter @rotho/extension build` produces `dist/background.js`, `dist/content.js` and
+  `dist/manifest.json`. `content_scripts` is listed in the built manifest.
+- `pnpm typecheck`, `pnpm lint` and `pnpm format:check` exit 0.
+- Live re-check (2026-10-11, after the tab returned to the Claude group): all three
+  `TITLE_SELECTORS` match on the live watch page and return "San Francisco 49ers at Seattle
+  Seahawks" (that exact string is a `title.test.ts` case → "SF @ SEA"). The Media Session
+  fallback reads "FOX 59".
+
+**Next:** Phase 4 (Stream Deck plugin). Add `ws: "catalog:"` to `@rotho/plugin` for the
+server, and use `formatMatchup` in `render.ts`.
 
 ## Phase 4: Stream Deck plugin — server, actions, rendering
 Status: Not started

@@ -19,6 +19,9 @@ describe("extension manifest", () => {
   it("is limited to YouTube TV", () => {
     expect(manifest.manifest_version).toBe(3);
     expect(manifest.host_permissions).toEqual(["https://tv.youtube.com/*"]);
-    expect(manifest.permissions).toEqual(["tabs", "storage", "alarms"]);
+    expect(manifest.permissions).toEqual(["tabs", "storage", "alarms", "scripting"]);
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["https://tv.youtube.com/*"], js: ["content.js"], run_at: "document_idle" },
+    ]);
   });
 });

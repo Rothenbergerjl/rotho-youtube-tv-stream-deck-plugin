@@ -1,4 +1,5 @@
-// Bundles the service worker (including @rotho/shared) and copies the manifest into dist/.
+// Bundles the service worker and content script (including @rotho/shared) and copies the
+// manifest into dist/.
 import { build } from "esbuild";
 import { copyFile, mkdir, rm } from "node:fs/promises";
 
@@ -12,6 +13,17 @@ await build({
   outfile: `${outdir}/background.js`,
   bundle: true,
   format: "esm",
+  target: "chrome116",
+  sourcemap: true,
+  logLevel: "info",
+});
+
+await build({
+  entryPoints: ["src/content.ts"],
+  outfile: `${outdir}/content.js`,
+  bundle: true,
+  // Content scripts are classic scripts, not modules.
+  format: "iife",
   target: "chrome116",
   sourcemap: true,
   logLevel: "info",
