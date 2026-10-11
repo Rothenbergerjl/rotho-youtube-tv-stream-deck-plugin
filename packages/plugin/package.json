@@ -11,11 +11,13 @@
     "test": "vitest run",
     "validate": "streamdeck validate com.rotho.yttv-multiview.sdPlugin",
     "link": "streamdeck link com.rotho.yttv-multiview.sdPlugin",
-    "pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force"
+    "pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force",
+    "fake-extension": "node test/fake-extension.ts"
   },
   "dependencies": {
     "@elgato/streamdeck": "catalog:",
-    "@rotho/shared": "workspace:*"
+    "@rotho/shared": "workspace:*",
+    "ws": "catalog:"
   },
   "devDependencies": {
     "@elgato/cli": "catalog:",
@@ -24,6 +26,7 @@
     "@rollup/plugin-terser": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
+    "@types/ws": "catalog:",
     "rollup": "catalog:",
     "tslib": "catalog:",
     "typescript": "catalog:",

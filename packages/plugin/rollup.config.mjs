@@ -33,6 +33,8 @@ const config = {
       include: ["src/**/*.ts", "../shared/src/**/*.ts"],
       exclude: ["**/*.test.ts", "test/**"],
       noEmit: false,
+      // Only test/fake-extension.ts needs this (it runs directly under Node); not valid when emitting.
+      allowImportingTsExtensions: false,
       mapRoot: isWatching ? "./" : undefined,
     }),
     nodeResolve({

@@ -8,11 +8,13 @@
       "UUID": "com.rotho.yttv-multiview.slot",
       "Icon": "imgs/actions/slot/icon",
       "Tooltip": "Shows a YouTube TV game; press to hear only that game.",
+      "PropertyInspectorPath": "ui/slot.html",
       "Controllers": ["Keypad"],
       "States": [
         {
           "Image": "imgs/actions/slot/key",
-          "TitleAlignment": "middle"
+          "TitleAlignment": "middle",
+          "ShowTitle": false
         }
       ]
     },
@@ -25,7 +27,8 @@
       "States": [
         {
           "Image": "imgs/actions/muteall/key",
-          "TitleAlignment": "middle"
+          "TitleAlignment": "middle",
+          "ShowTitle": false
         }
       ]
     }

@@ -33,6 +33,9 @@ catalogs:
     '@types/node':
       specifier: 24.12.0
       version: 24.12.0
+    '@types/ws':
+      specifier: 8.18.2
+      version: 8.18.2
     esbuild:
       specifier: 0.28.2
       version: 0.28.2
@@ -60,6 +63,9 @@ catalogs:
     vitest:
       specifier: 5.0.3
       version: 5.0.3
+    ws:
+      specifier: 8.22.0
+      version: 8.22.0
 
 importers:
 
@@ -114,6 +120,9 @@ importers:
       '@rotho/shared':
         specifier: workspace:*
         version: link:../shared
+      ws:
+        specifier: 'catalog:'
+        version: 8.22.0
     devDependencies:
       '@elgato/cli':
         specifier: 'catalog:'
@@ -133,6 +142,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.0
+      '@types/ws':
+        specifier: 'catalog:'
+        version: 8.18.2
       rollup:
         specifier: 'catalog:'
         version: 4.64.5
@@ -884,6 +896,9 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@typescript-eslint/eslint-plugin@8.71.1':
     resolution: {integrity: sha512-nNlBf6HuotqMgZvSkWD5hNdemiBIxQ2NmrlgfcUIeZRs+BbakjscCQRq/Hb74EFVnFiSWWdL12JruqwBy3ERDw==}
@@ -2280,6 +2295,10 @@ snapshots:
       undici-types: 7.16.0
 
   '@types/resolve@1.20.2': {}
+
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 24.12.0
 
   '@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)(typescript@6.0.3)':
     dependencies:

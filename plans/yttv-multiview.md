@@ -349,16 +349,16 @@ Completed 2026-10-11 on branch `1-yttv-multiview`.
 server, and use `formatMatchup` in `render.ts`.
 
 ## Phase 4: Stream Deck plugin — server, actions, rendering
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/server.ts`: `ws` server bound to `127.0.0.1:WS_PORT`; verify `Origin === chrome-extension://${EXTENSION_ID}` in `verifyClient`; one active client (newest wins); emit `connected`/`disconnected`/`state` events; log via SDK logger
-- [ ] `packages/plugin/src/store.ts`: holds latest `state` + connection status; actions subscribe to it
-- [ ] `packages/plugin/src/render.ts`: pure function building a 144×144 SVG data URL for a key from `{slot, title?, heard, connected}`: slot badge top-left, title centered (≤2 lines), green border + speaker glyph when heard, dimmed "No Chrome" when disconnected, dim slot-number-only when empty; unit tests snapshot the SVG strings
-- [ ] `actions/slot.ts` (`SingletonAction`): per-key setting `slot` (1–15); re-render all visible slot keys on store change; `onKeyDown` → send `solo` if connected and slot occupied, else `showAlert()`
-- [ ] `actions/mute-all.ts`: render muted/unmuted state; `onKeyDown` → `toggleMuteAll` or `showAlert()` if offline
-- [ ] Property inspector `ui/slot.html` using sdpi-components: slot number dropdown 1–15
-- [ ] Real key icons (`imgs/actions/slot`, `imgs/actions/muteall`, plugin icon, category icon) at 1x/2x sizes required by the manifest
-- [ ] `test/fake-extension.ts`: Node script that connects to the server with the correct `Origin` header, sends a scripted `state`, and logs received commands (used for integration verification)
+- [x] `packages/plugin/src/server.ts`: `ws` server bound to `127.0.0.1:WS_PORT`; verify `Origin === chrome-extension://${EXTENSION_ID}` in `verifyClient`; one active client (newest wins); emit `connected`/`disconnected`/`state` events; log via SDK logger
+- [x] `packages/plugin/src/store.ts`: holds latest `state` + connection status; actions subscribe to it
+- [x] `packages/plugin/src/render.ts`: pure function building a 144×144 SVG data URL for a key from `{slot, title?, heard, connected}`: slot badge top-left, title centered (≤2 lines), green border + speaker glyph when heard, dimmed "No Chrome" when disconnected, dim slot-number-only when empty; unit tests snapshot the SVG strings
+- [x] `actions/slot.ts` (`SingletonAction`): per-key setting `slot` (1–15); re-render all visible slot keys on store change; `onKeyDown` → send `solo` if connected and slot occupied, else `showAlert()`
+- [x] `actions/mute-all.ts`: render muted/unmuted state; `onKeyDown` → `toggleMuteAll` or `showAlert()` if offline
+- [x] Property inspector `ui/slot.html` using sdpi-components: slot number dropdown 1–15
+- [x] Real key icons (`imgs/actions/slot`, `imgs/actions/muteall`, plugin icon, category icon) at 1x/2x sizes required by the manifest
+- [x] `test/fake-extension.ts`: Node script that connects to the server with the correct `Origin` header, sends a scripted `state`, and logs received commands (used for integration verification)
 
 ### Verification Plan
 - `pnpm --filter @rotho/plugin test` passes (render snapshots, server origin rejection test, server accepts correct origin)
@@ -367,7 +367,76 @@ Status: Not started
 - Integration test (Vitest) starts the server in-process, connects the fake extension, sends `state`, and asserts the store reflects it; a connection with origin `http://evil.example` is refused
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`.
+
+**What exists now** (`packages/plugin/src`)
+- `server.ts` — `ExtensionServer` built on `ws`'s `WebSocketServer`, bound to `127.0.0.1`.
+  - Origin: `verifyClient` accepts only `EXTENSION_ORIGIN`; anything else gets HTTP 401 and a
+    log warning.
+  - One client at a time: a newer connection replaces the old one, which is closed with code
+    `4000` (`REPLACED_CLOSE_CODE`).
+  - Malformed messages are logged and ignored.
+  - Idle drop: a client silent for 60s is dropped (the extension heartbeats every 20s), so a
+    half-open socket from a sleeping service worker doesn't leave keys showing stale state.
+  - If the port is busy, it retries every 5s.
+  - `port` getter; `port: 0` picks a free port for tests.
+- `store.ts` — `Store` holds `{ connected, games, allMuted, canRestore }`. Disconnecting clears
+  the games; connecting shows empty slots until the first `state` arrives.
+- `render.ts` — pure SVG builders (144×144, base64 data URLs):
+  - `slotKeySvg`:
+    - Heard: green border and background, green slot badge, speaker with waves.
+    - Muted: grey badge, speaker with a cross.
+    - Empty: dim, large slot number.
+    - Disconnected: dim "No / Chrome" with the badge.
+    - Unknown title: shows "YouTube TV".
+  - `muteAllKeySvg` states: "Mute all", "Restore", "All muted", "No Chrome".
+  - `wrap()` splits text into at most 2 lines of 9 characters; the second line is cut with "…".
+  - Labels come from `formatMatchup`. Font size shrinks to fit the longest line, and text is
+    XML-escaped.
+- `actions/slot.ts` — `SlotAction`:
+  - Per-key setting `slot`. A **newly placed key defaults to the lowest slot no other visible
+    key uses**, so dragging out 4 keys gives slots 1–4 with no setup.
+  - Re-renders on store changes.
+  - Press: `solo` if connected and the slot has a game, otherwise `showAlert()`.
+- `actions/mute-all.ts` — `MuteAllAction`: press sends `toggleMuteAll`, or `showAlert()` when
+  offline.
+- `plugin.ts` — wires the store, server and actions. It logs the extension's `hello` and warns
+  on a protocol mismatch.
+- `ui/slot.html` — sdpi-components v4 `sdpi-select` (slot 1–15, `value-type="number"`) plus a
+  short help text.
+- **Icons are SVG** (`imgs/actions/{slot,muteall}/{icon,key}.svg`,
+  `imgs/plugin/category-icon.svg`) instead of 1x/2x PNG pairs. `streamdeck validate` accepts
+  them. The template's `marketplace.png` placeholder is still there; replacing it belongs with
+  Phase 6 packaging if wanted.
+- Both actions set `"ShowTitle": false` (the image carries all the text). The slot action has
+  `PropertyInspectorPath`.
+- `test/fake-extension.ts`:
+  - Exports `connectFakeExtension()` and `sampleState`.
+  - Script mode: `pnpm --filter @rotho/plugin fake-extension` runs under Node 24's type
+    stripping and connects to the running plugin.
+  - It imports `../../shared/src/constants.ts` directly, so the plugin tsconfig has
+    `allowImportingTsExtensions`. The Rollup typescript options turn it off, since emitting
+    doesn't allow it.
+- Added `ws` and `@types/ws` (catalog) to `@rotho/plugin`.
+
+**Verification results (all passed)**
+- `pnpm --filter @rotho/plugin test`: 29 tests.
+  - Render: 8 snapshots (`test/__snapshots__/render.test.ts.snap`) plus content assertions.
+  - Integration: real server and fake extension. The store reflects the sent state; origins
+    `http://evil.example` and empty are refused; commands reach the extension; malformed
+    messages are ignored; the newest connection wins (old one closed with 4000); disconnect
+    clears the store; an idle client is dropped.
+- Whole repo: `pnpm test` (shared 37, extension 40, plugin 29), `pnpm typecheck`, `pnpm lint`
+  and `pnpm format:check` all exit 0.
+- `pnpm --filter @rotho/plugin build` + `validate` → "Validation successful".
+  - `bin/plugin.js` is 98 KB and imports only Node built-ins.
+  - Its only `require`s are ws's optional `bufferutil` and `utf-8-validate`, inside try/catch.
+  - A copy of the `.sdPlugin` outside the repo runs with exit 0 and no module errors.
+- Visual check: all 10 key states rendered at 144px and 72px in the browser pane (preview HTML
+  at `dist/key-previews.html`, git-ignored) and look correct.
+
+**Next:** Phase 5, on the user's PC: link the plugin, load the extension unpacked, and run the
+scenarios with real games.
 
 ## Phase 5: End-to-end integration on the user's PC
 Status: Not started
