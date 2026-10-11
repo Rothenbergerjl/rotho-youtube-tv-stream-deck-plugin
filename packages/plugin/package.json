@@ -11,7 +11,7 @@
     "test": "vitest run",
     "validate": "streamdeck validate com.rotho.yttv-multiview.sdPlugin",
     "sd:link": "streamdeck link com.rotho.yttv-multiview.sdPlugin",
-    "sd:pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force",
+    "sd:pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force --no-update-check && prettier --write --log-level warn com.rotho.yttv-multiview.sdPlugin/manifest.json",
     "fake-extension": "node test/fake-extension.ts"
   },
   "dependencies": {

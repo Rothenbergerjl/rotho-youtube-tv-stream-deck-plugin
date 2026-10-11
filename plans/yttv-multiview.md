@@ -509,13 +509,13 @@ com.rotho.yttv-multiview`, and click reload on `chrome://extensions`.
 **Next:** Phase 6 (packaging, release workflow, docs).
 
 ## Phase 6: Packaging, release workflow, and docs
-Status: Not started
+Status: Complete (post-merge release run pending)
 
-- [ ] Single version source: root `package.json` version propagated by a `scripts/sync-version.mjs` into the plugin manifest (`Version` x.y.z.0) and extension manifest
-- [ ] `pnpm package` (root script): builds both, runs `pnpm --filter @rotho/plugin sd:pack` → `dist/com.rotho.yttv-multiview.streamDeckPlugin`, zips `packages/extension/dist` → `dist/yttv-multiview-extension-<version>.zip`
-- [ ] `.github/workflows/release.yml`: `workflow_dispatch` with `version` input; same pnpm setup as CI (`pnpm/action-setup`, Node 24, `--frozen-lockfile`), runs CI steps, sync-version, package, creates tag `v<version>` and a GitHub Release with both files attached (`gh release create`)
-- [ ] README: end-user install from a release (double-click `.streamDeckPlugin`; unzip extension and Load unpacked), usage, troubleshooting (port in use, extension ID mismatch, "No Chrome")
-- [ ] `CHANGELOG.md` with the 0.1.0 entry
+- [x] Single version source: root `package.json` version propagated by a `scripts/sync-version.mjs` into the plugin manifest (`Version` x.y.z.0) and extension manifest
+- [x] `pnpm package` (root script): builds both, runs `pnpm --filter @rotho/plugin sd:pack` → `dist/com.rotho.yttv-multiview.streamDeckPlugin`, zips `packages/extension/dist` → `dist/yttv-multiview-extension-<version>.zip`
+- [x] `.github/workflows/release.yml`: `workflow_dispatch` with `version` input; same pnpm setup as CI (`pnpm/action-setup`, Node 24, `--frozen-lockfile`), runs CI steps, sync-version, package, creates tag `v<version>` and a GitHub Release with both files attached (`gh release create`)
+- [x] README: end-user install from a release (double-click `.streamDeckPlugin`; unzip extension and Load unpacked), usage, troubleshooting (port in use, extension ID mismatch, "No Chrome")
+- [x] `CHANGELOG.md` with the 0.1.0 entry
 
 ### Verification Plan
 - `pnpm package` locally produces both files; `unzip -l` on the extension zip lists `manifest.json` and `background.js`
@@ -524,10 +524,116 @@ Status: Not started
 - After merge, the user triggers the workflow (manual run, not done by the agent); `gh release view v0.1.0` shows both assets
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`.
+
+**What exists now**
+- `scripts/sync-version.mjs` (`pnpm version:sync`; `--check` mode):
+  - Copies the root `package.json` version into all three package.json files, the extension
+    manifest `version` and the plugin manifest `Version` (as `x.y.z.0`).
+  - Rejects anything that isn't `MAJOR.MINOR.PATCH`, because Chrome needs plain integers.
+  - **Replaces only the value text**, not the whole file, so Prettier formatting survives. The
+    first version rewrote with `JSON.stringify`, which reflowed arrays and would have failed
+    `format:check` after every bump. Tested: de-synced 4 files, synced, and they came back
+    byte-identical to HEAD; the plugin's `Nodejs.Version "24"` was untouched.
+- `scripts/zip-extension.mjs` uses `fflate` (new root devDependency, catalog 0.8.3) to write
+  `dist/yttv-multiview-extension-<version>.zip` from `packages/extension/dist`, without source
+  maps. It fails if the manifest is missing.
+- `scripts/changelog-section.mjs <version>` prints that version's CHANGELOG section for the
+  release notes, and fails if there isn't one.
+- Root `pnpm package` runs `sync-version --check`, then `pnpm build`, then
+  `pnpm --filter @rotho/plugin sd:pack`, then `zip-extension`.
+- **`streamdeck pack` rewrites the source `manifest.json`** in its own JSON style (arrays
+  expanded, no final newline). `sd:pack` now runs `prettier --write` on the manifest straight
+  afterwards, so `pnpm package` leaves the tree clean (verified with `git diff`). `sd:pack` also
+  passes `--no-update-check`. `pack` leaves out `logs/` by default.
+- `.github/workflows/release.yml` (manual run, **main only**, `contents: write`):
+  - **Deviation from the item text:** the `version` input is not written into files by CI.
+    Instead it **must match** the committed `package.json` version, and the workflow fails if
+    release `v<version>` already exists. Bumps go through a normal commit or PR, and the tag
+    always points at a commit containing that version. This avoids CI pushing commits to
+    `main`.
+  - Steps: same pnpm/Node 24 setup as CI, then `pnpm install --frozen-lockfile`, typecheck,
+    lint, format:check, test, `pnpm package`, `check:extension-id`, a package-contents check
+    (fails on `node_modules/`), then `gh release create v<version>` with both files,
+    `--target $GITHUB_SHA` and the notes from CHANGELOG.
+  - The input reaches shell commands only through `env`, never inlined into `run:`, which
+    avoids script injection.
+- `CHANGELOG.md` has the `[0.1.0] - 2026-10-11` entry.
+- README rewritten:
+  - End-user install from a release (the folder-picker tip, the expected ID, how to update).
+  - Usage, including a key-states table and the slot and mute rules.
+  - Troubleshooting: "No Chrome", ID mismatch, missing titles, port 47731 busy
+    (`EADDRINUSE`), log locations, and that dev builds need a Stream Deck app restart.
+  - "How it works", Development (layout, setup, dev build, release steps, signing key).
+  - The link to this plan file was removed (the plan is deleted in the final commit).
+- Not done: replacing Elgato's placeholder `imgs/plugin/marketplace.png` store icon. It only
+  shows in Stream Deck's plugin list and isn't needed outside a Marketplace listing.
+
+**Verification results**
+- `pnpm package` (from a clean `dist/`) exits 0:
+  - `dist/com.rotho.yttv-multiview.streamDeckPlugin` has 11 files, including `manifest.json`
+    and `bin/plugin.js` (98 KB), with **0** `node_modules/` entries.
+  - `dist/yttv-multiview-extension-0.1.0.zip` has `background.js`, `content.js` and
+    `manifest.json`, with 0 `.map` files. The zipped manifest keeps `key`, so the extension ID
+    is preserved.
+- `actionlint`'s npm package has no binary, so used the plan's alternative:
+  `pnpm dlx @action-validator/cli` on `ci.yml` and `release.yml` → both exit 0.
+- Failure paths checked: `sync-version --check` exits 1 on a mismatch;
+  `changelog-section 9.9.9` exits 1.
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (37/40/29) and
+  `pnpm check:extension-id` all pass.
+- **Pending (user, after merge):** run Actions → Release → Run workflow on `main` with
+  `0.1.0`, then confirm `gh release view v0.1.0` lists both assets.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Built **Rotho YTTV Multiview**: a Stream Deck plugin plus a Chrome extension. Every open
+YouTube TV game shows up on a Stream Deck MK.2 key, and pressing a key plays only that game.
+
+- **Repo:** TypeScript pnpm monorepo with `@rotho/shared` (protocol, constants, matchup
+  formatting), `@rotho/extension` (MV3 service worker + content script, esbuild) and
+  `@rotho/plugin` (Elgato Node SDK v3, fully bundled with Rollup). Node 24, TypeScript 6.0,
+  ESLint, Prettier, Vitest (106 tests), CI on PRs and a manual release workflow.
+- **Extension:** the source of truth. A pure engine (`engine.ts`) handles stable slots by open
+  order, new tabs starting muted, solo, Mute All with restore, and reconciling with Chrome
+  after the worker sleeps or Chrome restarts. The content script reads the matchup from the
+  player DOM, because `document.title` is always "Home - YouTube TV". The WebSocket client
+  reconnects with backoff, sends a 20s heartbeat, and a 30s alarm wakes the worker to
+  reconnect.
+- **Plugin:** a localhost WebSocket server locked to the extension's fixed ID (newest
+  connection wins, idle connections dropped after 60s). Game Slot keys number themselves
+  automatically and show slot number, matchup ("SF @ SEA") and heard/muted state. The Mute
+  All key toggles and restores. Keys show "No Chrome" when disconnected. State and commands
+  are logged.
+- **Verified on the user's PC (Phase 5):** every scenario passed. Switching takes 6–14 ms
+  from key press to Chrome's reply; Chrome reconnects about 3s after a restart.
+- **Notable decisions** (details in the phase summaries):
+  - pnpm over npm.
+  - TypeScript 6.0 instead of 7 (typescript-eslint support).
+  - Added `alarms` and `scripting` permissions.
+  - Navigating away from YouTube TV unmutes that tab.
+  - More than 15 games are left untouched.
+  - SVG icons.
+  - `sd:link`/`sd:pack` script names (pnpm built-in clash).
+  - The release version must already be committed.
+- **Known limitations:** muting from Chrome's own tab menu isn't tracked (the next key press
+  fixes it); one Chrome profile only; NFL matchups are abbreviated, and other titles are cut to
+  2×9 characters; placeholder Marketplace icon.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. **Merge:** open a PR from `1-yttv-multiview` to `main` with `Fixes #1` in the body. Wait
+   for CI (typecheck, lint, format, test, build, extension ID, `streamdeck validate`) to pass.
+   Squash-merge; issue #1 closes and the board moves it to Done.
+2. **Release 0.1.0:** on GitHub, go to Actions → **Release** → Run workflow, choose branch
+   `main`, version `0.1.0`. The versions are already 0.1.0 and CHANGELOG has the section.
+3. **Verify:** `gh release view v0.1.0` lists `com.rotho.yttv-multiview.streamDeckPlugin` and
+   `yttv-multiview-extension-0.1.0.zip`.
+4. **Switch your PC from the dev build to the release (optional):**
+   1. Unlink the dev plugin by deleting the `com.rotho.yttv-multiview.sdPlugin` symlink in
+      `%APPDATA%\Elgato\StreamDeck\Plugins\`, with the Stream Deck app closed.
+   2. Double-click the released `.streamDeckPlugin`.
+   3. In `chrome://extensions`, remove the unpacked dev extension. Unzip the release zip to a
+      permanent folder and Load unpacked from it. The ID stays the same, so the plugin accepts
+      it.
+   4. Existing keys keep their settings because the plugin UUID is unchanged.
+5. **Future releases:** bump the root `package.json`, run `pnpm version:sync`, add a CHANGELOG
+   section, merge, then run the Release workflow with that version.

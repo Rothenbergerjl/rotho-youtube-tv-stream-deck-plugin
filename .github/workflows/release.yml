@@ -1,0 +1,78 @@
+name: Release
+
+# Run by hand from the Actions tab on main. Bump the version first (edit package.json,
+# `pnpm version:sync`, add a CHANGELOG.md section) and merge that, then run this with the same
+# version. It tags the current commit and publishes both packages to a GitHub Release.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (must match package.json)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check version and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          actual=$(node -p "require('./package.json').version")
+          if [ "$actual" != "$VERSION" ]; then
+            echo "::error::Input $VERSION does not match package.json version $actual"
+            exit 1
+          fi
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "::error::Release v$VERSION already exists"
+            exit 1
+          fi
+          node scripts/changelog-section.mjs "$VERSION" > release-notes.md
+
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test
+
+      # Checks versions are in sync, builds, packs the plugin, zips the extension.
+      - run: pnpm package
+      - run: pnpm check:extension-id
+
+      - name: Check package contents
+        run: |
+          unzip -l dist/com.rotho.yttv-multiview.streamDeckPlugin
+          if unzip -l dist/com.rotho.yttv-multiview.streamDeckPlugin | grep -q node_modules/; then
+            echo "::error::Plugin package contains node_modules"
+            exit 1
+          fi
+          unzip -l "dist/yttv-multiview-extension-$VERSION.zip"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" \
+            dist/com.rotho.yttv-multiview.streamDeckPlugin \
+            "dist/yttv-multiview-extension-$VERSION.zip" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file release-notes.md

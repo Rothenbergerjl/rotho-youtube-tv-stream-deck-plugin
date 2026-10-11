@@ -16,11 +16,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r run test",
-    "check:extension-id": "node scripts/check-extension-id.mjs"
+    "check:extension-id": "node scripts/check-extension-id.mjs",
+    "version:sync": "node scripts/sync-version.mjs",
+    "package": "node scripts/sync-version.mjs --check && pnpm build && pnpm --filter @rotho/plugin sd:pack && node scripts/zip-extension.mjs"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
     "eslint": "catalog:",
+    "fflate": "catalog:",
     "globals": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",
