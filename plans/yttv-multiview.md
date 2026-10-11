@@ -185,17 +185,17 @@ Completed 2026-10-11 on branch `1-yttv-multiview`.
 **Next:** Phase 2. Nothing is committed yet. The user commits Phase 1, including `pnpm-lock.yaml`.
 
 ## Phase 2: Shared protocol and extension tab/audio engine
-Status: Not started
+Status: Complete
 
-- [ ] Define protocol in `packages/shared/src/protocol.ts`, with a version field:
+- [x] Define protocol in `packages/shared/src/protocol.ts`, with a version field:
   - Extension → plugin: `hello {protocolVersion, extensionVersion}`, `state {games: Array<{slot, tabId, title, heard: boolean}>, allMuted: boolean, lastHeardTabId?: number}`, `heartbeat`
   - Plugin → extension: `solo {slot}`, `toggleMuteAll`, `requestState`
   - Runtime validators (`parseMessage`) that reject malformed JSON
-- [ ] `packages/extension/src/slots.ts`: pure slot allocator (lowest free slot, stable assignment, release on close, max 15) with unit tests
-- [ ] `packages/extension/src/engine.ts`: pure state reducer for events (tab added/removed/url-changed/title-changed, solo, toggleMuteAll) returning next state + list of `{tabId, muted}` effects; unit tests cover: new tab starts muted, solo mutes all others, closing the heard tab leaves all muted, mute-all toggles and restores last heard, navigating a tab away from `tv.youtube.com` frees its slot
-- [ ] `packages/extension/src/background.ts`: wire `chrome.tabs.onCreated/onUpdated/onRemoved` and startup scan (`chrome.tabs.query({url: "https://tv.youtube.com/*"})`) into the engine; apply effects with `chrome.tabs.update(tabId, {muted})`; persist state in `chrome.storage.session`
-- [ ] `packages/extension/src/connection.ts`: WebSocket client to `ws://127.0.0.1:${WS_PORT}`, exponential backoff reconnect (1s→30s), 20s heartbeat, send `hello` + full `state` on connect and `state` after every change
-- [ ] Unit tests for `connection.ts` using a mock WebSocket (reconnect, heartbeat, message dispatch)
+- [x] `packages/extension/src/slots.ts`: pure slot allocator (lowest free slot, stable assignment, release on close, max 15) with unit tests
+- [x] `packages/extension/src/engine.ts`: pure state reducer for events (tab added/removed/url-changed/title-changed, solo, toggleMuteAll) returning next state + list of `{tabId, muted}` effects; unit tests cover: new tab starts muted, solo mutes all others, closing the heard tab leaves all muted, mute-all toggles and restores last heard, navigating a tab away from `tv.youtube.com` frees its slot
+- [x] `packages/extension/src/background.ts`: wire `chrome.tabs.onCreated/onUpdated/onRemoved` and startup scan (`chrome.tabs.query({url: "https://tv.youtube.com/*"})`) into the engine; apply effects with `chrome.tabs.update(tabId, {muted})`; persist state in `chrome.storage.session`
+- [x] `packages/extension/src/connection.ts`: WebSocket client to `ws://127.0.0.1:${WS_PORT}`, exponential backoff reconnect (1s→30s), 20s heartbeat, send `hello` + full `state` on connect and `state` after every change
+- [x] Unit tests for `connection.ts` using a mock WebSocket (reconnect, heartbeat, message dispatch)
 
 ### Verification Plan
 - `pnpm --filter @rotho/shared --filter @rotho/extension test` passes, with tests named for each engine rule above
@@ -203,7 +203,77 @@ Status: Not started
 - `pnpm typecheck && pnpm lint` exit 0
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`.
+
+**What exists now**
+- `@rotho/shared` is split into `src/constants.ts` (unchanged constants) and `src/protocol.ts`
+  (message types plus `parseExtensionMessage` and `parsePluginMessage`). `src/index.ts`
+  re-exports both. The parsers return `null` for bad JSON, unknown types, wrong field types and
+  slots outside 1..15. They copy only the known fields. The protocol version travels in `hello`;
+  `PROTOCOL_VERSION` = 1.
+- `@rotho/extension`:
+  - `src/slots.ts`: `lowestFreeSlot(used, max = 15)`.
+  - `src/engine.ts`: pure `reduce(state, event) -> { state, effects, changed }`.
+    - State is `{ tabs: [{tabId, slot, title}], heardTabId, lastHeardTabId }`.
+    - Events: `tabUpdated` (create, URL change or title change), `tabRemoved`, `sync` (the full
+      tab list at startup), `solo`, `toggleMuteAll`.
+    - `toStateMessage(state)` builds the protocol `state` message.
+    - `isYouTubeTvUrl` accepts only `https://tv.youtube.com`.
+  - `src/connection.ts`: `PluginConnection`.
+    - Injectable socket factory.
+    - Backoff of 1s, 2s, 4s, 8s, 16s, then 30s max, reset after a successful connect.
+    - Heartbeat every 20s while open.
+    - `ensureConnected()` for the alarm.
+    - `send()` drops messages while disconnected; the full state is resent on every connect.
+  - `src/background.ts`:
+    - Registers the tab listeners synchronously.
+    - A promise queue processes events one at a time after the saved state loads from
+      `chrome.storage.session`.
+    - Mute changes go through `chrome.tabs.update`, ignoring tabs that already closed.
+    - State is persisted and broadcast only when `changed` is true, or always after the
+      startup `sync`.
+- Tests: shared has 20 (protocol plus constants); extension has 35 (slots, engine, connection,
+  manifest).
+
+**Decisions / behaviour beyond the original item text**
+- **Added the `alarms` permission** (`chrome.alarms` every 30s calls `ensureConnected()`). When
+  nothing is connected, the MV3 worker sleeps after about 30s idle and its reconnect timers die.
+  Without the alarm, the extension would not reconnect when the Stream Deck app starts after
+  Chrome. The manifest test was updated to `["tabs", "storage", "alarms"]`. When connected,
+  WebSocket traffic plus the 20s heartbeat keeps the worker alive (Chrome 116+).
+- **Startup scans all tabs** with `chrome.tabs.query({})`, not a URL filter. That lets `sync`
+  notice tracked tabs that navigated away from YouTube TV while the worker slept. Unseen
+  YouTube TV tabs are added in tab-id order, which roughly matches open order.
+- **`sync` enforces the invariant** that every tracked tab is muted except `heardTabId`. Saved
+  slots and the heard tab survive a worker restart; after a browser restart, tab IDs change, so
+  everything gets re-slotted and muted.
+- **A tab that navigates away from YouTube TV** is untracked and **unmuted**, so the user's
+  other browsing isn't left silent.
+- **More than 15 YouTube TV tabs:** the extra tabs are left untracked and untouched, not muted.
+  They pick up a slot on their next URL or title change after one frees.
+- `lastHeardTabId` is cleared when that tab closes, so Mute All has nothing to restore.
+- Manual mute/unmute from Chrome's tab UI is not observed (out of scope). The next solo
+  reasserts the state.
+- `PluginConnection` casts the DOM `WebSocket` to `SocketLike`; it matches at runtime, but the
+  DOM handler types are narrower.
+
+**Verification results (all passed)**
+- `pnpm --filter @rotho/shared --filter @rotho/extension exec vitest run --reporter=verbose`:
+  55 tests pass. They include named engine tests for: new tabs start muted; solo mutes all
+  others; closing the heard tab leaves all muted; mute all toggles and restores the last heard
+  tab; navigating away frees the slot.
+- `pnpm --filter @rotho/extension build` produces `dist/background.js` (10.4 kb) and
+  `dist/manifest.json`.
+- `pnpm typecheck`, `pnpm lint` and `pnpm format:check` exit 0.
+- Extra smoke test: the built `dist/background.js` ran in Node with a fake `chrome` object
+  against a real `ws` server on 127.0.0.1:47731. Results:
+  - Startup muted both YouTube TV tabs and skipped ESPN.
+  - It sent `hello` then `state` (slots 1 and 2, `allMuted: true`).
+  - `solo` slot 2 gave `[[7,true],[9,false]]`.
+  - A new tab got slot 3 and was muted.
+  - `toggleMuteAll` muted all three and stored `lastHeardTabId` = 9.
+
+**Next:** Phase 3 (title extraction). It needs a live YouTube TV game tab open in Chrome.
 
 ## Phase 3: Matchup title extraction
 Status: Not started
