@@ -1,0 +1,43 @@
+name: Plan
+description: Planned, multi-phase work tracked by a plan file in plans/
+title: "Plan: "
+labels: [plan]
+body:
+  - type: input
+    id: plan-file
+    attributes:
+      label: Plan file
+      description: Path to the plan, e.g. `plans/my-work.md`.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and scope
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Key decisions
+  - type: textarea
+    id: phases
+    attributes:
+      label: Phases
+      description: "One `- [ ] Phase N: <title>` line per phase."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / blockers
+  - type: textarea
+    id: related
+    attributes:
+      label: Related issues

@@ -1,0 +1,32 @@
+name: Bug
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Stream Deck plugin
+        - Chrome extension
+        - Both / not sure
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Plugin version, Stream Deck app version, Chrome version.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Plugin logs (`%APPDATA%\Elgato\StreamDeck\Plugins\com.rotho.yttv-multiview.sdPlugin\logs\`) or extension service-worker console output.
+      render: text

@@ -1,6 +1,6 @@
 # Rotho YTTV Multiview — Stream Deck audio switcher for YouTube TV
 
-Issue: #TBD   <!-- tracking issue; created after plan approval -->
+Issue: #1
 
 Build a Stream Deck plugin (`com.rotho.yttv-multiview`) plus a companion Chrome
 extension so that open YouTube TV tabs appear on Stream Deck keys and pressing a key
@@ -70,8 +70,9 @@ every issue it resolves.
 
 ## GitHub sync
 Run these yourself with `gh`; do not wait to be asked, except where marked. The
-issue is #TBD and its board item id is TBD (fill in when the tracking issue and board are
-created during plan sync).
+issue is #1 and its board item id is `PVTI_lAHOBLWqFc4BmmYPzhACpuU` (project "Rotho YTTV
+Multiview", number 3, id `PVT_kwHOBLWqFc4BmmYP`; Status field `PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI`;
+options Ready `a33a6237`, In Progress `96b69291`, Done `8a821b82`).
 Board ids and tested `gh` recipes live in `.github/gh-recipes.md` if the repo has
 one; read it and use its ids and commands. If it's missing, or a command fails
 with an id error, look the ids up with `gh project list`, `gh project field-list`
@@ -91,28 +92,28 @@ and `gh project item-list` (all with `--format json`).
   `.md` in the final commit.
 - Never run git commands that change anything; the user branches and commits.
 
-> Note: `main` has no commits yet. The user must make an initial commit on `main` and push
-> it (e.g. this plan file) before creating the work branch, so the PR has a base.
+> Work branch: the user creates it from `main` (suggested name `1-yttv-multiview`) before
+> Phase 1 starts.
 
 ## Phase 1: Repository setup
-Status: Not started
+Status: Complete
 
-- [ ] Install pnpm (`npm i -g pnpm`) and record the version in root `package.json` `"packageManager": "pnpm@<exact version>"`
-- [ ] Root `package.json` (private, `engines.node >=24`, `packageManager` pin) with scripts that fan out via `pnpm -r`: `build`, `typecheck`, `lint`, `format`, `format:check`, `test`
-- [ ] `pnpm-workspace.yaml`: `packages: ["packages/*"]`; `catalog:` with shared versions (typescript, vitest, eslint, typescript-eslint, prettier, ws, @types/node, @types/chrome, @elgato/streamdeck, @elgato/cli, rollup + plugins, esbuild); `onlyBuiltDependencies:` allow-list kept empty unless a dependency demonstrably needs its install script (e.g. `esbuild`)
-- [ ] `.npmrc` with `engine-strict=true`
-- [ ] `tsconfig.base.json` (strict, `ES2022`, `moduleResolution: bundler`) and per-package `tsconfig.json` files extending it
-- [ ] Scaffold `packages/shared` (`@rotho/shared`; `src/index.ts` exporting `PLUGIN_UUID = "com.rotho.yttv-multiview"`, `WS_PORT`, placeholder protocol types)
-- [ ] Scaffold `packages/plugin` (`@rotho/plugin`, depends on `"@rotho/shared": "workspace:*"`, other deps `catalog:`): use the Elgato template layout (run `streamdeck create` in a scratch folder and copy the relevant files, translating npm scripts to pnpm) — `com.rotho.yttv-multiview.sdPlugin/manifest.json` (Name "Rotho YTTV Multiview", `Nodejs.Version` "24", `Software.MinimumVersion` "7.1", OS windows, both action UUIDs declared with placeholder icons), `rollup.config.mjs` bundling everything (incl. `@rotho/shared` and `ws`, with `bufferutil`/`utf-8-validate` external) to `bin/plugin.js`, stub `src/plugin.ts`; package scripts `validate`, `link`, `pack` wrapping `streamdeck`
-- [ ] Scaffold `packages/extension` (`@rotho/extension`, depends on `"@rotho/shared": "workspace:*"`): MV3 `manifest.json` (permissions `tabs`, `storage`; `host_permissions` `https://tv.youtube.com/*`; background service worker), stub `src/background.ts`, build with esbuild (bundling `@rotho/shared`) to `dist/`
-- [ ] Commit `pnpm-lock.yaml`
-- [ ] Generate extension RSA keypair; put the public key in `manifest.json` `key`; record the resulting extension ID in `packages/shared` as `EXTENSION_ID`; add `*.pem` to `.gitignore` and document where the user keeps the private key
-- [ ] ESLint (flat config, `typescript-eslint`), Prettier, `.editorconfig`, `.gitattributes` (`* text=auto eol=lf`), `.gitignore` (node_modules, dist, bin, *.pem, *.streamDeckPlugin, coverage)
-- [ ] Vitest configured at root with one passing smoke test per package
-- [ ] `.github/workflows/ci.yml`: on `pull_request` and push to `main` — `pnpm/action-setup` (version from `packageManager`), `actions/setup-node` (Node 24, `cache: pnpm`), `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm --filter @rotho/plugin validate`
-- [ ] `README.md` (what it does, architecture diagram in text, dev setup incl. Node 24+ and `npm i -g pnpm`, local install: `pnpm --filter @rotho/plugin link`, Chrome "Load unpacked") and `LICENSE` (MIT, Rothenbergerjl, 2026)
-- [ ] `.github/gh-recipes.md` with project/field/option ids for the board and tested `gh` commands (board, labels, and tracking issue are created during plan sync)
-- [ ] `.github/ISSUE_TEMPLATE/` with `bug.yml` and `plan.yml`; `.github/pull_request_template.md` with a `Fixes #` line
+- [x] Install pnpm (`npm i -g pnpm`) and record the version in root `package.json` `"packageManager": "pnpm@<exact version>"`
+- [x] Root `package.json` (private, `engines.node >=24`, `packageManager` pin) with scripts that fan out via `pnpm -r`: `build`, `typecheck`, `lint`, `format`, `format:check`, `test`
+- [x] `pnpm-workspace.yaml`: `packages: ["packages/*"]`; `catalog:` with shared versions (typescript, vitest, eslint, typescript-eslint, prettier, ws, @types/node, @types/chrome, @elgato/streamdeck, @elgato/cli, rollup + plugins, esbuild); `onlyBuiltDependencies:` allow-list kept empty unless a dependency demonstrably needs its install script (e.g. `esbuild`)
+- [x] `.npmrc` with `engine-strict=true`
+- [x] `tsconfig.base.json` (strict, `ES2022`, `moduleResolution: bundler`) and per-package `tsconfig.json` files extending it
+- [x] Scaffold `packages/shared` (`@rotho/shared`; `src/index.ts` exporting `PLUGIN_UUID = "com.rotho.yttv-multiview"`, `WS_PORT`, placeholder protocol types)
+- [x] Scaffold `packages/plugin` (`@rotho/plugin`, depends on `"@rotho/shared": "workspace:*"`, other deps `catalog:`): use the Elgato template layout (run `streamdeck create` in a scratch folder and copy the relevant files, translating npm scripts to pnpm) — `com.rotho.yttv-multiview.sdPlugin/manifest.json` (Name "Rotho YTTV Multiview", `Nodejs.Version` "24", `Software.MinimumVersion` "7.1", OS windows, both action UUIDs declared with placeholder icons), `rollup.config.mjs` bundling everything (incl. `@rotho/shared` and `ws`, with `bufferutil`/`utf-8-validate` external) to `bin/plugin.js`, stub `src/plugin.ts`; package scripts `validate`, `link`, `pack` wrapping `streamdeck`
+- [x] Scaffold `packages/extension` (`@rotho/extension`, depends on `"@rotho/shared": "workspace:*"`): MV3 `manifest.json` (permissions `tabs`, `storage`; `host_permissions` `https://tv.youtube.com/*`; background service worker), stub `src/background.ts`, build with esbuild (bundling `@rotho/shared`) to `dist/`
+- [x] Commit `pnpm-lock.yaml`
+- [x] Generate extension RSA keypair; put the public key in `manifest.json` `key`; record the resulting extension ID in `packages/shared` as `EXTENSION_ID`; add `*.pem` to `.gitignore` and document where the user keeps the private key
+- [x] ESLint (flat config, `typescript-eslint`), Prettier, `.editorconfig`, `.gitattributes` (`* text=auto eol=lf`), `.gitignore` (node_modules, dist, bin, *.pem, *.streamDeckPlugin, coverage)
+- [x] Vitest configured at root with one passing smoke test per package
+- [x] `.github/workflows/ci.yml`: on `pull_request` and push to `main` — `pnpm/action-setup` (version from `packageManager`), `actions/setup-node` (Node 24, `cache: pnpm`), `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm --filter @rotho/plugin validate`
+- [x] `README.md` (what it does, architecture diagram in text, dev setup incl. Node 24+ and `npm i -g pnpm`, local install: `pnpm --filter @rotho/plugin link`, Chrome "Load unpacked") and `LICENSE` (MIT, Rothenbergerjl, 2026)
+- [x] `.github/gh-recipes.md` with project/field/option ids for the board and tested `gh` commands (created during plan sync, 2026-10-11, along with the labels, board, and issue #1)
+- [x] `.github/ISSUE_TEMPLATE/` with `bug.yml` and `plan.yml`; `.github/pull_request_template.md` with a `Fixes #` line
 
 ### Verification Plan
 - `pnpm install --frozen-lockfile` exits 0 on a clean checkout
@@ -125,7 +126,63 @@ Status: Not started
 - `gh label list` includes `plan`, `type:feature`, `area:plugin`, `area:extension`, `area:ci`; `gh project list --owner Rothenbergerjl` shows the board
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`.
+
+**What exists now**
+- pnpm 10.33.0 workspace (`packageManager` pinned). Root scripts: `build`, `typecheck`, `test`
+  fan out with `pnpm -r`; `lint` (`eslint .`), `format`, `format:check` run at root;
+  `check:extension-id` runs `scripts/check-extension-id.mjs`.
+- `pnpm-workspace.yaml` catalog pins every tool version. `onlyBuiltDependencies` allows only
+  `esbuild` (needs its postinstall to fetch its binary).
+- `@rotho/shared` exports TS source directly (`exports: "./src/index.ts"`, no build step) because
+  both consumers bundle it. Constants: `PLUGIN_UUID`, `ACTION_UUIDS`, `EXTENSION_ID`,
+  `EXTENSION_ORIGIN`, `WS_PORT = 47731`, `MAX_SLOTS = 15`, `PROTOCOL_VERSION = 1`, placeholder
+  `Game` type.
+- `@rotho/extension`: `manifest.json` lives at the package root (copied to `dist/` by
+  `build.mjs`, which bundles `src/background.ts` with esbuild as an ESM service worker,
+  `minimum_chrome_version` 116). Extension ID is `decadhapokljmmbknbfcpjckddhiicmg`.
+- `@rotho/plugin`: based on the `@elgato/cli` 1.10.2 template (extracted from the npm package
+  instead of running the interactive `streamdeck create` wizard). Manifest declares the Game Slot
+  (`.slot`) and Mute All (`.muteall`) actions with the template's placeholder PNGs, Windows only,
+  `Nodejs.Version` "24", `Software.MinimumVersion` "7.1". `src/plugin.ts` only logs and connects.
+  Scripts `validate`, `link`, `pack` (to `../../dist`), `watch`.
+- Tests (Vitest, `vitest run` per package, no config file needed): shared constants;
+  extension manifest key → `EXTENSION_ID`; plugin manifest UUIDs/Node/Stream Deck versions.
+- CI (`.github/workflows/ci.yml`), issue templates (`bug.yml`, `plan.yml`), PR template, README,
+  MIT LICENSE.
+
+**Key decisions / gotchas**
+- **TypeScript 6.0.3, not 7.0.** typescript-eslint 8.71 requires TS `<6.1`. TS 6 defaults
+  `types` to `[]`, so each package lists its `types` explicitly (`chrome`/`node`).
+- **@elgato/streamdeck 3.0.2** (the template's latest major). It already depends on `ws` 8,
+  so Phase 4 should import `ws` from the plugin's own dependency (add `ws: "catalog:"` then).
+- **ws native add-ons:** no `external` setting needed. `@rollup/plugin-commonjs`'s default
+  `ignoreTryCatch` leaves ws's `require("bufferutil")` inside its try/catch. Verified: the
+  bundle imports only Node built-ins and runs from a copy outside the repo.
+- **Rollup typescript plugin** needs `noEmit: false` (base tsconfig has `noEmit: true`) and
+  includes `../shared/src/**/*.ts` so shared source compiles into the bundle.
+- **Vitest runs per package** (`pnpm -r run test`) instead of a root config. Same outcome as
+  the plan item, simpler.
+- **Local machine:** pnpm was originally installed under nvm's Node 22, so it ran on Node 22
+  and failed `engine-strict`. Fixed by `npm i -g pnpm@10.33.0` under Node 24
+  (`C:\Program Files\nodejs\pnpm` now comes first on PATH).
+- **Private key** is at `~/.config/rotho-yttv-multiview/extension-key.pem` (outside the repo;
+  public key and ID in `~/.config/rotho-yttv-multiview/public.json`). Only needed for Chrome Web
+  Store publishing.
+- `.gitignore` must use `**/*.sdPlugin/bin/`; a pattern with a slash is anchored to the root.
+
+**Verification results (all passed)**
+- Clean `rm -rf node_modules && pnpm install --frozen-lockfile` → exit 0.
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` → exit 0. `pnpm test`: 7 tests
+  across 3 packages pass.
+- `pnpm --filter @rotho/plugin validate` → "Validation successful".
+- Inlined-deps grep on `bin/plugin.js` → `0`. Its only imports are Node built-ins. Copied
+  `.sdPlugin` outside the repo, `node bin/plugin.js` → exit 0, no module-not-found errors.
+- Manifest has `"Version": "24"`. `pnpm check:extension-id` → "Extension ID OK".
+- `git add -n .` lists no `*.pem`, `bin/`, `dist/` or `node_modules` paths.
+- `gh label list` has all 5 required labels. Project "Rotho YTTV Multiview" (#3) exists.
+
+**Next:** Phase 2. Nothing is committed yet. The user commits Phase 1, including `pnpm-lock.yaml`.
 
 ## Phase 2: Shared protocol and extension tab/audio engine
 Status: Not started
