@@ -47,7 +47,7 @@ the plugin on change).
 
 ### Install locally
 
-1. Link the plugin into Stream Deck: `pnpm --filter @rotho/plugin link`, then restart the plugin
+1. Link the plugin into Stream Deck: `pnpm --filter @rotho/plugin sd:link`, then restart the plugin
    with `pnpm --filter @rotho/plugin exec streamdeck restart com.rotho.yttv-multiview`.
 2. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and
    choose `packages/extension/dist`. The extension ID should be

@@ -111,7 +111,7 @@ Status: Complete
 - [x] ESLint (flat config, `typescript-eslint`), Prettier, `.editorconfig`, `.gitattributes` (`* text=auto eol=lf`), `.gitignore` (node_modules, dist, bin, *.pem, *.streamDeckPlugin, coverage)
 - [x] Vitest configured at root with one passing smoke test per package
 - [x] `.github/workflows/ci.yml`: on `pull_request` and push to `main` — `pnpm/action-setup` (version from `packageManager`), `actions/setup-node` (Node 24, `cache: pnpm`), `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm --filter @rotho/plugin validate`
-- [x] `README.md` (what it does, architecture diagram in text, dev setup incl. Node 24+ and `npm i -g pnpm`, local install: `pnpm --filter @rotho/plugin link`, Chrome "Load unpacked") and `LICENSE` (MIT, Rothenbergerjl, 2026)
+- [x] `README.md` (what it does, architecture diagram in text, dev setup incl. Node 24+ and `npm i -g pnpm`, local install: `pnpm --filter @rotho/plugin sd:link`, Chrome "Load unpacked") and `LICENSE` (MIT, Rothenbergerjl, 2026)
 - [x] `.github/gh-recipes.md` with project/field/option ids for the board and tested `gh` commands (created during plan sync, 2026-10-11, along with the labels, board, and issue #1)
 - [x] `.github/ISSUE_TEMPLATE/` with `bug.yml` and `plan.yml`; `.github/pull_request_template.md` with a `Fixes #` line
 
@@ -439,13 +439,13 @@ Completed 2026-10-11 on branch `1-yttv-multiview`.
 scenarios with real games.
 
 ## Phase 5: End-to-end integration on the user's PC
-Status: Not started
+Status: Complete
 
-- [ ] `pnpm --filter @rotho/plugin link` and `pnpm --filter @rotho/plugin exec streamdeck restart com.rotho.yttv-multiview` (Stream Deck app must be 7.1+)
-- [ ] User loads `packages/extension/dist` unpacked in Chrome (`chrome://extensions`, Developer mode) and confirms the extension ID matches `EXTENSION_ID`
-- [ ] User drags 2–4 Game Slot keys (slots 1..N) and one Mute All key onto the MK.2
-- [ ] Walk through the scenarios: open 2 games (both start muted, slots 1 & 2), press slot 1 (hear game 1), press slot 2 (switch), Mute All (silence), Mute All again (game 2 returns), close game 2 (all muted, slot 2 empty), open new game (takes slot 2, muted), quit Chrome (keys show "No Chrome"), reopen Chrome (reconnects, state restored)
-- [ ] Fix any defects found; add regression tests for each
+- [x] `pnpm --filter @rotho/plugin sd:link` and `pnpm --filter @rotho/plugin exec streamdeck restart com.rotho.yttv-multiview` (Stream Deck app must be 7.1+)
+- [x] User loads `packages/extension/dist` unpacked in Chrome (`chrome://extensions`, Developer mode) and confirms the extension ID matches `EXTENSION_ID`
+- [x] User drags 2–4 Game Slot keys (slots 1..N) and one Mute All key onto the MK.2
+- [x] Walk through the scenarios: open 2 games (both start muted, slots 1 & 2), press slot 1 (hear game 1), press slot 2 (switch), Mute All (silence), Mute All again (game 2 returns), close game 2 (all muted, slot 2 empty), open new game (takes slot 2, muted), quit Chrome (keys show "No Chrome"), reopen Chrome (reconnects, state restored)
+- [x] Fix any defects found; add regression tests for each
 
 ### Verification Plan
 - Plugin log (`%APPDATA%\Elgato\StreamDeck\Plugins\com.rotho.yttv-multiview.sdPlugin\logs\`) shows a client connection from the extension origin and `solo`/`toggleMuteAll` commands matching key presses
@@ -453,13 +453,66 @@ Status: Not started
 - All Phase 2–4 automated tests still pass
 
 ### Phase Summary
-_(write when phase completes)_
+Completed 2026-10-11 on branch `1-yttv-multiview`. Tested on the user's PC: Stream Deck MK.2,
+Stream Deck app 7.4.2, Chrome with the unpacked extension (ID `decadhapokljmmbknbfcpjckddhiicmg`
+confirmed).
+
+**Scenario results** (the user confirmed sound and keys; the plugin log confirmed messages)
+| Step | Result |
+| --- | --- |
+| Open 2 games | Both muted, slots 1 (SF @ SEA) and 2 (DET @ ARI). Title briefly read "NFL ST - FOX" while the page loaded |
+| Press slot 1, then slot 2 | Only that game heard; highlight moved. Key press to state update took 6–14 ms |
+| Mute All, then Mute All again | All muted ("Restore"), then DET @ ARI (the last heard game) came back |
+| Press empty slot 3 | Alert shown; no command sent |
+| Pressing the already-heard slot again | `solo` sent, no state change (correct) |
+| Close the heard game (SF @ SEA) | All muted; slot 1 empty; slot 2 unchanged |
+| Open a new game | Took slot 1 (lowest free); muted; title arrived about 4s later |
+| Quit Chrome | Plugin logged "Extension disconnected"; keys showed "No Chrome" |
+| Reopen Chrome | Reconnected about 3s after launch; restored game came back in slot 1, muted; solo works |
+
+**Defects found and fixed**
+- **`pnpm --filter @rotho/plugin link` and `... pack` run pnpm's own `link`/`pack` commands**,
+  not our scripts. Renamed the scripts to `sd:link` and `sd:pack`, and updated the README and
+  this plan (Phase 5 and 6 items now say `sd:link`/`sd:pack`). `validate` doesn't clash and
+  was kept.
+- **`scripts/check-extension-id.mjs` had been broken since Phase 2.** It regex-read
+  `EXTENSION_ID` from `shared/src/index.ts`, but Phase 2 moved the constants to
+  `constants.ts`, so it compared against `undefined` and failed (CI runs it, but CI hasn't
+  run yet because there's no PR). It now imports `../packages/shared/src/constants.ts` directly
+  (Node 24 type stripping), so a future move fails at import instead of silently.
+- A newly linked plugin only loads after **quitting and reopening the Stream Deck app**;
+  `streamdeck restart` alone doesn't load it. Worth a line in the README troubleshooting
+  (Phase 6).
+
+**Added for diagnosis:** the plugin now logs every `State: 1:SF @ SEA*, 2:DET @ ARI` update
+(`*` = heard) and every `Sending {...}` command at info level. That is what made this phase
+verifiable from `packages/plugin/com.rotho.yttv-multiview.sdPlugin/logs/` (reached through the
+symlink in `%APPDATA%\Elgato\StreamDeck\Plugins\`).
+
+**Verification results**
+- Plugin log shows the connection from the extension origin, `hello` (0.1.0, protocol 1), and
+  `solo`/`toggleMuteAll` commands matching each key press (see the table above).
+- Tab mute states were confirmed by ear and on the keys rather than with
+  `chrome.tabs.query`: a page can't call that API, and the state messages the extension sends
+  come straight from its engine state.
+- After the fixes: `pnpm test` (shared 37, extension 40, plugin 29), `pnpm typecheck`,
+  `pnpm lint`, `pnpm format:check`, `pnpm --filter @rotho/plugin validate` and
+  `pnpm check:extension-id` all pass.
+- No regression tests were needed for engine behaviour (no engine defects). The script fix is
+  covered by `check:extension-id` itself, in CI.
+
+**State left on the user's PC:** the plugin is linked (symlink into the Stream Deck Plugins
+folder) and the extension is loaded unpacked. Both point at this repo, so rebuilding updates
+them: run `pnpm build`, then `pnpm --filter @rotho/plugin exec streamdeck restart
+com.rotho.yttv-multiview`, and click reload on `chrome://extensions`.
+
+**Next:** Phase 6 (packaging, release workflow, docs).
 
 ## Phase 6: Packaging, release workflow, and docs
 Status: Not started
 
 - [ ] Single version source: root `package.json` version propagated by a `scripts/sync-version.mjs` into the plugin manifest (`Version` x.y.z.0) and extension manifest
-- [ ] `pnpm package` (root script): builds both, runs `pnpm --filter @rotho/plugin pack` → `dist/com.rotho.yttv-multiview.streamDeckPlugin`, zips `packages/extension/dist` → `dist/yttv-multiview-extension-<version>.zip`
+- [ ] `pnpm package` (root script): builds both, runs `pnpm --filter @rotho/plugin sd:pack` → `dist/com.rotho.yttv-multiview.streamDeckPlugin`, zips `packages/extension/dist` → `dist/yttv-multiview-extension-<version>.zip`
 - [ ] `.github/workflows/release.yml`: `workflow_dispatch` with `version` input; same pnpm setup as CI (`pnpm/action-setup`, Node 24, `--frozen-lockfile`), runs CI steps, sync-version, package, creates tag `v<version>` and a GitHub Release with both files attached (`gh release create`)
 - [ ] README: end-user install from a release (double-click `.streamDeckPlugin`; unzip extension and Load unpacked), usage, troubleshooting (port in use, extension ID mismatch, "No Chrome")
 - [ ] `CHANGELOG.md` with the 0.1.0 entry

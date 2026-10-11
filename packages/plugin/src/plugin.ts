@@ -1,5 +1,11 @@
 import streamDeck from "@elgato/streamdeck";
-import { EXTENSION_ORIGIN, PLUGIN_UUID, PROTOCOL_VERSION, WS_PORT } from "@rotho/shared";
+import {
+  EXTENSION_ORIGIN,
+  formatMatchup,
+  PLUGIN_UUID,
+  PROTOCOL_VERSION,
+  WS_PORT,
+} from "@rotho/shared";
 import { MuteAllAction } from "./actions/mute-all";
 import { SlotAction } from "./actions/slot";
 import { ExtensionServer } from "./server";
@@ -25,6 +31,10 @@ const server = new ExtensionServer({
         }
         break;
       case "state":
+        // e.g. "State: 1:SF @ SEA*, 2:BUF @ LAR (* = heard)"
+        logger.info(
+          `State: ${message.games.map((g) => `${g.slot}:${formatMatchup(g.title)}${g.heard ? "*" : ""}`).join(", ") || "no games"}${message.allMuted ? " (all muted)" : ""}`,
+        );
         store.applyState(message);
         break;
       case "heartbeat":

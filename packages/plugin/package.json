@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "validate": "streamdeck validate com.rotho.yttv-multiview.sdPlugin",
-    "link": "streamdeck link com.rotho.yttv-multiview.sdPlugin",
-    "pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force",
+    "sd:link": "streamdeck link com.rotho.yttv-multiview.sdPlugin",
+    "sd:pack": "streamdeck pack com.rotho.yttv-multiview.sdPlugin --output ../../dist --force",
     "fake-extension": "node test/fake-extension.ts"
   },
   "dependencies": {

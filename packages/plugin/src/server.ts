@@ -73,6 +73,7 @@ export class ExtensionServer {
   /** Sends to the connected extension; returns false if none is connected. */
   send(message: PluginMessage): boolean {
     if (!this.connected) return false;
+    this.logger.info(`Sending ${JSON.stringify(message)}`);
     this.client!.send(JSON.stringify(message));
     return true;
   }
