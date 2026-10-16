@@ -28,7 +28,10 @@
       - any-glob-to-any-file:
           - README.md
           - CHANGELOG.md
+          - docs/**
           - LICENSE
+          - PRIVACY.md
+          - SECURITY.md
 
 "area:ci-devex":
   - changed-files:
@@ -47,4 +50,5 @@
           - .editorconfig
           - .gitattributes
           - .gitignore
+          - .gitleaksignore
           - .npmrc

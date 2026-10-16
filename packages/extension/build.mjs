@@ -1,7 +1,8 @@
-// Bundles the service worker and content script (including @rotho/shared) and copies the
-// manifest into dist/.
+// Bundles the service worker and content script (including @rotho/shared), copies the manifest
+// and renders the icons into dist/.
 import { build } from "esbuild";
-import { copyFile, mkdir, rm } from "node:fs/promises";
+import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { ICON_SIZES, renderIcon } from "./icons/render.ts";
 
 const outdir = "dist";
 
@@ -30,3 +31,8 @@ await build({
 });
 
 await copyFile("manifest.json", `${outdir}/manifest.json`);
+
+await mkdir(`${outdir}/icons`);
+for (const size of ICON_SIZES) {
+  await writeFile(`${outdir}/icons/icon-${size}.png`, renderIcon(size));
+}

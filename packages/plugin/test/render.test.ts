@@ -57,6 +57,22 @@ describe("slotKeySvg", () => {
     expect(svg).toMatchSnapshot();
   });
 
+  it.each(["plugin", "extension"] as const)("tells you to update the %s on a mismatch", (side) => {
+    const svg = slotKeySvg({ slot: 3, connected: true, title: "ignored", mismatch: side });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(`>${side}</text>`);
+    expect(svg).toContain(">3</text>"); // slot badge
+    expect(svg).toContain('fill="#f59e0b"'); // warning triangle
+    expect(svg).not.toContain("ignored");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("prefers 'No Chrome' over a mismatch", () => {
+    const svg = slotKeySvg({ slot: 1, connected: false, mismatch: "plugin" });
+    expect(svg).toContain(">Chrome</text>");
+    expect(svg).not.toContain(">Update</text>");
+  });
+
   it("escapes XML in titles", () => {
     const svg = slotKeySvg({ slot: 1, connected: true, title: "A&B <x>", heard: false });
     expect(svg).toContain("A&amp;B &lt;x&gt;");
@@ -73,6 +89,56 @@ describe("muteAllKeySvg", () => {
     const svg = muteAllKeySvg(view);
     expect(svg).toContain(`>${label}</text>`);
     expect(svg).toMatchSnapshot();
+  });
+
+  it.each(["plugin", "extension"] as const)("tells you to update the %s on a mismatch", (side) => {
+    const svg = muteAllKeySvg({
+      connected: true,
+      allMuted: false,
+      canRestore: true,
+      mismatch: side,
+    });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(`>${side}</text>`);
+    expect(svg).not.toContain(">Mute all</text>");
+    expect(svg).toMatchSnapshot();
+  });
+});
+
+describe("update badge", () => {
+  const BADGE = 'fill="#3b82f6"';
+
+  it.each([
+    ["a game", { slot: 1, connected: true, title: "SF at SEA", heard: true }],
+    ["an empty slot", { slot: 5, connected: true }],
+    ["No Chrome", { slot: 1, connected: false }],
+    ["a mismatch", { slot: 2, connected: true, mismatch: "plugin" as const }],
+  ])("is added to %s on a Game Slot key", (_name, view) => {
+    expect(slotKeySvg(view)).not.toContain(BADGE);
+    const svg = slotKeySvg({ ...view, updateAvailable: true });
+    expect(svg).toContain(BADGE);
+    expect(svg.endsWith("</svg>")).toBe(true);
+  });
+
+  it("is added to the Mute All key", () => {
+    const view = { connected: true, allMuted: false, canRestore: false };
+    expect(muteAllKeySvg(view)).not.toContain(BADGE);
+    expect(muteAllKeySvg({ ...view, updateAvailable: true })).toContain(BADGE);
+  });
+
+  it("draws in the bottom-right corner", () => {
+    expect(
+      slotKeySvg({
+        slot: 1,
+        connected: true,
+        title: "SF at SEA",
+        heard: true,
+        updateAvailable: true,
+      }),
+    ).toMatchSnapshot();
+    expect(
+      muteAllKeySvg({ connected: true, allMuted: false, canRestore: false, updateAvailable: true }),
+    ).toMatchSnapshot();
   });
 });
 

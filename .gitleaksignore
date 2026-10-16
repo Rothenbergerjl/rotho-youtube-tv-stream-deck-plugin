@@ -1,0 +1,3 @@
+# The extension manifest "key" is the public half of the extension signing key (it fixes the
+# extension ID) and is meant to be public. The private key is never committed.
+8371a6f75f5dba674b20eec8a9244864612c5139:packages/extension/manifest.json:generic-api-key:6

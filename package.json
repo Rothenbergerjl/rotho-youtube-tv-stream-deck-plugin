@@ -1,6 +1,6 @@
 {
   "name": "rotho-yttv-multiview",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Stream Deck plugin + Chrome extension to switch audio between YouTube TV tabs.",
   "license": "MIT",

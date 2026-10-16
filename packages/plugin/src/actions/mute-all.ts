@@ -19,11 +19,16 @@ export class MuteAllAction extends SingletonAction {
   }
 
   override async onKeyDown(ev: KeyDownEvent): Promise<void> {
-    if (!this.server.send({ type: "toggleMuteAll" })) await ev.action.showAlert();
+    if (this.store.current.mismatch || !this.server.send({ type: "toggleMuteAll" })) {
+      await ev.action.showAlert();
+    }
   }
 
   private async renderAll(): Promise<void> {
-    const image = toDataUrl(muteAllKeySvg(this.store.current));
+    const state = this.store.current;
+    const image = toDataUrl(
+      muteAllKeySvg({ ...state, updateAvailable: state.update !== undefined }),
+    );
     await Promise.all(this.actions.map((a) => (a.isKey() ? a.setImage(image) : undefined)));
   }
 }

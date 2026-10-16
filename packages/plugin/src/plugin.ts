@@ -10,10 +10,11 @@ import { MuteAllAction } from "./actions/mute-all";
 import { SlotAction } from "./actions/slot";
 import { ExtensionServer } from "./server";
 import { Store } from "./store";
+import { UpdateChecker } from "./updates";
 
 const logger = streamDeck.logger.createScope("yttv");
 streamDeck.logger.setLevel("info");
-logger.info(`${PLUGIN_UUID} starting`);
+logger.info(`${PLUGIN_UUID} ${__PLUGIN_VERSION__} starting`);
 
 const store = new Store();
 const server = new ExtensionServer({
@@ -26,8 +27,11 @@ const server = new ExtensionServer({
     switch (message.type) {
       case "hello":
         logger.info(`Extension ${message.extensionVersion}, protocol ${message.protocolVersion}`);
-        if (message.protocolVersion !== PROTOCOL_VERSION) {
-          logger.warn(`Protocol mismatch: plugin speaks ${PROTOCOL_VERSION}`);
+        store.setProtocol(message.protocolVersion);
+        if (store.current.mismatch) {
+          logger.warn(
+            `Protocol mismatch: plugin speaks ${PROTOCOL_VERSION}; update the ${store.current.mismatch}`,
+          );
         }
         break;
       case "state":
@@ -48,3 +52,9 @@ streamDeck.actions.registerAction(new MuteAllAction(store, server));
 
 await streamDeck.connect();
 await server.start();
+
+new UpdateChecker({
+  currentVersion: __PLUGIN_VERSION__,
+  onResult: (update) => store.setUpdate(update),
+  logger,
+}).start();

@@ -1,5 +1,6 @@
 // Builds key images as SVG (144×144, the @2x key size) and returns them as data URLs.
 import { formatMatchup } from "@rotho/shared";
+import type { UpdateTarget } from "./store";
 
 const SIZE = 144;
 const FONT = "Segoe UI, Arial, sans-serif";
@@ -13,6 +14,8 @@ const colors = {
   dimBackground: "#0a0a0a",
   badge: "#2b3038",
   muted: "#ef4444",
+  warning: "#f59e0b",
+  update: "#3b82f6",
 };
 
 export interface SlotKeyView {
@@ -21,12 +24,18 @@ export interface SlotKeyView {
   /** Raw title from the extension; undefined when the slot is empty. */
   title?: string;
   heard?: boolean;
+  /** Protocol mismatch: the side to update. Shown instead of the game. */
+  mismatch?: UpdateTarget;
+  /** A newer plugin release exists: adds a small badge in the corner. */
+  updateAvailable?: boolean;
 }
 
 export interface MuteAllKeyView {
   connected: boolean;
   allMuted: boolean;
   canRestore: boolean;
+  mismatch?: UpdateTarget;
+  updateAvailable?: boolean;
 }
 
 export function toDataUrl(svg: string): string {
@@ -34,11 +43,28 @@ export function toDataUrl(svg: string): string {
 }
 
 export function slotKeySvg(view: SlotKeyView): string {
+  return withUpdateBadge(slotKeyBody(view), view.updateAvailable);
+}
+
+export function muteAllKeySvg(view: MuteAllKeyView): string {
+  return withUpdateBadge(muteAllKeyBody(view), view.updateAvailable);
+}
+
+function slotKeyBody(view: SlotKeyView): string {
   if (!view.connected) {
     return svg(
       colors.dimBackground,
       badge(view.slot, colors.dim),
       lines(["No", "Chrome"], colors.dim, 26),
+    );
+  }
+
+  if (view.mismatch) {
+    return svg(
+      colors.dimBackground,
+      badge(view.slot, colors.dim),
+      warning(SIZE / 2, 48),
+      lines(["Update", view.mismatch], colors.text, 24, 100),
     );
   }
 
@@ -61,12 +87,19 @@ export function slotKeySvg(view: SlotKeyView): string {
   );
 }
 
-export function muteAllKeySvg(view: MuteAllKeyView): string {
+function muteAllKeyBody(view: MuteAllKeyView): string {
   if (!view.connected) {
     return svg(
       colors.dimBackground,
       speaker(SIZE / 2, 50, "off", colors.dim, 1.6),
       lines(["No Chrome"], colors.dim, 22, 112),
+    );
+  }
+  if (view.mismatch) {
+    return svg(
+      colors.dimBackground,
+      warning(SIZE / 2, 48),
+      lines(["Update", view.mismatch], colors.text, 24, 100),
     );
   }
   if (view.allMuted) {
@@ -152,6 +185,27 @@ function speaker(cx: number, cy: number, mode: "on" | "off", color: string, scal
       ? `<path d="M9 -7 Q14 0 9 7 M13 -12 Q21 0 13 12" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M9 -6 L19 6 M19 -6 L9 6" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`;
   return `<g transform="translate(${cx} ${cy}) scale(${scale})">${body}${extra}</g>`;
+}
+
+/** Adds a blue up-arrow dot in the bottom-right corner when an update is available. */
+function withUpdateBadge(image: string, show: boolean | undefined): string {
+  if (!show) return image;
+  const c = SIZE - 16;
+  const badge =
+    `<circle cx="${c}" cy="${c}" r="12" fill="${colors.update}"/>` +
+    `<path d="M${c} ${c + 6} V${c - 5} M${c - 5} ${c} L${c} ${c - 6} L${c + 5} ${c}" fill="none" stroke="${colors.text}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return image.replace(/<\/svg>$/, `${badge}</svg>`);
+}
+
+/** Warning triangle with an exclamation mark, centred at (cx, cy). */
+function warning(cx: number, cy: number): string {
+  return (
+    `<g transform="translate(${cx} ${cy})">` +
+    `<path d="M0 -20 L23 19 H-23 Z" fill="${colors.warning}" stroke="${colors.warning}" stroke-width="6" stroke-linejoin="round"/>` +
+    `<rect x="-3" y="-9" width="6" height="16" rx="3" fill="${colors.dimBackground}"/>` +
+    `<circle cx="0" cy="13" r="3.5" fill="${colors.dimBackground}"/>` +
+    `</g>`
+  );
 }
 
 function escapeXml(value: string): string {

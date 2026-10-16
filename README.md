@@ -6,23 +6,39 @@ and mutes the rest.
 
 ## Install
 
-Requirements: Windows 10+, Stream Deck app 7.1+, Chrome 116+.
+You need Windows 10 or later, the Stream Deck app 7.1 or later, and Chrome 116 or later. There are
+two pieces: a Chrome extension and a Stream Deck plugin.
 
-1. Download both files from the latest
-   [release](https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases):
-   `com.rotho.yttv-multiview.streamDeckPlugin` and `yttv-multiview-extension-<version>.zip`.
-2. **Stream Deck plugin:** double-click `com.rotho.yttv-multiview.streamDeckPlugin` and confirm
-   the install in the Stream Deck app.
-3. **Chrome extension:**
-   1. Unzip `yttv-multiview-extension-<version>.zip` to a folder you'll keep, for example
-      `Documents\yttv-multiview-extension`. Chrome loads it from there, so don't delete it.
-   2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-   3. Click **Load unpacked** and choose the unzipped folder. The dialog only shows folders, so
-      select the folder itself rather than looking for files inside it.
-   4. Check that the extension ID is `decadhapokljmmbknbfcpjckddhiicmg`.
+1. **Chrome extension:** open the
+   [Rotho YTTV Multiview page in the Chrome Web Store](https://chromewebstore.google.com/detail/decadhapokljmmbknbfcpjckddhiicmg)
+   and click **Add to Chrome**. The listing is unlisted, so it won't show up in store searches;
+   use this link.
+2. **Stream Deck plugin:** open the
+   [latest release](https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases/latest),
+   download `com.rotho.yttv-multiview.streamDeckPlugin`, double-click it, and confirm the install
+   in the Stream Deck app.
+3. Add keys to your Stream Deck (see [Usage](#usage)).
 
-To update, install the new `.streamDeckPlugin`, unzip the new extension over the same folder, and
-click the reload icon on the extension in `chrome://extensions`.
+### Upgrading
+
+- **Chrome extension:** updates itself. Chrome checks for updates every few hours; to update right
+  away, open `chrome://extensions`, turn on **Developer mode** and click **Update**.
+- **Stream Deck plugin:** when a new version is out, every key shows a small blue arrow in its
+  bottom-right corner. Select a Game Slot key in the Stream Deck app and click **Plugin vX.Y.Z is
+  available** in its settings to open the release, then download and double-click the new
+  `com.rotho.yttv-multiview.streamDeckPlugin`. It installs over the old version and keeps your
+  keys.
+
+### Moving from a "Load unpacked" install
+
+If you installed the extension from a zip with **Load unpacked** before it was in the Web Store:
+
+1. Open `chrome://extensions` and click **Remove** on Rotho YTTV Multiview. Chrome can't have the
+   unpacked copy and the store copy installed at the same time.
+2. Install it from the Web Store link above.
+3. Delete the folder you unzipped it into, and turn off **Developer mode** if you don't need it.
+
+Your Stream Deck keys keep working; reload any open YouTube TV tabs if a game doesn't appear.
 
 ## Usage
 
@@ -38,6 +54,8 @@ click the reload icon on the extension in `chrome://extensions`.
 | Game Slot | Just a dim number                                                     | Empty slot; nothing happens                  |
 | Game Slot | "No Chrome"                                                           | The extension isn't connected                |
 | Mute All  | "Mute all" / "Restore" / "All muted"                                  | Mute everything, or bring back the last game |
+| Any key   | Amber warning, "Update plugin" / "Update extension"                   | Nothing until you update that piece          |
+| Any key   | Small blue arrow in the bottom-right corner                           | Works as usual; a plugin update is available |
 
 How games get slots and sound:
 
@@ -56,8 +74,19 @@ How games get slots and sound:
 - It reconnects within about 30 seconds of Chrome or the Stream Deck app starting. Reloading the
   extension forces an immediate reconnect.
 - Check the extension ID is `decadhapokljmmbknbfcpjckddhiicmg`. The plugin only accepts that ID;
-  a different ID means the extension was built without its `key` and must be reinstalled from a
-  release.
+  a different ID means the extension wasn't installed from the Web Store link above. Remove it and
+  reinstall from that link.
+
+**Keys say "Update plugin" or "Update extension".** The plugin and extension are different
+versions that can't talk to each other. Keys ignore presses until they match.
+
+- "Update plugin": install the newest `.streamDeckPlugin` from the
+  [latest release](https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases/latest).
+- "Update extension": Chrome usually updates it within a few hours. To update now, open
+  `chrome://extensions`, turn on **Developer mode** and click **Update**.
+
+**Keys have a small blue arrow.** A newer plugin is available; see [Upgrading](#upgrading). The
+keys work normally in the meantime.
 
 **A game doesn't show up, or shows "YouTube TV" instead of the matchup.** The title comes from the
 YouTube TV player; it appears a few seconds after the game starts playing. If the tab was open
@@ -92,6 +121,8 @@ tray and reopen it; newly linked plugins load only when the app starts.
 - The extension connects to the plugin; the plugin only accepts the extension's fixed origin.
 - A content script reads the matchup from the player, because YouTube TV's page title is always
   "Home - YouTube TV".
+- Nothing leaves your computer except the plugin's update check against GitHub; see the
+  [privacy policy](PRIVACY.md). To report a security problem, see [SECURITY.md](SECURITY.md).
 
 ## Development
 
@@ -124,8 +155,9 @@ running plugin).
 1. Link the plugin into Stream Deck: `pnpm --filter @rotho/plugin sd:link`, then quit and reopen
    the Stream Deck app (first time only). After rebuilding, restart the plugin with
    `pnpm --filter @rotho/plugin exec streamdeck restart com.rotho.yttv-multiview`.
-2. In Chrome, **Load unpacked** `packages/extension/dist`. After rebuilding, click the reload icon
-   on the extension.
+2. In Chrome, **Load unpacked** `packages/extension/dist` (needs **Developer mode** in
+   `chrome://extensions`). Remove the Web Store copy first; both have the same ID. After
+   rebuilding, click the reload icon on the extension.
 
 ### Release
 
@@ -135,15 +167,30 @@ running plugin).
 3. Merge to `main`.
 4. In GitHub, open **Actions → Release → Run workflow** on `main` and enter the same version. The
    workflow checks, builds, and packages everything, tags `vX.Y.Z`, and publishes a GitHub Release
-   with both files.
+   with both files. Installed plugins see the new release within 12 hours and show the update
+   badge.
+5. Publish the extension: download `yttv-multiview-extension-<version>.zip` from the release, open
+   the [Chrome Web Store developer dashboard](https://chrome.google.com/webstore/devconsole),
+   select Rotho YTTV Multiview, upload the zip under **Package**, and click **Submit for review**.
+   Keep visibility **Unlisted**. Chrome updates installed copies a few hours after approval. The
+   listing text and permission justifications live in
+   [docs/chrome-web-store.md](docs/chrome-web-store.md); update them there when permissions or
+   behaviour change.
 
-`pnpm package` builds the same two files locally into `dist/`.
+`pnpm package` builds the same two files locally into `dist/`. The zip's manifest leaves out the
+`key` field, which the Web Store rejects; the source manifest keeps it for unpacked dev builds.
+
+**When `PROTOCOL_VERSION` changes,** users need both new pieces before their keys work again. Run
+the release workflow first and submit the extension right after, so the plugin is available by the
+time the store pushes the extension (which updates itself, while the plugin needs a manual
+install). Mention it at the top of the changelog section.
 
 ### Extension signing key
 
 The extension's fixed ID comes from the public `key` in `packages/extension/manifest.json`. The
-matching private key is kept outside the repo at `~/.config/rotho-yttv-multiview/extension-key.pem`
-and is only needed to publish to the Chrome Web Store. Never commit `*.pem` files.
+matching private key is kept outside the repo at `~/.config/rotho-yttv-multiview/extension-key.pem`.
+It was used once, for the first Web Store upload, so the store kept the same ID; later uploads
+don't need it. Keep it backed up anyway, and never commit `*.pem` files.
 
 ## License
 

@@ -32,5 +32,24 @@
         opened.
       </p>
     </sdpi-item>
+    <sdpi-item id="update" label="Update" hidden>
+      <sdpi-button id="open-update"><div id="update-text"></div></sdpi-button>
+    </sdpi-item>
+    <script>
+      // The plugin answers "getUpdate" and also pushes changes while this panel is open.
+      const client = SDPIComponents.streamDeckClient;
+      client.sendToPropertyInspector.subscribe(({ payload }) => {
+        if (payload?.type !== "update") return;
+        document.getElementById("update").hidden = !payload.update;
+        if (payload.update) {
+          document.getElementById("update-text").textContent =
+            `Plugin v${payload.update.version} is available`;
+        }
+      });
+      document
+        .getElementById("open-update")
+        .addEventListener("click", () => client.send("sendToPlugin", { type: "openUpdate" }));
+      client.send("sendToPlugin", { type: "getUpdate" });
+    </script>
   </body>
 </html>

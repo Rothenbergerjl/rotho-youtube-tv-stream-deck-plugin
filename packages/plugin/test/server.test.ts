@@ -1,4 +1,4 @@
-import { EXTENSION_ORIGIN, type ExtensionMessage } from "@rotho/shared";
+import { EXTENSION_ORIGIN, type ExtensionMessage, PROTOCOL_VERSION } from "@rotho/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ExtensionServer, REPLACED_CLOSE_CODE } from "../src/server";
 import { Store } from "../src/store";
@@ -23,7 +23,9 @@ async function eventually(check: () => void, timeoutMs = 2_000): Promise<void> {
   }
 }
 
-async function connect(options: { origin?: string; state?: unknown } = {}) {
+async function connect(
+  options: { origin?: string; state?: unknown; protocolVersion?: number } = {},
+) {
   const fake = await connectFakeExtension({ port: server.port!, ...options });
   fakes.push(fake);
   return fake;
@@ -39,6 +41,7 @@ beforeEach(async () => {
     onDisconnected: () => store.setConnected(false),
     onMessage: (m) => {
       received.push(m);
+      if (m.type === "hello") store.setProtocol(m.protocolVersion);
       if (m.type === "state") store.applyState(m);
     },
   });
@@ -65,6 +68,12 @@ describe("ExtensionServer + Store (integration)", () => {
     });
     expect(store.gameInSlot(2)?.tabId).toBe(102);
     expect(store.gameInSlot(3)).toBeUndefined();
+  });
+
+  it("flags a newer extension protocol as a plugin update", async () => {
+    await connect({ protocolVersion: PROTOCOL_VERSION + 1 });
+    await eventually(() => expect(store.current.games).toHaveLength(3));
+    expect(store.current.mismatch).toBe("plugin");
   });
 
   it("refuses any other origin", async () => {
