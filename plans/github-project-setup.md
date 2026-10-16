@@ -218,26 +218,26 @@ The user did this in the web UI on 2026-10-16. GitHub only, no commit.
   the move to Done. Confirm both at PR time, in `/open-pr` step 4.
 
 ## Phase 4: Issue templates, PR template and PR workflows
-Status: Not started
+Status: Complete
 
-- [ ] Rewrite `.github/ISSUE_TEMPLATE/bug.yml` to bulldog's structure:
+- [x] Rewrite `.github/ISSUE_TEMPLATE/bug.yml` to bulldog's structure:
   - "What's wrong?", "Steps to reproduce", "Expected behavior" and "Actual behavior"
     (all required), "Suspected cause / relevant files" and "Possible fix" (optional),
     and the Severity dropdown (Low, Medium, High, Critical, required).
   - Keep this repo's Area dropdown (required) and its Versions and Logs fields
     (including the logs path and `render: text`).
   - Name: "Bug report". Labels: `[bug]`.
-- [ ] Add `.github/ISSUE_TEMPLATE/feature.yml`, copied from bulldog (labels `[enhancement]`),
+- [x] Add `.github/ISSUE_TEMPLATE/feature.yml`, copied from bulldog (labels `[enhancement]`),
       with this repo's Area dropdown added
-- [ ] Add `.github/ISSUE_TEMPLATE/config.yml` with `blank_issues_enabled: false`
-- [ ] Leave `.github/ISSUE_TEMPLATE/plan.yml` unchanged
-- [ ] Rewrite `.github/pull_request_template.md` in bulldog's shape (Summary, Issues with
+- [x] Add `.github/ISSUE_TEMPLATE/config.yml` with `blank_issues_enabled: false`
+- [x] Leave `.github/ISSUE_TEMPLATE/plan.yml` unchanged
+- [x] Rewrite `.github/pull_request_template.md` in bulldog's shape (Summary, Issues with
       `Fixes #` and the no-issue comment, Changes, Testing). The Testing checkboxes are
       `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` and `pnpm build`,
       matching `ci.yml`.
-- [ ] Add `.github/workflows/pr-issue-link.yml`, copied from bulldog unchanged
-- [ ] Add `.github/workflows/pr-labeler.yml`, copied from bulldog unchanged
-- [ ] Add `.github/labeler.yml` with this header comment ("When adding a new package or
+- [x] Add `.github/workflows/pr-issue-link.yml`, copied from bulldog unchanged
+- [x] Add `.github/workflows/pr-labeler.yml`, copied from bulldog unchanged
+- [x] Add `.github/labeler.yml` with this header comment ("When adding a new package or
       feature directory, add its globs here") and these globs:
   - `area:plugin`: `packages/plugin/**`
   - `area:extension`: `packages/extension/**`
@@ -258,7 +258,22 @@ Status: Not started
   `area:ci-devex`, and `pr-issue-link` gives no warning.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-16. Waiting for the user to commit.
+- **Issue templates:**
+  - `bug.yml` keeps bulldog's fields and order and adds this repo's fields: Area right
+    after "What's wrong?", and Versions and Logs after "Actual behavior". The cause, fix
+    and severity fields come last.
+  - `feature.yml` has the Area dropdown after "Problem or motivation".
+- **`labeler.yml`:** uses double-quoted keys and globs. Bulldog uses single quotes, but
+  this repo's Prettier config (`pnpm format:check`, which runs in CI) requires double
+  quotes.
+- **Verified:**
+  - `pnpm format:check` passes, and `pnpm lint` passes.
+  - All 7 YAML files under `.github/` that were touched or kept parse with
+    `pnpm dlx js-yaml@4` (exit 0).
+  - All 6 area labels used in `labeler.yml` exist.
+- **Not checked yet:** the PR-time behaviour of `pr-labeler` and `pr-issue-link`. Check
+  it when the PR opens.
 
 ## Phase 5: Agent docs, recipes and cleanup
 Status: Not started
