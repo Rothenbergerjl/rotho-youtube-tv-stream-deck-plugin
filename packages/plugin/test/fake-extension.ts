@@ -30,9 +30,14 @@ export interface FakeExtension {
 }
 
 export function connectFakeExtension(
-  options: { port?: number; origin?: string; state?: unknown } = {},
+  options: { port?: number; origin?: string; state?: unknown; protocolVersion?: number } = {},
 ): Promise<FakeExtension> {
-  const { port = WS_PORT, origin = EXTENSION_ORIGIN, state = sampleState } = options;
+  const {
+    port = WS_PORT,
+    origin = EXTENSION_ORIGIN,
+    state = sampleState,
+    protocolVersion = PROTOCOL_VERSION,
+  } = options;
   const socket = new WebSocket(`ws://127.0.0.1:${port}`, { origin });
   const commands: unknown[] = [];
   const send = (message: unknown) => socket.send(JSON.stringify(message));
@@ -45,7 +50,7 @@ export function connectFakeExtension(
       reject(new Error(`Server refused connection: HTTP ${res.statusCode}`)),
     );
     socket.once("open", () => {
-      send({ type: "hello", protocolVersion: PROTOCOL_VERSION, extensionVersion: "fake" });
+      send({ type: "hello", protocolVersion, extensionVersion: "fake" });
       send(state);
       resolve({
         socket,
@@ -63,10 +68,13 @@ export function connectFakeExtension(
 }
 
 // Script mode: connect to the running plugin and log commands until Ctrl+C.
+// `--protocol <n>` sends a different protocol version to show the mismatch keys.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const fake = await connectFakeExtension();
+  const flag = process.argv.indexOf("--protocol");
+  const protocolVersion = flag === -1 ? PROTOCOL_VERSION : Number(process.argv[flag + 1]);
+  const fake = await connectFakeExtension({ protocolVersion });
   console.log(
-    `Connected to ws://127.0.0.1:${WS_PORT}; sent hello + state. Press keys on the Stream Deck.`,
+    `Connected to ws://127.0.0.1:${WS_PORT}; sent hello (protocol ${protocolVersion}) + state. Press keys on the Stream Deck.`,
   );
   fake.socket.on("message", (data) => console.log("command:", data.toString()));
   setInterval(() => fake.send({ type: "heartbeat" }), 20_000);

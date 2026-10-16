@@ -26,8 +26,11 @@ const server = new ExtensionServer({
     switch (message.type) {
       case "hello":
         logger.info(`Extension ${message.extensionVersion}, protocol ${message.protocolVersion}`);
-        if (message.protocolVersion !== PROTOCOL_VERSION) {
-          logger.warn(`Protocol mismatch: plugin speaks ${PROTOCOL_VERSION}`);
+        store.setProtocol(message.protocolVersion);
+        if (store.current.mismatch) {
+          logger.warn(
+            `Protocol mismatch: plugin speaks ${PROTOCOL_VERSION}; update the ${store.current.mismatch}`,
+          );
         }
         break;
       case "state":

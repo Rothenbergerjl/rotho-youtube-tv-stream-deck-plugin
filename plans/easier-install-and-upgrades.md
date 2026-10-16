@@ -323,25 +323,25 @@ sizes); typecheck, lint, format clean; `check:extension-id` OK; zip holds `backg
 
 ## Phase 3: Protocol mismatch on keys
 
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/store.ts`: add `mismatch?: "plugin" | "extension"` to `PluginState`
+- [x] `packages/plugin/src/store.ts`: add `mismatch?: "plugin" | "extension"` to `PluginState`
       (the side that must update: `"plugin"` when the extension's protocol is newer, else
       `"extension"`), a `setProtocol(extensionProtocol: number)` method comparing to
       `PROTOCOL_VERSION`, and clear it on disconnect.
-- [ ] `packages/plugin/src/plugin.ts`: on `hello`, call `store.setProtocol(...)` (keep the
+- [x] `packages/plugin/src/plugin.ts`: on `hello`, call `store.setProtocol(...)` (keep the
       existing log lines). While `mismatch` is set, ignore `state` messages for display (log them
       as now).
-- [ ] `packages/plugin/src/render.ts`: add a `mismatch` field to `SlotKeyView` and
+- [x] `packages/plugin/src/render.ts`: add a `mismatch` field to `SlotKeyView` and
       `MuteAllKeyView`; when set, draw a warning key (amber, e.g. `#f59e0b`, warning glyph, text
       "Update plugin" / "Update extension"). Disconnected ("No Chrome") wins over mismatch.
-- [ ] `actions/slot.ts` and `actions/mute-all.ts`: pass `mismatch` into the views; `onKeyDown`
+- [x] `actions/slot.ts` and `actions/mute-all.ts`: pass `mismatch` into the views; `onKeyDown`
       shows `showAlert()` and sends nothing while mismatched.
-- [ ] Tests: `render.test.ts` snapshots for both mismatch sides on both keys; store tests for
+- [x] Tests: `render.test.ts` snapshots for both mismatch sides on both keys; store tests for
       `setProtocol` (equal → none, older/newer → correct side, disconnect clears); a server/plugin
       test using `test/fake-extension.ts` or the existing server tests that a `hello` with
       `protocolVersion: PROTOCOL_VERSION + 1` leads to `mismatch: "plugin"`.
-- [ ] `fake-extension.ts`: add an option (e.g. `--protocol <n>`) to send a different protocol
+- [x] `fake-extension.ts`: add an option (e.g. `--protocol <n>`) to send a different protocol
       version for manual checks.
 
 ### Verification Plan
@@ -351,9 +351,25 @@ Status: Not started
 - `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`,
   `pnpm --filter @rotho/plugin validate` pass.
 
+Result (2026-10-16): all passed. Tests 122 total (plugin 41: 4 new snapshots, 2 render
+behaviour tests, 6 store tests in new `test/store.test.ts`, 1 server integration test);
+validate "Validation successful". Snapshots rendered to PNG and checked by eye: amber triangle,
+"Update / plugin" or "Update / extension", slot badge on Game Slot keys.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- `Store` has `mismatch?: UpdateTarget` (`"plugin" | "extension"`, exported from `store.ts`),
+  set by `setProtocol()` from `hello`. It survives `applyState` and is cleared by
+  `setConnected` (connect or disconnect) and by a matching `hello`. The field is omitted, not
+  `undefined`, when there's no mismatch.
+- Rather than dropping `state` messages, the store keeps games up to date and the render layer
+  shows the mismatch key instead (same effect, simpler; games reappear as soon as it clears).
+- Render order: No Chrome > mismatch > normal. Game Slot keeps a dim slot badge so you can tell
+  keys apart. New colour `warning: #f59e0b` and a `warning()` triangle glyph in `render.ts`.
+- Both actions call `showAlert()` and send nothing while mismatched. `plugin.ts` logs
+  `Protocol mismatch: plugin speaks N; update the <side>`.
+- Manual check: `pnpm --filter @rotho/plugin fake-extension -- --protocol 2` against a running
+  plugin shows "Update plugin" on every key.
 
 ## Phase 4: Update-available check
 

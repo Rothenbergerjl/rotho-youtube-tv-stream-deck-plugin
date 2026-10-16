@@ -57,6 +57,22 @@ describe("slotKeySvg", () => {
     expect(svg).toMatchSnapshot();
   });
 
+  it.each(["plugin", "extension"] as const)("tells you to update the %s on a mismatch", (side) => {
+    const svg = slotKeySvg({ slot: 3, connected: true, title: "ignored", mismatch: side });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(`>${side}</text>`);
+    expect(svg).toContain(">3</text>"); // slot badge
+    expect(svg).toContain('fill="#f59e0b"'); // warning triangle
+    expect(svg).not.toContain("ignored");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("prefers 'No Chrome' over a mismatch", () => {
+    const svg = slotKeySvg({ slot: 1, connected: false, mismatch: "plugin" });
+    expect(svg).toContain(">Chrome</text>");
+    expect(svg).not.toContain(">Update</text>");
+  });
+
   it("escapes XML in titles", () => {
     const svg = slotKeySvg({ slot: 1, connected: true, title: "A&B <x>", heard: false });
     expect(svg).toContain("A&amp;B &lt;x&gt;");
@@ -72,6 +88,19 @@ describe("muteAllKeySvg", () => {
   ])("%j → %s", (view, label) => {
     const svg = muteAllKeySvg(view);
     expect(svg).toContain(`>${label}</text>`);
+    expect(svg).toMatchSnapshot();
+  });
+
+  it.each(["plugin", "extension"] as const)("tells you to update the %s on a mismatch", (side) => {
+    const svg = muteAllKeySvg({
+      connected: true,
+      allMuted: false,
+      canRestore: true,
+      mismatch: side,
+    });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(`>${side}</text>`);
+    expect(svg).not.toContain(">Mute all</text>");
     expect(svg).toMatchSnapshot();
   });
 });

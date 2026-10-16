@@ -19,7 +19,9 @@ export class MuteAllAction extends SingletonAction {
   }
 
   override async onKeyDown(ev: KeyDownEvent): Promise<void> {
-    if (!this.server.send({ type: "toggleMuteAll" })) await ev.action.showAlert();
+    if (this.store.current.mismatch || !this.server.send({ type: "toggleMuteAll" })) {
+      await ev.action.showAlert();
+    }
   }
 
   private async renderAll(): Promise<void> {

@@ -53,7 +53,11 @@ export class SlotAction extends SingletonAction<SlotSettings> {
   override async onKeyDown(ev: KeyDownEvent<SlotSettings>): Promise<void> {
     const slot = this.slots.get(ev.action.id);
     const game = slot === undefined ? undefined : this.store.gameInSlot(slot);
-    if (!game || !this.server.send({ type: "solo", slot: game.slot })) {
+    if (
+      this.store.current.mismatch ||
+      !game ||
+      !this.server.send({ type: "solo", slot: game.slot })
+    ) {
       await ev.action.showAlert();
     }
   }
@@ -66,10 +70,10 @@ export class SlotAction extends SingletonAction<SlotSettings> {
     const slot = this.slots.get(id);
     const key = this.actions.find((a) => a.id === id);
     if (slot === undefined || !key?.isKey()) return;
-    const { connected } = this.store.current;
+    const { connected, mismatch } = this.store.current;
     const game = this.store.gameInSlot(slot);
     await key.setImage(
-      toDataUrl(slotKeySvg({ slot, connected, title: game?.title, heard: game?.heard })),
+      toDataUrl(slotKeySvg({ slot, connected, title: game?.title, heard: game?.heard, mismatch })),
     );
   }
 }
