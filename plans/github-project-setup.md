@@ -63,9 +63,9 @@ use the ids in this plan. If a command fails with an id error, look the ids up w
 `gh project item-list 3 --owner Rothenbergerjl --format json`. Run `gh` from
 PowerShell and pass multi-line bodies with `--body-file` from the scratchpad.
 
-Current (pre-Phase 2) ids: project `PVT_kwHOBLWqFc4BmmYP`, Status field
-`PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI`, In Progress `96b69291`. **Phase 2 changes the
-option ids**; record the new ones in Phase 2's summary and use those from then on.
+Current ids (since Phase 2): project `PVT_kwHOBLWqFc4BmmYP`, Status field
+`PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI`, In Progress `05c39441`. The full table is in
+Phase 2's summary.
 
 - **First phase starts:** set board Status to **In Progress**
   (`gh project item-edit --id <item-id> --project-id PVT_kwHOBLWqFc4BmmYP --field-id PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI --single-select-option-id <in-progress-option-id>`).
@@ -83,21 +83,21 @@ option ids**; record the new ones in Phase 2's summary and use those from then o
 - Never run git commands that change anything; the user branches and commits.
 
 ## Phase 1: Labels
-Status: Not started
+Status: Complete
 
-- [ ] Add `enhancement` to #1: `gh issue edit 1 --add-label enhancement`
-- [ ] Rename `area:ci`: `gh label edit area:ci --name area:ci-devex --color c5def5 --description "CI, scripts, developer tooling"`
-- [ ] Delete `type:feature` and the GitHub defaults (`accessibility`, `documentation`,
+- [x] Add `enhancement` to #1: `gh issue edit 1 --add-label enhancement`
+- [x] Rename `area:ci`: `gh label edit area:ci --name area:ci-devex --color c5def5 --description "CI, scripts, developer tooling"`
+- [x] Delete `type:feature` and the GitHub defaults (`accessibility`, `documentation`,
       `duplicate`, `good first issue`, `help wanted`, `invalid`, `wontfix`) with
       `gh label delete <name> --yes`
-- [ ] Set colors and descriptions to match bulldog (`gh label edit`, or `gh label create --force`):
+- [x] Set colors and descriptions to match bulldog (`gh label edit`, or `gh label create --force`):
   - `bug` d73a4a "Something is broken or behaves incorrectly"
   - `enhancement` a2eeef "New feature or improvement"
   - `question` d876e3 "Needs a decision or discussion before work"
   - `plan` 5319e7 "Tracks a /real-work plan doc in plans/"
-- [ ] Create `tech-debt` fbca04 "Refactor, cleanup or internal quality work"
-- [ ] Create `no-issue` ededed "PR intentionally has no linked issue (skips the link check)"
-- [ ] Area labels, all `c5def5`:
+- [x] Create `tech-debt` fbca04 "Refactor, cleanup or internal quality work"
+- [x] Create `no-issue` ededed "PR intentionally has no linked issue (skips the link check)"
+- [x] Area labels, all `c5def5`:
   - `area:plugin` "Stream Deck plugin (packages/plugin)"
   - `area:extension` "Chrome extension (packages/extension)"
   - `area:shared` "Shared protocol and helpers (packages/shared)"
@@ -113,22 +113,33 @@ Status: Not started
 - The tracking issue's labels now include `area:ci-devex`.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-16, GitHub only, no commit. #3 was set to In Progress (old option id
+`96b69291`) before starting.
+- Ran the commands above. Every label in the list was written with
+  `gh label create <name> --color --description --force`, which creates it or updates
+  it in place.
+- **Verified:**
+  - `gh label list` shows exactly the 12 labels, with the colors and descriptions above.
+  - #1 has enhancement, plan, area:plugin, area:extension, area:shared and area:ci-devex.
+  - #3 has enhancement, plan and area:ci-devex. The rename carried `area:ci` over on
+    both issues.
+- Next is Phase 2. #3 is currently In Progress, and replacing the Status options will
+  clear it, so re-set it with the new id.
 
 ## Phase 2: Board fields and statuses
-Status: Not started
+Status: Complete
 
-- [ ] Read #2's option colors and descriptions:
+- [x] Read #2's option colors and descriptions:
       `gh api graphql -f query='query{node(id:"PVT_kwHOBLWqFc4BlhYx"){... on ProjectV2{fields(first:30){nodes{... on ProjectV2SingleSelectField{id name options{name color description}}}}}}}'`
-- [ ] Replace #3's Status options with the `updateProjectV2Field` mutation
+- [x] Replace #3's Status options with the `updateProjectV2Field` mutation
       (`fieldId: PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI`, `singleSelectOptions` = Backlog, Ready,
       In Progress, In Review, Done with #2's colors and descriptions)
-- [ ] Create Priority: `gh project field-create 3 --owner Rothenbergerjl --name Priority --data-type SINGLE_SELECT --single-select-options "P0,P1,P2,P3"`,
+- [x] Create Priority: `gh project field-create 3 --owner Rothenbergerjl --name Priority --data-type SINGLE_SELECT --single-select-options "P0,P1,P2,P3"`,
       then set #2's colors and descriptions with `updateProjectV2Field`
-- [ ] Create Size the same way with `XS,S,M,L,XL`
-- [ ] Re-set Status on the existing items: #1 → Done, tracking issue → In Progress
-- [ ] Set #3's Priority to P2 and Size to M
-- [ ] Record the new field and option ids in this phase's summary
+- [x] Create Size the same way with `XS,S,M,L,XL`
+- [x] Re-set Status on the existing items: #1 → Done, tracking issue → In Progress
+- [x] Set #3's Priority to P2 and Size to M
+- [x] Record the new field and option ids in this phase's summary
 
 ### Verification Plan
 - `gh project field-list 3 --owner Rothenbergerjl --format json`: Status options are
@@ -140,31 +151,48 @@ Status: Not started
   the tracking issue has In Progress plus its Priority and Size.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-16, GitHub only, no commit.
+- **Status:** replaced with the `updateProjectV2Field` mutation, sent as a query file:
+  `gh api graphql -F query=@status.graphql`. Inline nested input objects don't work
+  well from PowerShell.
+- **Priority and Size:** #2's options are all GRAY with no descriptions. That is what
+  `field-create` produces, so no follow-up mutation was needed.
+- **Re-set:** #1 back to Done, and #3 to In Progress, P2, M.
+- **Verified:** a GraphQL comparison of `{name, options{name color description}}` for
+  the three fields in #2 and #3 came out IDENTICAL, and the item list showed the right
+  values. #1 has no Priority or Size, which is fine because it's closed.
+
+New ids (project `PVT_kwHOBLWqFc4BmmYP`), for `gh-recipes.md` in Phase 5:
+
+| Field | Field id | Options |
+|---|---|---|
+| Status | `PVTSSF_lAHOBLWqFc4BmmYPzhlOtxI` | Backlog `6cd334fc`, Ready `217c607b`, In Progress `05c39441`, In Review `55aacf25`, Done `06818f0a` |
+| Priority | `PVTSSF_lAHOBLWqFc4BmmYPzhl-KnE` | P0 `bbe9f2d7`, P1 `801c2fd2`, P2 `b4925dba`, P3 `49664824` |
+| Size | `PVTSSF_lAHOBLWqFc4BmmYPzhl-KoU` | XS `fe88457c`, S `5d69542c`, M `e2b0f215`, L `9320b576`, XL `8421f9a9` |
 
 ## Phase 3: Views and built-in workflows (user, in the web UI)
-Status: Not started
+Status: Complete
 
 Open project #2 in one tab as the reference and project #3
 (https://github.com/users/Rothenbergerjl/projects/3) in another. The agent gives the
 user this checklist and waits for them to finish.
 
-- [ ] **Triage view:** rename "View 1" to **Triage**. Layout: Table. Filter: `no:priority`.
+- [x] **Triage view:** rename "View 1" to **Triage**. Layout: Table. Filter: `no:priority`.
       Sort: Created, ascending. Visible fields: Title, Assignees, Status, Linked pull
       requests, Sub-issues progress. Save.
-- [ ] **Board view:** create a new view called **Board**. Layout: Board. Column by:
+- [x] **Board view:** create a new view called **Board**. Layout: Board. Column by:
       Status. Visible fields: Title, Assignees, Status, Labels, Linked pull requests,
       Sub-issues progress. No filter. Save.
-- [ ] **Workflows** (⋯ → Workflows). For each one, open #2's version, copy its trigger,
+- [x] **Workflows** (⋯ → Workflows). For each one, open #2's version, copy its trigger,
       filter and target status, then turn it on in #3:
-  - [ ] Item added to project
-  - [ ] Item reopened (create it if it isn't listed)
-  - [ ] Item closed
-  - [ ] Pull request linked to issue
-  - [ ] Pull request merged
-  - [ ] Auto-close issue
-  - [ ] Auto-add to project: repo `rotho-youtube-tv-stream-deck-plugin`, same filter as #2
-  - [ ] Auto-add sub-issues to project (already on; check it matches)
+  - [x] Item added to project
+  - [x] Item reopened (create it if it isn't listed)
+  - [x] Item closed
+  - [x] Pull request linked to issue
+  - [x] Pull request merged
+  - [x] Auto-close issue
+  - [x] Auto-add to project: repo `rotho-youtube-tv-stream-deck-plugin`, same filter as #2
+  - [x] Auto-add sub-issues to project (already on; check it matches)
 
 ### Verification Plan
 - The agent runs
@@ -176,7 +204,18 @@ user this checklist and waits for them to finish.
   should move to **In Review** on its own, and after merge to **Done**.
 
 ### Phase Summary
-_(write when phase completes)_
+The user did this in the web UI on 2026-10-16. GitHub only, no commit.
+- **How it was checked:** the agent ran the query above against both projects and
+  normalized it with jq: views sorted by name, `{name, layout, filter, sort, group,
+  fields}`, plus the workflows sorted by name. #2's filter has a trailing space, which
+  was trimmed before comparing.
+- **Result:** IDENTICAL.
+  - Triage: table, `no:priority`, sorted by Created ascending.
+  - Board: board layout, columns by Status.
+  - All 8 workflows are enabled.
+- **Not checked yet:** the API doesn't expose each workflow's target status or filter.
+  The open PR checks those when #3 moves to In Review by itself, and the merge checks
+  the move to Done. Confirm both at PR time, in `/open-pr` step 4.
 
 ## Phase 4: Issue templates, PR template and PR workflows
 Status: Not started
