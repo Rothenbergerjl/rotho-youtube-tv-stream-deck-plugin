@@ -62,7 +62,10 @@ with `--format json`).
 
 ## Phase 1: Pre-public audit and repo security
 
-Status: Not started
+Status: Complete
+
+Ruleset payload as applied (ruleset id `25274919`) (`gh api repos/.../rulesets --method POST --input <file>`):
+`{"name":"protect-main","target":"branch","enforcement":"active","conditions":{"ref_name":{"include":["~DEFAULT_BRANCH"],"exclude":[]}},"bypass_actors":[{"actor_id":5,"actor_type":"RepositoryRole","bypass_mode":"pull_request"}],"rules":[{"type":"deletion"},{"type":"non_fast_forward"},{"type":"pull_request","parameters":{"required_approving_review_count":0,"dismiss_stale_reviews_on_push":true,"require_code_owner_review":false,"require_last_push_approval":false,"required_review_thread_resolution":true,"allowed_merge_methods":["squash"]}},{"type":"required_status_checks","parameters":{"strict_required_status_checks_policy":true,"do_not_enforce_on_create":false,"required_status_checks":[{"context":"check"}]}}]}`
 
 Every `gh` write in this phase is **ask first**: show the exact command(s) in chat, run after the
 user approves, then read the setting back. Save JSON payloads in the scratchpad and pass them with
@@ -70,30 +73,30 @@ user approves, then read the setting back. Save JSON payloads in the scratchpad 
 
 Audit (read-only; going public waits on this):
 
-- [ ] Run a full-history secret scan: `gitleaks git --redact -v .` (install via
+- [x] Run a full-history secret scan: `gitleaks git --redact -v .` (install via
       `winget install gitleaks` if missing; ask before installing). Expect "no leaks found". Review
       and explain any hit; a real secret means stop and ask (rotate + history rewrite is the
       user's call).
-- [ ] `git log --all --name-only --format= | sort -u` and check for `*.pem`, `.env`, key files,
+- [x] `git log --all --name-only --format= | sort -u` and check for `*.pem`, `.env`, key files,
       personal paths or notes that shouldn't be public. Check `git log --all --format='%an <%ae>'`
       so the user knows which author emails become public.
-- [ ] Report audit results in chat and get the user's OK before any setting changes.
+- [x] Report audit results in chat and get the user's OK before any setting changes.
 
 Repo files (committed in this phase):
 
-- [ ] Add `SECURITY.md`: supported version (latest release only), report privately via GitHub
+- [x] Add `SECURITY.md`: supported version (latest release only), report privately via GitHub
       "Report a vulnerability" (private vulnerability reporting), no public issues for security.
-- [ ] Add `.github/CODEOWNERS` with `* @Rothenbergerjl`.
-- [ ] Add `SECURITY.md` / `.github/CODEOWNERS` globs to `.github/labeler.yml` under
+- [x] Add `.github/CODEOWNERS` with `* @Rothenbergerjl`.
+- [x] Add `SECURITY.md` / `.github/CODEOWNERS` globs to `.github/labeler.yml` under
       `area:ci-devex` if they don't match an existing glob.
 
 GitHub settings (via `gh`, ask first, read back):
 
-- [ ] Merge settings: squash only, delete branch on merge
+- [x] Merge settings: squash only, delete branch on merge
       (`gh repo edit --enable-squash-merge --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge`).
-- [ ] Disable wiki and projects-on-repo if unused (`gh repo edit --enable-wiki=false`); keep
-      issues on.
-- [ ] Ruleset `protect-main` on the default branch
+- [x] Disable wiki and projects-on-repo if unused (`gh repo edit --enable-wiki=false`); keep
+      issues on. (Wiki was already off; projects kept on because the board links through it.)
+- [x] Ruleset `protect-main` on the default branch
       (`gh api repos/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/rulesets --method POST --input <file>`):
       target `~DEFAULT_BRANCH`; rules `deletion`, `non_fast_forward`, `pull_request`
       (required approvals 0 since the user is the only maintainer, dismiss stale reviews,
@@ -101,36 +104,36 @@ GitHub settings (via `gh`, ask first, read back):
       with context `check` (the CI job) and strict mode on; bypass actor = repository admin role
       (`actor_id: 5, actor_type: RepositoryRole, bypass_mode: pull_request`) so the user can still
       merge their own PRs. Read back with `gh api .../rulesets` and `.../rules/branches/main`.
-- [ ] Actions permissions: default workflow token read-only and Actions can't approve PRs
+- [x] Actions permissions: default workflow token read-only and Actions can't approve PRs
       (`gh api repos/.../actions/permissions/workflow --method PUT -f default_workflow_permissions=read -F can_approve_pull_request_reviews=false`).
       Workflows that need more already declare `permissions:` (`release.yml`: `contents: write`;
       `pr-labeler.yml`: `pull-requests: write`); confirm `ci.yml` needs nothing more and add
       `permissions: contents: read` to it.
-- [ ] Fork PR workflows require approval for all outside contributors
+- [x] Fork PR workflows require approval for all outside contributors
       (`gh api repos/.../actions/permissions/fork-pr-contributor-approval --method PUT -f approval_policy=all_external_contributors`;
       if the endpoint is unavailable, add a UI checklist item: Settings → Actions → General →
       "Require approval for all external contributors").
-- [ ] Allowed actions: GitHub-owned plus verified creators (`actions/*`, `pnpm/action-setup`)
+- [x] Allowed actions: GitHub-owned plus verified creators (`actions/*`, `pnpm/action-setup`)
       (`gh api repos/.../actions/permissions --method PUT` with `allowed_actions=selected`, then
       `.../actions/permissions/selected-actions` with `github_owned_allowed=true` and
       `patterns_allowed=["pnpm/action-setup@*"]`). Re-check every `uses:` in `.github/workflows/`
       is covered.
-- [ ] Security features: secret scanning + push protection
+- [x] Security features: secret scanning + push protection
       (`gh api repos/... --method PATCH --input <file>` with
       `security_and_analysis.secret_scanning` and `secret_scanning_push_protection` enabled;
       available once public), Dependabot alerts (`gh api repos/.../vulnerability-alerts --method PUT`),
       private vulnerability reporting (`gh api repos/.../private-vulnerability-reporting --method PUT`).
-- [ ] Restrict PR creation to collaborators (GitHub setting added 2026-02-13, Settings → General →
+- [x] Restrict PR creation to collaborators (GitHub setting added 2026-02-13, Settings → General →
       Features → Pull requests). Check whether the REST repo API exposes it
       (`gh api repos/... --jq 'keys'` after a UI change, or the REST docs); if not, give the user a
       UI checklist step and verify by reading the repo page/API afterwards.
-- [ ] **Explicit go from the user**, then make the repo public:
+- [x] **Explicit go from the user**, then make the repo public:
       `gh repo edit --visibility public --accept-visibility-change-consequences`. Then apply the
       security-feature item above if it needed public visibility.
 
 ### Verification Plan
 
-- `gitleaks git --redact .` exits 0 with "no leaks found" (recorded before going public).
+- `gitleaks git --redact .` (or the Docker command in the Phase Summary) exits 0 with "no leaks found" (recorded before going public).
 - `gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge`
   → `PUBLIC`, `true`, `false`, `false`, `true`.
 - `gh api repos/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/rules/branches/main` lists
@@ -144,9 +147,33 @@ GitHub settings (via `gh`, ask first, read back):
 - PR restriction: the setting reads back as collaborators-only (API, or the user confirms in the
   UI).
 
+Result (2026-10-16): all checks passed. gitleaks exit 0 after `.gitleaksignore`; repo `PUBLIC`,
+squash only, delete-on-merge; `main` rules `deletion`, `non_fast_forward`, `pull_request`
+(squash), `required_status_checks` (`check`); workflow token `read`, can't approve PRs; fork
+approval `all_external_contributors`; secret scanning + push protection `enabled`; Dependabot
+alerts 204 (on); private vulnerability reporting `enabled: true`;
+`pull_request_creation_policy` = `collaborators_only`; signed-out `releases/latest` → 200.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- Audit: no secrets, `.pem`/`.env` files or personal paths in history. gitleaks (run via Docker:
+  `docker run --rm -v "D:\Code\rotho-youtube-tv-stream-deck-plugin:/repo:ro" zricethezav/gitleaks:v8.24.3 git /repo --redact`;
+  winget isn't available) flagged only the manifest's public `key`, now ignored by fingerprint in
+  `.gitleaksignore`. The user accepted that 2 commits show their Gmail address.
+- Files: `SECURITY.md`, `.github/CODEOWNERS`, `.gitleaksignore`, `permissions: contents: read` in
+  `ci.yml`, `SECURITY.md` and `.gitleaksignore` globs in `labeler.yml` (CODEOWNERS is already
+  covered by `.github/**`).
+- Deviation (posted on #5): GitHub Free blocks rulesets, fork-PR approval, secret scanning and
+  private vulnerability reporting on private repos, so they were applied right after going
+  public. PR creation was restricted to collaborators first.
+- PR restriction is the REST repo field `pull_request_creation_policy` (`all` →
+  `collaborators_only`); no UI step was needed.
+- Also set the squash commit to PR title + PR body (keeps `Fixes #N` in `main`'s history). Repo
+  Projects stays enabled because the board links through it; the wiki was already off; the
+  board itself stays private.
+- Admins bypass the ruleset only via PR (`bypass_mode: pull_request`): the user can merge a PR
+  with red CI but can't push directly to `main`.
+- Phase 4's update check can now hit `releases/latest` without a token.
 
 ## Phase 2: Chrome Web Store readiness
 

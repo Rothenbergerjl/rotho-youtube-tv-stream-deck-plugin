@@ -29,6 +29,7 @@
           - README.md
           - CHANGELOG.md
           - LICENSE
+          - SECURITY.md
 
 "area:ci-devex":
   - changed-files:
@@ -47,4 +48,5 @@
           - .editorconfig
           - .gitattributes
           - .gitignore
+          - .gitleaksignore
           - .npmrc
