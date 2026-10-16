@@ -1,6 +1,6 @@
 {
   "name": "@rotho/extension",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Chrome extension that tracks YouTube TV tabs and controls their audio for the Stream Deck plugin.",
   "type": "module",

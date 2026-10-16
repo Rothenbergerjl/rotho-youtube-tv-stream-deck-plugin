@@ -441,27 +441,27 @@ API returned `tag_name: v0.1.0` and `html_url`. Badge snapshots rendered and che
 
 ## Phase 5: Docs and version 0.2.0
 
-Status: Not started
+Status: Complete
 
-- [ ] Rewrite README **Install** for non-developers: (1) install the extension from the Web Store
+- [x] Rewrite README **Install** for non-developers: (1) install the extension from the Web Store
       link (`https://chromewebstore.google.com/detail/<item-id>`), (2) download and double-click
       `com.rotho.yttv-multiview.streamDeckPlugin` from the latest release, (3) add keys. Drop the
       Developer mode steps from the user path.
-- [ ] README **Upgrading**: extension updates itself; for the plugin, keys show a blue badge and
+- [x] README **Upgrading**: extension updates itself; for the plugin, keys show a blue badge and
       the Game Slot settings link to the release; install the new file over the old one.
-- [ ] README **Moving from a Load unpacked install**: remove the unpacked extension in
+- [x] README **Moving from a Load unpacked install**: remove the unpacked extension in
       `chrome://extensions` first (same ID can't be installed twice), then install from the store;
       the old folder can be deleted.
-- [ ] README **Troubleshooting**: add "Keys say Update plugin / Update extension" (what to do;
+- [x] README **Troubleshooting**: add "Keys say Update plugin / Update extension" (what to do;
       store updates can take a few hours to arrive, `chrome://extensions` → Update forces it) and
       what the badge means.
-- [ ] README **Development → Release**: add Web Store upload steps (upload the release zip in the
+- [x] README **Development → Release**: add Web Store upload steps (upload the release zip in the
       dashboard, submit, Unlisted) and the release-order rule: when `PROTOCOL_VERSION` changes,
       publish the plugin release first and submit the extension after, so the auto-updating
       extension never runs ahead for long; keep the dev "Load unpacked" instructions.
-- [ ] Link `PRIVACY.md` and `SECURITY.md` from the README.
-- [ ] Set root `package.json` version to `0.2.0`, run `pnpm version:sync`.
-- [ ] Add `## [0.2.0] - <date>` to `CHANGELOG.md`: Web Store distribution, extension icons,
+- [x] Link `PRIVACY.md` and `SECURITY.md` from the README.
+- [x] Set root `package.json` version to `0.2.0`, run `pnpm version:sync`.
+- [x] Add `## [0.2.0] - <date>` to `CHANGELOG.md`: Web Store distribution, extension icons,
       protocol-mismatch keys, update badge, public repo/security policy, privacy policy.
 
 ### Verification Plan
@@ -474,19 +474,76 @@ Status: Not started
 - README contains the real Web Store URL (no `<item-id>` placeholder) and no Developer mode step
   in the Install section.
 
+Result (2026-10-16): all passed. `sync-version --check` → "All versions are 0.2.0"; manifests
+0.2.0 / 0.2.0.0; `changelog-section.mjs 0.2.0` prints the section; tests 150/150; typecheck,
+lint, format, build clean; `pnpm package` → `dist/com.rotho.yttv-multiview.streamDeckPlugin` and
+`dist/yttv-multiview-extension-0.2.0.zip`; built `plugin.js` embeds `"0.2.0"`; extension ID OK;
+README has no `<item-id>` and no Developer mode step in Install.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- README: Install is now Web Store link + plugin download from `releases/latest`; new
+  **Upgrading** and **Moving from a "Load unpacked" install** subsections; Usage table rows for
+  the mismatch warning and update badge; Troubleshooting entries for "Update plugin / Update
+  extension" and the badge; the ID troubleshooting points at the store link; privacy/security
+  links under How it works.
+- Release docs: step 5 uploads the release zip to the Web Store (Unlisted); notes that the zip
+  drops `key`; release-order rule for `PROTOCOL_VERSION` bumps (release plugin first, submit the
+  extension right after, flag it in the changelog); signing-key section says the `.pem` was only
+  needed for the first upload. Dev build notes that the store copy must be removed before Load
+  unpacked (same ID).
+- The Web Store link (`https://chromewebstore.google.com/detail/decadhapokljmmbknbfcpjckddhiicmg`)
+  only works after the store approves the item (Deployment Plan step 3).
+- `CHANGELOG.md` `[0.2.0]` is dated 2026-10-16; change the date if the release happens later.
 
 ## Final Recap
 
-_(write when all phases complete: summary of the entire piece of work)_
+Issue #5 is done in five phases on branch `5-better-ux-install`:
+
+1. **Repo security, then public.** A full-history gitleaks scan was clean (the manifest's public
+   `key` is ignored in `.gitleaksignore`). Added `SECURITY.md` and `CODEOWNERS`. GitHub settings:
+   squash-only merges with PR title/body, PR creation limited to collaborators, allowed actions
+   restricted, read-only workflow token. After going public: `protect-main` ruleset (PR + CI
+   `check` required, no force-push/delete, admin bypass only via PR), fork-PR approval for all
+   external contributors, secret scanning + push protection, Dependabot alerts, private
+   vulnerability reporting.
+2. **Chrome Web Store readiness.** Extension icons rendered from an SVG at build time,
+   `PRIVACY.md`, store listing text, release zip drops the manifest `key`. A draft store item
+   kept the ID `decadhapokljmmbknbfcpjckddhiicmg`.
+3. **Protocol mismatch on keys.** "Update plugin" / "Update extension" on every key; presses
+   refused.
+4. **Update-available check.** GitHub `releases/latest` on start and every 12h; blue badge on
+   every key; Game Slot settings link to the release. Version embedded at build.
+5. **Docs and 0.2.0.** README rewritten for non-developers; release process covers the Web Store;
+   version 0.2.0 and changelog.
+
+Deviations (posted on #5 where needed): GitHub Free only allows rulesets, fork approval, secret
+scanning and private vulnerability reporting on public repos, so they were applied right after
+going public. Minor implementation choices are recorded in each Phase Summary.
 
 ## Deployment Plan
 
-_(write when all phases complete: step-by-step deployment instructions. Expected outline: merge
-the PR; run Actions → Release with 0.2.0; upload `yttv-multiview-extension-0.2.0.zip` to the Web
-Store item, fill the listing from Phase 2, set visibility Unlisted, submit for review; after
-approval, on a clean Chrome profile install the extension from the link and the plugin from the
-release, check the keys work and no badge shows; uninstall your own unpacked copy and switch to
-the store copy.)_
+After the PR (with `Fixes #5`) is squash-merged to `main`:
+
+1. **GitHub release.** Actions → **Release** → Run workflow on `main`, version `0.2.0`. Check the
+   release `v0.2.0` has `com.rotho.yttv-multiview.streamDeckPlugin` and
+   `yttv-multiview-extension-0.2.0.zip`.
+2. **Web Store package.** Download `yttv-multiview-extension-0.2.0.zip` from the release. In the
+   [developer dashboard](https://chrome.google.com/webstore/devconsole), open the draft
+   Rotho YTTV Multiview item → **Package** → upload the zip (it replaces the 0.1.0 draft).
+3. **Web Store listing.** Fill the Store listing, Privacy and Distribution tabs from
+   `docs/chrome-web-store.md` (moved there from this plan's Phase 2 → Store listing):
+   description, category, icon, at least one 1280×800 screenshot, single purpose, permission
+   justifications, "no remote code", data usage, privacy policy URL (now live on `main`),
+   visibility **Unlisted**. Click **Submit for review** and wait for approval (email).
+4. **Check on a clean profile** (a new Chrome profile, or another PC):
+   - Install the extension from
+     `https://chromewebstore.google.com/detail/decadhapokljmmbknbfcpjckddhiicmg`; confirm the
+     ID in `chrome://extensions`.
+   - Install the 0.2.0 plugin from the release.
+   - Open two YouTube TV games: keys show matchups, presses switch audio, no badge and no
+     "Update" warning. The plugin log shows `com.rotho.yttv-multiview 0.2.0 starting` and
+     `Up to date (latest 0.2.0)`.
+5. **Switch your own install.** Remove your unpacked copy in `chrome://extensions`, install from
+   the store link, delete the old unzipped folder.
+6. **Invite people.** Send them the README's Install section (store link + latest release).
