@@ -177,44 +177,116 @@ alerts 204 (on); private vulnerability reporting `enabled: true`;
 
 ## Phase 2: Chrome Web Store readiness
 
-Status: Not started
+Status: Complete
 
-- [ ] Add `packages/extension/icons/icon.svg`, based on
+- [x] Add `packages/extension/icons/icon.svg`, based on
       `packages/plugin/com.rotho.yttv-multiview.sdPlugin/imgs/plugin/category-icon.svg`, legible at
       16px (solid background, simple glyph).
-- [ ] Add `@resvg/resvg-js` (pnpm catalog + `packages/extension` devDependency) and render
+- [x] Add `@resvg/resvg-js` (pnpm catalog + `packages/extension` devDependency) and render
       `icon-16.png`, `icon-48.png`, `icon-128.png` from the SVG in `packages/extension/build.mjs`
       into `dist/icons/` (generated at build, not committed).
-- [ ] Add `"icons": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" }`
+- [x] Add `"icons": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" }`
       to `packages/extension/manifest.json`.
-- [ ] Extend `packages/extension/test/manifest.test.ts`: every `icons` entry exists in `dist/`
+- [x] Extend `packages/extension/test/manifest.test.ts`: every `icons` entry exists in `dist/`
       after build, or (if the test doesn't build) the SVG source exists and sizes are 16/48/128.
-- [ ] Show the user the rendered PNGs (read them as images) for approval of the look.
-- [ ] Add `PRIVACY.md` at the repo root: the extension reads YouTube TV tab titles and mute state
+- [x] Show the user the rendered PNGs (read them as images) for approval of the look.
+- [x] Add `PRIVACY.md` at the repo root: the extension reads YouTube TV tab titles and mute state
       and sends them only to the plugin on `127.0.0.1:47731`; nothing leaves the machine; the
       plugin's only network request is the anonymous GitHub release check (Phase 4); no analytics,
       no accounts. Its public URL
       (`https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/blob/main/PRIVACY.md`)
       is the listing's privacy policy.
-- [ ] Draft the store listing in a `### Store listing` subsection of this phase (below): name,
+- [x] Draft the store listing in a `### Store listing` subsection of this phase (below): name,
       summary (≤132 chars), description, category, single-purpose statement, justification for
       each permission (`tabs`, `storage`, `alarms`, `scripting`, host `https://tv.youtube.com/*`),
       data-usage answers ("website content" → tab titles, kept local), and screenshot guidance
       (1280×800, at least one: a multiview Chrome window next to the Stream Deck app).
-- [ ] **User steps** (agent waits): register a Chrome Web Store developer account ($5); run
+- [x] **User steps** (agent waits): register a Chrome Web Store developer account ($5); run
       `pnpm package`; in the dashboard create a new item by uploading
       `dist/yttv-multiview-extension-0.1.0.zip` (or try the zip with `key.pem` at its root to keep
       the ID); **do not submit/publish**; report the Item ID and the Package tab's public key.
-- [ ] If the Item ID is `decadhapokljmmbknbfcpjckddhiicmg`: nothing to change. If it differs:
+- [x] If the Item ID is `decadhapokljmmbknbfcpjckddhiicmg`: nothing to change. If it differs:
       replace `key` in `packages/extension/manifest.json` with the dashboard public key, update
       `EXTENSION_ID` in `packages/shared/src/constants.ts`, update the ID in `README.md` and any
       tests, and note that the old `extension-key.pem` is retired. If the dashboard rejects the
       `key` field in an upload, add stripping it to `scripts/zip-extension.mjs` (the store keeps
       the ID itself) and keep it in the source manifest for unpacked dev builds.
+      (2026-10-16: the dashboard rejected it with "key field is not allowed in manifest";
+      `zip-extension.mjs` now drops `key` from the zip's manifest. The retry with `key` removed and
+      `key.pem` at the zip root worked: Item ID `decadhapokljmmbknbfcpjckddhiicmg`, and the
+      dashboard public key matches the manifest `key`. Draft item, version 0.1.0, not submitted.)
 
 ### Store listing
 
-_(drafted during this phase)_
+Paste into the Chrome Web Store developer dashboard.
+
+**Store listing tab**
+
+- Name: `Rotho YTTV Multiview` (from the manifest)
+- Summary (manifest `description`, 99 chars): `Lets the Rotho YTTV Multiview Stream Deck
+  plugin switch audio between YouTube TV tabs.`
+- Description:
+
+  ```text
+  Watch several YouTube TV games at once and pick which one you hear from your Stream Deck.
+
+  This extension is the Chrome half of Rotho YTTV Multiview. It needs the Rotho YTTV Multiview
+  Stream Deck plugin (Windows, Stream Deck 7.1+), available from
+  https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases
+
+  How it works:
+  • Open each YouTube TV game in its own Chrome window or tab.
+  • Each game appears on a Stream Deck "Game Slot" key with its matchup (e.g. "SF @ SEA").
+  • Press a key to hear only that game; every other YouTube TV tab is muted.
+  • A "Mute All" key mutes everything or brings back the last game.
+  • New YouTube TV tabs start muted, so opening a game never interrupts the one you're hearing.
+
+  Privacy: the extension only looks at tv.youtube.com tabs and talks only to the Stream Deck plugin
+  on your own computer (127.0.0.1). Nothing is sent over the internet.
+
+  Not affiliated with YouTube, Google or Elgato.
+  ```
+
+- Category: Productivity → Tools. Language: English.
+- Icon: `icons/icon-128.png` from the zip (also at `packages/extension/dist/icons/` after
+  `pnpm build`).
+- Screenshots (at least one, 1280×800 PNG/JPEG): Chrome with two or three YouTube TV games side
+  by side and the Stream Deck app showing Game Slot keys (one green, heard). Optional small promo
+  tile 440×280.
+- Homepage/support URL: `https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin`
+
+**Privacy tab**
+
+- Single purpose: `Mutes and unmutes YouTube TV tabs and reports which games are open, so the
+  Rotho YTTV Multiview Stream Deck plugin can show each game on a key and switch which one is
+  heard.`
+- Permission justifications:
+  - `tabs`: `Finds open tv.youtube.com tabs, reads their titles to label Stream Deck keys, and
+    mutes or unmutes them when a key is pressed.`
+  - `storage`: `Keeps the slot assignments and the currently heard tab in session storage so they
+    survive the service worker restarting.`
+  - `alarms`: `Wakes the service worker periodically to reconnect to the local Stream Deck plugin
+    and keep the connection alive.`
+  - `scripting`: `Injects the content script into YouTube TV tabs that were already open when the
+    extension was installed or updated, so their game titles appear without a reload.`
+  - Host permission `https://tv.youtube.com/*`: `Reads the game matchup from the YouTube TV player,
+    since the page title is always "Home - YouTube TV". No other sites are accessed.`
+- Remote code: `No, I am not using remote code.`
+- Data usage: tick **Website content** (tab titles and the player's matchup text). Tick all three
+  certifications (not sold, not used for unrelated purposes, not used for credit decisions).
+- Privacy policy URL:
+  `https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/blob/main/PRIVACY.md`
+  (live once this branch merges; `PRIVACY.md` is on this branch until then).
+
+**Distribution tab**
+
+- Visibility: **Unlisted**. Regions: all. Free.
+
+**Keeping the extension ID** (first upload only): the store normally assigns its own ID. To try to
+keep `decadhapokljmmbknbfcpjckddhiicmg`, upload a one-off zip with `key.pem` (the private key from
+`~/.config/rotho-yttv-multiview/extension-key.pem`, renamed) at the zip root. If the dashboard
+rejects the `key` field in `manifest.json`, remove that field from the one-off zip's manifest.
+Never commit this zip or put it in the repo folder.
 
 ### Verification Plan
 
@@ -226,9 +298,28 @@ _(drafted during this phase)_
 - `pnpm package` produces a zip containing `manifest.json`, `background.js`, `content.js`,
   `icons/icon-*.png` and no `.map` files.
 
+Result (2026-10-16): all passed. Tests 110/110 (4 new: manifest icon map, 16/48/128 PNG IHDR
+sizes); typecheck, lint, format clean; `check:extension-id` OK; zip holds `background.js`,
+`content.js`, `icons/icon-{16,48,128}.png`, `manifest.json` (no `key`), no `.map`.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- Icon: `packages/extension/icons/icon.svg` (dark rounded tile, 2×2 screens, bottom-right green
+  = heard), approved by the user. `icons/render.ts` renders it with `@resvg/resvg-js` 2.6.2 (no
+  install scripts); `build.mjs` imports it directly (Node strips the types) and writes
+  `dist/icons/`. 128px keeps 16px transparent padding; 16/48 crop to the artwork
+  (`viewBox="16 16 96 96"`).
+- `PRIVACY.md` matches the code: tab ID/title/slot/heard kept in `chrome.storage.session`, sent
+  only to `127.0.0.1:47731`; the plugin's only network call is the Phase 4 GitHub release check.
+  Its URL is the listing's privacy policy (live after merge).
+- Web Store: the dashboard rejects a manifest `key` ("key field is not allowed in manifest"), so
+  `scripts/zip-extension.mjs` drops it from the zip; the source manifest keeps it for unpacked
+  dev builds and `check:extension-id`. The first upload used `key.pem` at the zip root and kept
+  the ID `decadhapokljmmbknbfcpjckddhiicmg`. A draft item (0.1.0) exists, not submitted. Later
+  uploads use the normal release zip.
+- The user's shell is Windows PowerShell 5.1: no `utf8NoBOM`, and `Compress-Archive` may write
+  backslash paths. Use `[IO.File]::WriteAllText` and `tar -a -c -f` in user-facing commands.
+- Store listing text is in **Store listing** above, to paste at submit time (Deployment Plan).
 
 ## Phase 3: Protocol mismatch on keys
 

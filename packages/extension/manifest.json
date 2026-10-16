@@ -5,6 +5,11 @@
   "description": "Lets the Rotho YTTV Multiview Stream Deck plugin switch audio between YouTube TV tabs.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3UlbR6S4sHACdCQdC0+YFxK50w0vEPjIGjRpAv3g2VJo6rekxTD4wbTQf2jgbLmFGGsFRKe9GkiPtcj4SkYssFcDavuJfnbUU9OMct3M/TwZnX2N6GHyuWWxzEQEk7VizxAHpmOn4ToBEyKHkLin+b+GNTCATNpro8ePoPva7BC9K3zOjhEQeKRieUwc9LQUqYcNUdMpMtNcNYLKQIfMw0+qb0gt4TUcdG7l0tPSqumvvG+EMf7ozUWL7t6CwGWEtz/1tOA+h0yIHu7QWVd5hOeQvVa09OBnRJzyaz8J3Hevsk27yBfnUrH5eFiA9UUmivRzf9ybjNXXRaGu+1sUeQIDAQAB",
   "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["tabs", "storage", "alarms", "scripting"],
   "host_permissions": ["https://tv.youtube.com/*"],
   "background": {
