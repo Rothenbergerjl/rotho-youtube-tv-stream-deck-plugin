@@ -47,3 +47,25 @@ describe("Store.setProtocol", () => {
     expect(store.current).not.toHaveProperty("mismatch");
   });
 });
+
+describe("Store.setUpdate", () => {
+  const update = { version: "0.3.0", url: "https://example.test/v0.3.0" };
+
+  it("keeps the update across state, disconnect and reconnect", () => {
+    store.setUpdate(update);
+    store.applyState({ ...sampleState, games: [...sampleState.games] });
+    expect(store.current.update).toEqual(update);
+    store.setConnected(false);
+    expect(store.current.update).toEqual(update);
+    store.setConnected(true);
+    expect(store.current.update).toEqual(update);
+  });
+
+  it("only notifies when the version changes, and clears", () => {
+    store.setUpdate(update);
+    store.setUpdate({ ...update });
+    expect(updates).toHaveLength(2); // setConnected + first setUpdate
+    store.setUpdate(undefined);
+    expect(store.current).not.toHaveProperty("update");
+  });
+});

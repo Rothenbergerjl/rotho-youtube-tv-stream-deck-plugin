@@ -105,6 +105,43 @@ describe("muteAllKeySvg", () => {
   });
 });
 
+describe("update badge", () => {
+  const BADGE = 'fill="#3b82f6"';
+
+  it.each([
+    ["a game", { slot: 1, connected: true, title: "SF at SEA", heard: true }],
+    ["an empty slot", { slot: 5, connected: true }],
+    ["No Chrome", { slot: 1, connected: false }],
+    ["a mismatch", { slot: 2, connected: true, mismatch: "plugin" as const }],
+  ])("is added to %s on a Game Slot key", (_name, view) => {
+    expect(slotKeySvg(view)).not.toContain(BADGE);
+    const svg = slotKeySvg({ ...view, updateAvailable: true });
+    expect(svg).toContain(BADGE);
+    expect(svg.endsWith("</svg>")).toBe(true);
+  });
+
+  it("is added to the Mute All key", () => {
+    const view = { connected: true, allMuted: false, canRestore: false };
+    expect(muteAllKeySvg(view)).not.toContain(BADGE);
+    expect(muteAllKeySvg({ ...view, updateAvailable: true })).toContain(BADGE);
+  });
+
+  it("draws in the bottom-right corner", () => {
+    expect(
+      slotKeySvg({
+        slot: 1,
+        connected: true,
+        title: "SF at SEA",
+        heard: true,
+        updateAvailable: true,
+      }),
+    ).toMatchSnapshot();
+    expect(
+      muteAllKeySvg({ connected: true, allMuted: false, canRestore: false, updateAvailable: true }),
+    ).toMatchSnapshot();
+  });
+});
+
 describe("wrap", () => {
   it.each([
     ["SF @ SEA", ["SF @ SEA"]],

@@ -15,6 +15,7 @@ const colors = {
   badge: "#2b3038",
   muted: "#ef4444",
   warning: "#f59e0b",
+  update: "#3b82f6",
 };
 
 export interface SlotKeyView {
@@ -25,6 +26,8 @@ export interface SlotKeyView {
   heard?: boolean;
   /** Protocol mismatch: the side to update. Shown instead of the game. */
   mismatch?: UpdateTarget;
+  /** A newer plugin release exists: adds a small badge in the corner. */
+  updateAvailable?: boolean;
 }
 
 export interface MuteAllKeyView {
@@ -32,6 +35,7 @@ export interface MuteAllKeyView {
   allMuted: boolean;
   canRestore: boolean;
   mismatch?: UpdateTarget;
+  updateAvailable?: boolean;
 }
 
 export function toDataUrl(svg: string): string {
@@ -39,6 +43,14 @@ export function toDataUrl(svg: string): string {
 }
 
 export function slotKeySvg(view: SlotKeyView): string {
+  return withUpdateBadge(slotKeyBody(view), view.updateAvailable);
+}
+
+export function muteAllKeySvg(view: MuteAllKeyView): string {
+  return withUpdateBadge(muteAllKeyBody(view), view.updateAvailable);
+}
+
+function slotKeyBody(view: SlotKeyView): string {
   if (!view.connected) {
     return svg(
       colors.dimBackground,
@@ -75,7 +87,7 @@ export function slotKeySvg(view: SlotKeyView): string {
   );
 }
 
-export function muteAllKeySvg(view: MuteAllKeyView): string {
+function muteAllKeyBody(view: MuteAllKeyView): string {
   if (!view.connected) {
     return svg(
       colors.dimBackground,
@@ -173,6 +185,16 @@ function speaker(cx: number, cy: number, mode: "on" | "off", color: string, scal
       ? `<path d="M9 -7 Q14 0 9 7 M13 -12 Q21 0 13 12" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M9 -6 L19 6 M19 -6 L9 6" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`;
   return `<g transform="translate(${cx} ${cy}) scale(${scale})">${body}${extra}</g>`;
+}
+
+/** Adds a blue up-arrow dot in the bottom-right corner when an update is available. */
+function withUpdateBadge(image: string, show: boolean | undefined): string {
+  if (!show) return image;
+  const c = SIZE - 16;
+  const badge =
+    `<circle cx="${c}" cy="${c}" r="12" fill="${colors.update}"/>` +
+    `<path d="M${c} ${c + 6} V${c - 5} M${c - 5} ${c} L${c} ${c - 6} L${c + 5} ${c}" fill="none" stroke="${colors.text}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return image.replace(/<\/svg>$/, `${badge}</svg>`);
 }
 
 /** Warning triangle with an exclamation mark, centred at (cx, cy). */

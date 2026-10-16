@@ -373,29 +373,29 @@ validate "Validation successful". Snapshots rendered to PNG and checked by eye: 
 
 ## Phase 4: Update-available check
 
-Status: Not started
+Status: Complete
 
-- [ ] Embed the plugin version at build: in `packages/plugin/rollup.config.mjs` add a small
+- [x] Embed the plugin version at build: in `packages/plugin/rollup.config.mjs` add a small
       replace plugin (or `@rollup/plugin-replace`) that injects the root `package.json` version as
       `__PLUGIN_VERSION__`; declare it in a `.d.ts`; vitest `define` it for tests. (Don't read
       `manifest.json` at runtime; Marketplace DRM would forbid it later.)
-- [ ] Add `packages/plugin/src/updates.ts`: `UpdateChecker` with injectable `fetch`, clock and
+- [x] Add `packages/plugin/src/updates.ts`: `UpdateChecker` with injectable `fetch`, clock and
       interval; GETs `https://api.github.com/repos/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases/latest`
       with `Accept: application/vnd.github+json` and a `User-Agent`; parses `tag_name` (`vX.Y.Z`)
       and `html_url`; compares with a small semver compare (numeric `major.minor.patch`; ignore
       prereleases and drafts); runs on start and every 12h (`unref`'d timer); any error, non-200
       or unparseable tag → log at info and keep the previous result.
-- [ ] Store: add `update?: { version: string; url: string }` to `PluginState` with a setter;
+- [x] Store: add `update?: { version: string; url: string }` to `PluginState` with a setter;
       survives connect/disconnect.
-- [ ] `render.ts`: when `update` is set, add a small badge (e.g. blue `#3b82f6` up-arrow dot in
+- [x] `render.ts`: when `update` is set, add a small badge (e.g. blue `#3b82f6` up-arrow dot in
       the bottom-right corner) to every key state, including "No Chrome" and mismatch; keys keep
       working.
-- [ ] Game Slot Property Inspector: on `onPropertyInspectorDidAppear`, the plugin sends
+- [x] Game Slot Property Inspector: on `onPropertyInspectorDidAppear`, the plugin sends
       `{ update }` with `streamDeck.ui.sendToPropertyInspector`; `ui/slot.html` shows
       "Plugin vX.Y.Z is available" and a button that sends `{ openUpdate: true }`; the plugin then
       calls `streamDeck.system.openUrl(update.url)`. Shows nothing when up to date.
-- [ ] Wire `UpdateChecker` into `plugin.ts` after `streamDeck.connect()`.
-- [ ] Tests: `updates.test.ts` (newer → set, equal/older → unset, prerelease ignored, network
+- [x] Wire `UpdateChecker` into `plugin.ts` after `streamDeck.connect()`.
+- [x] Tests: `updates.test.ts` (newer → set, equal/older → unset, prerelease ignored, network
       error/404/bad JSON → no throw and no change, interval re-checks using fake timers);
       `render.test.ts` snapshots with the badge; semver compare edge cases (`0.10.0 > 0.9.0`).
 
@@ -409,9 +409,35 @@ Status: Not started
   `curl -s https://api.github.com/repos/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases/latest`
   returns `tag_name` and `html_url`.
 
+Result (2026-10-16): all passed. Tests 150 total (plugin 69: new `updates.test.ts` with
+parse/compare edge cases, newer/equal/older, 404, bad JSON, prerelease tag, missing `html_url`,
+network error, interval with fake timers; 2 store tests; badge render tests and 2 snapshots).
+Built `bin/plugin.js` contains `"0.1.0"` and no `__PLUGIN_VERSION__`; validate successful; live
+API returned `tag_name: v0.1.0` and `html_url`. Badge snapshots rendered and checked by eye.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- `src/updates.ts`: `UpdateChecker` (injectable `fetch`, `intervalMs`, `logger`) checks on start
+  and every 12h with a `unref`'d timer and a 10s request timeout. Only plain `X.Y.Z` / `vX.Y.Z`
+  tags count. Any failure is logged at info and reports nothing, so the previous result stays.
+  Equal or older → `onResult(undefined)`.
+- Version: `rollup.config.mjs` reads the root `package.json` and a small inline `plugin-version`
+  transform replaces `__PLUGIN_VERSION__` (declared in `src/globals.d.ts`). Only `plugin.ts` uses
+  it, passing it to `UpdateChecker` as `currentVersion`, so tests need no `define`. The start-up
+  log now includes the version.
+- Store: `update?: UpdateInfo`, `setUpdate()` notifies only when the version changes; kept
+  across `applyState` and `setConnected`.
+- Render: `slotKeySvg`/`muteAllKeySvg` wrap the old bodies and add a blue (`#3b82f6`) up-arrow
+  dot at the bottom-right when `updateAvailable` is set, on every key state.
+- Property Inspector (small change from the plan): instead of pushing on
+  `onPropertyInspectorDidAppear`, `ui/slot.html` sends `{ type: "getUpdate" }` when it loads
+  (it can load after the appear event fires), and the plugin also pushes
+  `{ type: "update", update }` when the update changes. The button sends
+  `{ type: "openUpdate" }` → `streamDeck.system.openUrl`. PI messaging uses
+  `SDPIComponents.streamDeckClient` (`sendToPropertyInspector.subscribe`, `send("sendToPlugin")`).
+- Manual check after a newer release exists: the plugin log shows `Update available: X.Y.Z`,
+  keys get the badge, the Game Slot settings show "Plugin vX.Y.Z is available" and the button
+  opens the release.
 
 ## Phase 5: Docs and version 0.2.0
 

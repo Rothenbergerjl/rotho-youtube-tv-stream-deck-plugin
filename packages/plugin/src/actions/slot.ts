@@ -1,7 +1,8 @@
-import {
+import streamDeck, {
   action,
   type DidReceiveSettingsEvent,
   type KeyDownEvent,
+  type SendToPluginEvent,
   SingletonAction,
   type WillAppearEvent,
   type WillDisappearEvent,
@@ -10,23 +11,40 @@ import { MAX_SLOTS } from "@rotho/shared";
 import { slotKeySvg, toDataUrl } from "../render";
 import type { ExtensionServer } from "../server";
 import type { Store } from "../store";
+import type { UpdateInfo } from "../updates";
 
 type SlotSettings = {
   slot?: number;
 };
+
+// Messages with ui/slot.html. The property inspector asks for the update status when it loads
+// (it may load after propertyInspectorDidAppear) and asks the plugin to open the release page.
+type FromPropertyInspector = { type: "getUpdate" } | { type: "openUpdate" };
 
 /** Game Slot: shows the game in its slot; pressing it plays only that game. */
 @action({ UUID: "com.rotho.yttv-multiview.slot" })
 export class SlotAction extends SingletonAction<SlotSettings> {
   /** Slot number for each visible key, by action id. */
   private readonly slots = new Map<string, number>();
+  private sentUpdate: UpdateInfo | undefined;
 
   constructor(
     private readonly store: Store,
     private readonly server: ExtensionServer,
   ) {
     super();
-    store.subscribe(() => void this.renderAll());
+    store.subscribe((state) => {
+      void this.renderAll();
+      if (state.update !== this.sentUpdate) void this.sendUpdate();
+    });
+  }
+
+  override async onSendToPlugin(
+    ev: SendToPluginEvent<FromPropertyInspector, SlotSettings>,
+  ): Promise<void> {
+    const { update } = this.store.current;
+    if (ev.payload?.type === "getUpdate") await this.sendUpdate();
+    if (ev.payload?.type === "openUpdate" && update) await streamDeck.system.openUrl(update.url);
   }
 
   override async onWillAppear(ev: WillAppearEvent<SlotSettings>): Promise<void> {
@@ -70,11 +88,29 @@ export class SlotAction extends SingletonAction<SlotSettings> {
     const slot = this.slots.get(id);
     const key = this.actions.find((a) => a.id === id);
     if (slot === undefined || !key?.isKey()) return;
-    const { connected, mismatch } = this.store.current;
+    const { connected, mismatch, update } = this.store.current;
     const game = this.store.gameInSlot(slot);
     await key.setImage(
-      toDataUrl(slotKeySvg({ slot, connected, title: game?.title, heard: game?.heard, mismatch })),
+      toDataUrl(
+        slotKeySvg({
+          slot,
+          connected,
+          title: game?.title,
+          heard: game?.heard,
+          mismatch,
+          updateAvailable: update !== undefined,
+        }),
+      ),
     );
+  }
+
+  /** Tells a visible property inspector about the update; a no-op when none is open. */
+  private async sendUpdate(): Promise<void> {
+    this.sentUpdate = this.store.current.update;
+    await streamDeck.ui.sendToPropertyInspector({
+      type: "update",
+      update: this.sentUpdate ? { ...this.sentUpdate } : null,
+    });
   }
 }
 
