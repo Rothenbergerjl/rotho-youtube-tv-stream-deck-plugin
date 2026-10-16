@@ -1,0 +1,40 @@
+name: Feature / enhancement
+description: New feature or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Stream Deck plugin
+        - Chrome extension
+        - Both / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: A checklist of what must be true for this to be done.
+      placeholder: "- [ ] ..."
+    validations:
+      required: false

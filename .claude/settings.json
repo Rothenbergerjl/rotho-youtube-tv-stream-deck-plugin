@@ -1,0 +1,8 @@
+{
+  "worktree": {
+    "bgIsolation": "none"
+  },
+  "permissions": {
+    "allow": ["Bash(pnpm *)", "PowerShell(pnpm *)"]
+  }
+}

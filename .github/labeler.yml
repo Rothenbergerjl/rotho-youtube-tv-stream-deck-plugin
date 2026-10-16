@@ -1,0 +1,50 @@
+# Area labels for PRs, applied by .github/workflows/pr-labeler.yml.
+# Overlaps are fine: a PR can get several area labels.
+# When adding a new package or feature directory, add its globs here.
+
+"area:plugin":
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/plugin/**
+
+"area:extension":
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/extension/**
+
+"area:shared":
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/shared/**
+
+"area:testing":
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/*/test/**
+          - "**/*.test.ts"
+
+"area:docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - README.md
+          - CHANGELOG.md
+          - LICENSE
+
+"area:ci-devex":
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - scripts/**
+          - .claude/**
+          - CLAUDE.md
+          - package.json
+          - pnpm-workspace.yaml
+          - pnpm-lock.yaml
+          - tsconfig.base.json
+          - eslint.config.js
+          - .prettierrc.json
+          - .prettierignore
+          - .editorconfig
+          - .gitattributes
+          - .gitignore
+          - .npmrc
