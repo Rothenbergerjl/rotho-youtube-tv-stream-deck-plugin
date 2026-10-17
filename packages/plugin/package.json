@@ -2,7 +2,7 @@
   "name": "@rotho/plugin",
   "version": "0.4.0",
   "private": true,
-  "description": "Stream Deck plugin that shows YouTube TV tabs on keys and solos their audio.",
+  "description": "Stream Deck plugin that shows YouTube TV, Peacock and Paramount+ tabs on keys and solos their audio.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",

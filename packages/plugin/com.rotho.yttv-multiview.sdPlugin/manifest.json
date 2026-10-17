@@ -7,7 +7,7 @@
       "Name": "Game Slot",
       "UUID": "com.rotho.yttv-multiview.slot",
       "Icon": "imgs/actions/slot/icon",
-      "Tooltip": "Shows a YouTube TV game; press to hear only that game.",
+      "Tooltip": "Shows a YouTube TV, Peacock or Paramount+ game; press to hear only that game.",
       "PropertyInspectorPath": "ui/slot.html",
       "Controllers": ["Keypad"],
       "States": [
@@ -22,7 +22,7 @@
       "Name": "Mute All",
       "UUID": "com.rotho.yttv-multiview.muteall",
       "Icon": "imgs/actions/muteall/icon",
-      "Tooltip": "Mutes every YouTube TV tab; press again to restore the last game.",
+      "Tooltip": "Mutes every game; press again to restore the last one.",
       "Controllers": ["Keypad"],
       "States": [
         {
@@ -33,10 +33,10 @@
       ]
     },
     {
-      "Name": "Open YouTube TV",
+      "Name": "Open Service",
       "UUID": "com.rotho.yttv-multiview.open",
       "Icon": "imgs/actions/open/icon",
-      "Tooltip": "Opens YouTube TV in a new Chrome window or tab; the new game starts muted.",
+      "Tooltip": "Opens YouTube TV, Peacock or Paramount+ in a new Chrome window or tab; the new game starts muted.",
       "PropertyInspectorPath": "ui/open.html",
       "Controllers": ["Keypad"],
       "States": [
@@ -66,7 +66,7 @@
   "Category": "Rotho YTTV Multiview",
   "CategoryIcon": "imgs/plugin/category-icon",
   "CodePath": "bin/plugin.js",
-  "Description": "Show your open YouTube TV games on Stream Deck keys and switch which one you hear.",
+  "Description": "Show your open YouTube TV, Peacock and Paramount+ games on Stream Deck keys and switch which one you hear.",
   "Icon": "imgs/plugin/marketplace",
   "SDKVersion": 3,
   "Software": {

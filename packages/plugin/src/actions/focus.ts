@@ -58,6 +58,7 @@ export class FocusAction extends SingletonAction<FocusSettings> {
 
   private async renderAll(): Promise<void> {
     const state = this.store.current;
+    const heard = state.games.find((g) => g.heard);
     // Keys differ only by their Team colors setting, so draw each variant once.
     const image = (teamColors: boolean) =>
       toDataUrl(
@@ -65,7 +66,8 @@ export class FocusAction extends SingletonAction<FocusSettings> {
           connected: state.connected,
           mismatch: state.mismatch,
           featureMissing: !this.store.has(FEATURES.focus),
-          title: state.games.find((g) => g.heard)?.title,
+          title: heard?.title,
+          service: heard?.service,
           updateAvailable: state.update !== undefined,
           teamColors,
         }),

@@ -1,12 +1,19 @@
 <!doctype html>
 <html>
   <head lang="en">
-    <title>Open YouTube TV Settings</title>
+    <title>Open Service Settings</title>
     <meta charset="utf-8" />
     <script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
   </head>
 
   <body>
+    <sdpi-item label="Service">
+      <sdpi-select setting="service" default="youtubeTv">
+        <option value="youtubeTv">YouTube TV</option>
+        <option value="peacock">Peacock</option>
+        <option value="paramountPlus">Paramount+</option>
+      </sdpi-select>
+    </sdpi-item>
     <sdpi-item label="Open in">
       <sdpi-select setting="target" default="window">
         <option value="window">New window</option>
@@ -17,6 +24,10 @@
       <p>
         A new tab opens in the Chrome window you used last. The new game starts muted and takes the
         next free slot.
+      </p>
+      <p>
+        Peacock and Paramount+ are turned on in the Chrome extension's options. If the key shows
+        "Turn on", pressing it opens them.
       </p>
     </sdpi-item>
   </body>

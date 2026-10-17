@@ -104,6 +104,7 @@ export class SlotAction extends SingletonAction<SlotSettings> {
           connected,
           title: game?.title,
           heard: game?.heard,
+          service: game?.service,
           mismatch,
           updateAvailable: update !== undefined,
           teamColors: this.teamColors.get(id) ?? true,

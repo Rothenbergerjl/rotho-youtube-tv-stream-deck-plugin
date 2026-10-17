@@ -269,29 +269,77 @@ Paramount+ selectors are not checked in Chrome yet (Phase 5).
   Widen the matches to the whole site if that's a problem.
 
 ## Phase 4: Plugin badge and Open key service setting
-Status: Not started
+Status: Complete
 
-- [ ] `store.ts`: keep `services` from state (default `["youtubeTv"]`).
-- [ ] `render.ts`: `serviceBadge(service)` disc in the bottom-left on Game Slot and Focus keys
+- [x] `store.ts`: keep `services` from state (default `["youtubeTv"]`).
+- [x] `render.ts`: `serviceBadge(service)` disc in the bottom-left on Game Slot and Focus keys
       with a game (text, team-color and heard variants); move or narrow the text block so two-line
       labels don't overlap the badge; empty-title fallback label is the service name instead of
       "YouTube TV".
-- [ ] `slot.ts`, `focus.ts`: pass `game.service` through to the view.
-- [ ] `open.ts` + `ui/open.html`: **Service** select (`youtubeTv` default); key shows the service
+- [x] `slot.ts`, `focus.ts`: pass `game.service` through to the view.
+- [x] `open.ts` + `ui/open.html`: **Service** select (`youtubeTv` default); key shows the service
       name; "Turn on" state when the service isn't in `services` (press sends `openOptions`);
       "Update extension" when a non-YouTube TV service is picked and `openService` is missing;
       YouTube TV keeps sending `openYouTubeTv`.
-- [ ] Plugin `manifest.json`: Open action name "Open Service", tooltips and plugin description
+- [x] Plugin `manifest.json`: Open action name "Open Service", tooltips and plugin description
       mention Peacock and Paramount+.
-- [ ] Tests: `render.test.ts` cases and snapshot updates for each badge and Open key state;
+- [x] Tests: `render.test.ts` cases and snapshot updates for each badge and Open key state;
       `store.test.ts` for `services`; `manifest.test.ts` if it checks names.
 
 ### Verification Plan
 - `pnpm --filter @rotho/plugin test` passes (snapshots reviewed, not blindly updated).
 - `pnpm typecheck`, `pnpm lint`, `pnpm build` pass.
 
+Result (2026-10-17): plugin tests pass (6 files, 142 tests); `pnpm test` (shared 688, plugin 142,
+extension 77), `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm build` pass.
+Snapshots were reviewed twice: first as a rendered PNG sheet of 16 keys (every badge layout and
+Open key state), then in the `.snap` diff. Only the 7 keys that show a game changed, as intended,
+and 4 new snapshots were written. The empty-slot, No Chrome, mismatch, Mute All and YouTube TV
+Open key snapshots are unchanged. Not checked on a real Stream Deck yet (Phase 5).
+
 ### Phase Summary
-_(write when phase completes)_
+- **Badge colors are final as set in Phase 1:** "TV" `#ff0033`, "P" `#000000`, "P+" `#0064ff`,
+  white letters. Every monogram disc has a 1.5px `#6b7280` ring so Peacock's black disc shows on
+  dark keys.
+- **`render.ts`:**
+  - Badge layout: `serviceBadge(service)` (exported) is a dark `onDisc` (r17) at (22, 122) with
+    a monogram disc (r13) on top. `onDisc` gained an optional radius.
+  - Which keys get it: every Game Slot and Focus key with a game, YouTube TV included (also when
+    `service` is missing, i.e. from older extensions). Never on empty, No Chrome, mismatch or
+    Nothing-heard keys.
+  - Text layout: Game Slot text labels are centred at y=70 instead of 86. The Focus key uses
+    crosshair y=28 and text max 26px centred at y=74 (was y=32, 30px, y=92).
+  - Team-color layout: the bottom team abbreviation moved from x=72 to x=82, and the shared font
+    is sized for 84px instead of 112px. Abbreviations of up to 4 characters still get 30px.
+  - Labels: the empty-title fallback is `SERVICES[service].name`.
+  - `OpenKeyView` gained `service` and `off`. The order of precedence is No Chrome → Update
+    (mismatch or missing feature) → Turn on (dimmed monogram, r28) → Full → normal.
+  - Normal Open key: YouTube TV keeps the old `#ef4444` play button, so its snapshot is
+    unchanged. Peacock and Paramount+ use their badge color with the service name.
+- **`store.ts`:** `PluginState.services` (from the state message, defaulting to `["youtubeTv"]`,
+  reset on disconnect) and `Store.isEnabled(service)`.
+- **`settings.ts`:** `serviceSetting(value)` (unknown or missing means `youtubeTv`), next to
+  `teamColorsSetting`, so it can be tested without the SDK.
+- **`open.ts`:** keeps a per-key service map, as `focus.ts` does for Team colors, and draws each
+  service's image once.
+  - `messageFor` decides what a press sends.
+  - The needed feature is `openYouTubeTv` for YouTube TV and `openService` for the others.
+  - Mismatch, missing feature, Full or a failed send → alert.
+  - Service off → `openOptions`.
+  - YouTube TV → `openYouTubeTv`; others → `openService`.
+- **Wording:**
+  - `ui/open.html` has a Service select (default `youtubeTv`) and a note about "Turn on".
+  - `ui/slot.html`'s help text mentions the three services and the badge.
+  - Manifest: Open action "Open Service"; Game Slot, Mute All and Open tooltips; plugin
+    description.
+  - `packages/plugin/package.json` description also updated. It isn't on the Phase 5 list, which
+    covers the extension and root `package.json` files.
+- **Tests:**
+  - `render.test.ts`: new Open key cases (Peacock, Paramount+, Turn on, Update over Turn on) and
+    a "service badge" block.
+  - `store.test.ts`: a services block. `settings.test.ts`: `serviceSetting`.
+  - `manifest.test.ts`: the Open name, tooltip and description.
+  - `server.test.ts`: now expects `services: ["youtubeTv"]`.
 
 ## Phase 5: Docs and live check
 Status: Not started
