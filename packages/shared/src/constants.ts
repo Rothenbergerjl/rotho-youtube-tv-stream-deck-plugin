@@ -37,6 +37,8 @@ export const PROTOCOL_VERSION = 1;
 export const FEATURES = {
   openYouTubeTv: "openYouTubeTv",
   focus: "focus",
+  /** `openService` and `openOptions` messages. */
+  openService: "openService",
 } as const;
 
 export type Feature = (typeof FEATURES)[keyof typeof FEATURES];

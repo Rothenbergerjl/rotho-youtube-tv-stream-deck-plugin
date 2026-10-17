@@ -47,6 +47,52 @@ describe("parseExtensionMessage", () => {
     expect(parsed).toEqual({ type: "state", games: [game], allMuted: true });
   });
 
+  it("accepts state with services and per-game service", () => {
+    const peacock = { ...game, slot: 2, tabId: 11, heard: false, service: "peacock" };
+    expect(
+      parseExtensionMessage(
+        JSON.stringify({
+          type: "state",
+          games: [{ ...game, service: "youtubeTv" }, peacock],
+          allMuted: false,
+          services: ["youtubeTv", "peacock"],
+        }),
+      ),
+    ).toEqual({
+      type: "state",
+      games: [{ ...game, service: "youtubeTv" }, peacock],
+      allMuted: false,
+      services: ["youtubeTv", "peacock"],
+    });
+  });
+
+  it("leaves service and services off a state from an older extension", () => {
+    const parsed = parseExtensionMessage(
+      JSON.stringify({ type: "state", games: [game], allMuted: false }),
+    );
+    expect(parsed).not.toHaveProperty("services");
+    expect(parsed).toEqual({ type: "state", games: [game], allMuted: false });
+    expect(parsed?.type === "state" && parsed.games[0]).not.toHaveProperty("service");
+  });
+
+  it("drops unknown services and games of unknown services from a newer extension", () => {
+    expect(
+      parseExtensionMessage(
+        JSON.stringify({
+          type: "state",
+          games: [game, { ...game, slot: 2, tabId: 11, heard: false, service: "espn" }],
+          allMuted: false,
+          services: ["youtubeTv", "espn", "paramountPlus"],
+        }),
+      ),
+    ).toEqual({
+      type: "state",
+      games: [game],
+      allMuted: false,
+      services: ["youtubeTv", "paramountPlus"],
+    });
+  });
+
   it.each([
     ["invalid JSON", "{"],
     ["a non-object", "[1]"],
@@ -69,6 +115,18 @@ describe("parseExtensionMessage", () => {
     [
       "state with a non-integer lastHeardTabId",
       JSON.stringify({ type: "state", games: [], allMuted: true, lastHeardTabId: "1" }),
+    ],
+    [
+      "state with a non-string game service",
+      JSON.stringify({ type: "state", games: [{ ...game, service: 1 }], allMuted: true }),
+    ],
+    [
+      "state with non-array services",
+      JSON.stringify({ type: "state", games: [], allMuted: true, services: "peacock" }),
+    ],
+    [
+      "state with a non-string service",
+      JSON.stringify({ type: "state", games: [], allMuted: true, services: [1] }),
     ],
   ])("rejects %s", (_, raw) => {
     expect(parseExtensionMessage(raw)).toBeNull();
@@ -94,6 +152,15 @@ describe("parsePluginMessage", () => {
     expect(parsePluginMessage('{"type":"focus","slot":15}')).toEqual({ type: "focus", slot: 15 });
   });
 
+  it("accepts openService and openOptions", () => {
+    expect(
+      parsePluginMessage('{"type":"openService","service":"paramountPlus","target":"tab"}'),
+    ).toEqual({ type: "openService", service: "paramountPlus", target: "tab" });
+    expect(parsePluginMessage('{"type":"openOptions","extra":1}')).toEqual({
+      type: "openOptions",
+    });
+  });
+
   it.each([
     ["invalid JSON", "nope"],
     ["null", "null"],
@@ -105,6 +172,16 @@ describe("parsePluginMessage", () => {
     ["openYouTubeTv with an unknown target", '{"type":"openYouTubeTv","target":"popup"}'],
     ["focus without a slot", '{"type":"focus"}'],
     ["focus with slot 16", '{"type":"focus","slot":16}'],
+    ["openService without a service", '{"type":"openService","target":"tab"}'],
+    [
+      "openService with an unknown service",
+      '{"type":"openService","service":"espn","target":"tab"}',
+    ],
+    ["openService without a target", '{"type":"openService","service":"peacock"}'],
+    [
+      "openService with an unknown target",
+      '{"type":"openService","service":"peacock","target":"popup"}',
+    ],
   ])("rejects %s", (_, raw) => {
     expect(parsePluginMessage(raw)).toBeNull();
   });
