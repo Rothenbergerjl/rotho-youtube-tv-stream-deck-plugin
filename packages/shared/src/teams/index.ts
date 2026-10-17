@@ -7,6 +7,7 @@ import { LIGUE_1 } from "./ligue1";
 import { MLB } from "./mlb";
 import { NATIONAL } from "./national";
 import { NBA } from "./nba";
+import { NCAA } from "./ncaa";
 import { NFL } from "./nfl";
 import { NHL } from "./nhl";
 import { SERIE_A } from "./seriea";
@@ -23,6 +24,7 @@ export const LEAGUES: readonly League[] = [
   WNBA,
   MLB,
   NHL,
+  NCAA,
   EPL,
   EFL_CHAMPIONSHIP,
   LALIGA,

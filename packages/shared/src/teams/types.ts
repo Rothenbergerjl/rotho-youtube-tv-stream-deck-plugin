@@ -14,7 +14,8 @@ export type LeagueId =
   | "ligue1"
   | "ucl-extras"
   | "ligamx"
-  | "intl";
+  | "intl"
+  | "ncaa";
 
 export type Sport = "football" | "basketball" | "baseball" | "hockey" | "soccer";
 

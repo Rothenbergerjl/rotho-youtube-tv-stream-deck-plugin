@@ -169,11 +169,79 @@ describe("soccer", () => {
   });
 
   it.each([
-    "Mexico vs. Club América", // national team vs club: different pools
-    "Orlando City vs. Inter Miami", // MLS
-    "Soccer: Rangers at Kings", // sport hint excludes the NHL
-    "Spurs vs. Wolves", // NBA (SAS, MIN) and Premier League (TOT, WOL) both fit
-  ])("%j has no matchup", (raw) => {
+    // National team vs club: different pools, but each side has one candidate.
+    ["Mexico vs. Club América", "MEX v AME"],
+    // The sport hint leaves only the Scottish Rangers and no Kings.
+    ["Soccer: Rangers at Kings", "RAN @ KING"],
+    // NBA (SAS, MIN) and Premier League (TOT, WOL) both fit.
+    ["Spurs vs. Wolves", "SPUR v WOLV"],
+  ])("%j shortens each side on its own → %j", (raw, expected) => {
+    const parsed = parseTitle(raw);
+    expect(parsed.display).toBe(expected);
+    expect(parsed.matchup?.league).toBeUndefined();
+  });
+
+  it("does not match MLS clubs", () => {
+    expect(parseTitle("Orlando City vs. Inter Miami").matchup).toBeUndefined();
+  });
+});
+
+describe("college", () => {
+  // Unverified format: best guesses at YouTube TV titles, not captured from the app.
+  it.each([
+    ["College Football: Ohio State at Michigan", "OSU @ MICH"],
+    ["Oklahoma State Cowboys at Texas Longhorns", "OKST @ TEX"],
+    ["Alabama Crimson Tide vs. Georgia Bulldogs", "ALA v UGA"],
+    ["Texas A&M at LSU", "TAMU @ LSU"],
+    ["Men's College Basketball: Duke at North Carolina", "DUKE @ UNC"],
+    ["Wake Forest at Duke", "WAKE @ DUKE"],
+    ["Miami (FL) at Notre Dame", "MIA @ ND"],
+    // Louisville and Pitt: the college hint excludes the NFL, NHL and MLB.
+    ["College Football: Cardinals at Panthers", "LOU @ PITT"],
+    // Full names win over the bare state.
+    ["Kansas City Chiefs at Texas", "KC @ TEX"],
+  ])("%j → %j", (raw, expected) => {
+    expect(formatMatchup(raw)).toBe(expected);
+  });
+
+  it("keeps pro teams when the full name is given", () => {
+    expect(parseTitle("Utah Jazz at Houston Rockets").matchup?.league).toBe("nba");
+    expect(parseTitle("Utah at Houston").matchup?.league).toBe("ncaa");
+  });
+});
+
+describe("generic matchups", () => {
+  it.each([
+    ["Men's College Basketball: Gonzaga at Saint Mary's", "GONZ @ SAIN"],
+    ["NCAA Football: Appalachian State vs. Coastal Carolina", "APPA v COAS"],
+    ["College Basketball: Boston College at Gonzaga", "BC @ GONZ"],
+    ["Women's Volleyball: Nebraska at Creighton", "NEB @ CREI"],
+    ["College Football: St. John's vs. The Citadel", "JOHN v CITA"],
+    // Table names that fit more than one league.
+    ["Giants at Cardinals", "GIAN @ CARD"],
+    ["Panthers at Jets", "PANT @ JETS"],
+    ["Texas Rangers at Los Angeles Kings", "TEX @ LAK"],
+  ])("%j → %j", (raw, expected) => {
+    expect(formatMatchup(raw)).toBe(expected);
+  });
+
+  it("keeps the table id for a known side", () => {
+    expect(parseTitle("College Basketball: Gonzaga vs. Baylor").matchup).toEqual({
+      separator: "v",
+      teams: [{ abbr: "GONZ" }, { abbr: "BAY", teamId: "ncaa:BAY" }],
+    });
+  });
+
+  it.each([
+    "CBS 4 News at 6", // digits
+    "Breakfast at Tiffany's", // no sports hint
+    "Live at the Apollo", // lowercase word
+    "Rams at Billsville", // only one side is a table name, and no hint
+    "College Football Live at Noon", // show words
+    "NFL Films Presents at Midnight", // has a hint, but show words rule it out
+    "NBA Countdown at Halftime",
+    "Gonzaga at Saint Mary's", // unknown teams need a hint
+  ])("%j is not a matchup", (raw) => {
     expect(parseTitle(raw).matchup).toBeUndefined();
   });
 });

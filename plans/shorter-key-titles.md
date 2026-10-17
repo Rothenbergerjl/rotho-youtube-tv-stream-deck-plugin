@@ -234,21 +234,21 @@ Status: Complete
   Brest), but `teamId` keeps them distinct.
 - Known ambiguity: "Spurs vs. Wolves" fits the NBA and the Premier League, so it has no matchup
   without a hint. "Mexico vs. Club América" (national team vs club) has no matchup because they're
-  in different pools.
+  in different pools. Phase 4 later turned both into per-side matchups: "SPUR v WOLV" and "MEX v AME".
 - Deviation comment posted on #6 with the user's OK (2026-10-17).
 
 ## Phase 4: College and generic fallback
-Status: Not started
+Status: Complete
 
-- [ ] Add `teams/ncaa.ts` with ACC, Big Ten, Big 12, SEC and Notre Dame schools (school name, school
+- [x] Add `teams/ncaa.ts` with ACC, Big Ten, Big 12, SEC and Notre Dame schools (school name, school
       + mascot, common short names such as "Ole Miss", "Pitt", "Cal"),
       one table for football and basketball.
-- [ ] Add hints: "College Football", "College Basketball", "NCAA", "Men's College Basketball",
+- [x] Add hints: "College Football", "College Basketball", "NCAA", "Men's College Basketball",
       "Women's College Basketball", conference names ("SEC", "Big Ten", "ACC", "Big 12").
-- [ ] Implement the generic short form in `parseTitle` (first meaningful word, uppercased, ≤4 letters)
+- [x] Implement the generic short form in `parseTitle` (first meaningful word, uppercased, ≤4 letters)
       with the guards: a sports hint or one known side; each side 1–5 capitalised words with no
       digits.
-- [ ] Add tests: "College Football: Ohio State at Michigan" (→ OSU @ MICH), "Oklahoma State
+- [x] Add tests: "College Football: Ohio State at Michigan" (→ OSU @ MICH), "Oklahoma State
       Cowboys at Texas Longhorns" (→ OKST @ TEX), "Cardinals at Panthers" with a college hint
       (Louisville/Pitt → LOU @ PITT), "Men's College Basketball: Gonzaga at Saint Mary's" (generic →
       GONZ @ SAIN), and the generic cases from Phase 2 ("Giants at Cardinals" → "GIAN @ CARD"). Also
@@ -259,8 +259,43 @@ Status: Not started
 - `pnpm --filter @rotho/shared test` passes, with the college, generic and negative cases.
 - `pnpm typecheck` and `pnpm lint` exit 0.
 
+**Result (2026-10-17):** 167/167 shared and 90/90 plugin tests pass. `pnpm typecheck`, `pnpm lint` and
+`prettier --check packages/shared plans` are clean.
+
 ### Phase Summary
-_(write when phase completes)_
+- `teams/ncaa.ts` (`ncaa`, its own pool) has 68 schools: 17 ACC, 18 Big Ten, 16 Big 12, 16 SEC and
+  Notre Dame. Each has the bare school name, school + mascot, and the mascot alone only when no
+  other school here shares it (no bare Tigers, Wildcats, Bulldogs or Cougars). Stanford "Cardinal"
+  and Louisville "Cardinals" are distinct. Membership is from my own knowledge of 2026–27 and
+  wasn't fetched.
+- Bare state names ("Texas", "Utah", "Miami", "Washington") now match college teams. Full pro names
+  still win because the longest name wins ("Utah Jazz at Houston Rockets" → NBA, "Utah at Houston" →
+  NCAA).
+- `findMatchup(text)` now takes the unfolded title and works in three steps (doc comment in
+  `title.ts`):
+  1. Table resolution, as before.
+  2. Both sides are table names but no single pool fits: each side shortens on its own. A side with
+     exactly one candidate (after hint filtering) keeps its table code and `teamId`; otherwise it
+     gets the generic form. "Giants at Cardinals" → "GIAN @ CARD", "Texas Rangers at Los Angeles
+     Kings" → "TEX @ LAK".
+  3. Neither side matched as a pair: only if the title has a league/sport hint or a sport word
+     (Football, Basketball, Baseball, Softball, Hockey, Soccer, Fútbol, Volleyball, NCAA, College),
+     `genericPattern` looks for two runs of 1–5 capitalised, digit-free words around the separator.
+     Hint phrases are cut out first (replaced with " : "), so "College Basketball:" can't become
+     part of a team.
+- **Guard refined from the plan:** the plan's "or one side is a known team" would have made "Rams at
+  Billsville" a matchup (RAMS @ BILL), which contradicts the plan's own negative case. Now unknown
+  sides need a hint or sport word; matchups without one happen only when both sides are table
+  names (step 2).
+- `NOT_TEAM_WORDS` (Live, News, Show, Noon, Night, Final, Countdown, GameDay, Films, Presents,
+  Midnight, Halftime…) rules out show titles like "College Football Live at Noon" and "NFL Films
+  Presents at Midnight". That second one was a real false positive found by a test. The generic
+  form skips "The", "University", "of" and "St." ("St. John's" → JOHN).
+- Phase 3 tests that expected no matchup for "Spurs vs. Wolves", "Mexico vs. Club América" and
+  "Soccer: Rangers at Kings" now expect the per-side forms ("SPUR v WOLV", "MEX v AME", "RAN @
+  KING").
+- Known gap: a table name inside a longer unknown name can match first ("South Florida at Florida"
+  could read as FLA @ FLA). Not handled.
 
 ## Phase 5: Non-sports shortening and final checks
 Status: Not started
