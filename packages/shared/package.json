@@ -4,6 +4,7 @@
   "private": true,
   "description": "Protocol types and constants shared by the Stream Deck plugin and Chrome extension.",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts"
   },

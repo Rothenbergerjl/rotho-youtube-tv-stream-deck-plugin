@@ -15,12 +15,21 @@ they show "Update extension" while the other keys keep working.
   key shows "Full" when all 15 slots are taken.
 - **Focus Heard Game** key: shows the game you're hearing; press it to bring that game's Chrome
   window and tab to the front.
+- Short matchups for more than the NFL: NBA, WNBA, MLB, NHL, major college teams (ACC, Big Ten,
+  Big 12, SEC and Notre Dame), soccer (Premier League, EFL Championship, LaLiga, Bundesliga,
+  Serie A, Ligue 1, Champions League regulars, Liga MX) and national teams. For example
+  "BOS @ LAL", "MCI v ARS", "USA v MEX". Other games show a short form of each team, such as
+  "GONZ @ SAIN".
 
 ### Changed
 
 - The extension now tells the plugin which optional features it supports. An older extension no
   longer blocks every key when only a new feature is missing; only the keys that need it ask for
   an update.
+- "vs" matchups show as "v" so they fit on one line ("KC v BUF" instead of "KC vs BUF").
+- Long non-game titles are cut at a word boundary and drop filler like "Live:" and "(New)"; shows
+  with an episode name keep just the show name ("The Simpsons").
+- Smaller extension download: the team lists now ship only in the plugin.
 
 ## [0.2.0] - 2026-10-16
 

@@ -30,6 +30,18 @@ describe("slotKeySvg", () => {
     expect(svg).toMatchSnapshot();
   });
 
+  it("fits a soccer 'v' matchup on one line", () => {
+    const svg = slotKeySvg({
+      slot: 5,
+      connected: true,
+      title: "Premier League: Manchester City vs. Arsenal",
+      heard: false,
+    });
+    expect(svg).toContain(">MCI v ARS</text>");
+    // Badge number, plus one line of label text.
+    expect(svg.match(/<text /g)).toHaveLength(2);
+  });
+
   it("wraps long non-matchup titles onto two lines", () => {
     const svg = slotKeySvg({ slot: 4, connected: true, title: "NFL GameDay Live", heard: false });
     expect(svg).toContain(">NFL</text>");
