@@ -53,8 +53,8 @@ describe("slotKeySvg", () => {
       teamColors: false,
     });
     expect(svg).toContain(">MCI v ARS</text>");
-    // Badge number, plus one line of label text.
-    expect(svg.match(/<text /g)).toHaveLength(2);
+    // Slot badge number, one line of label text, and the service monogram.
+    expect(svg.match(/<text /g)).toHaveLength(3);
   });
 
   it("wraps long non-matchup titles onto two lines", () => {
@@ -67,6 +67,15 @@ describe("slotKeySvg", () => {
     const svg = slotKeySvg({ slot: 3, connected: true, title: "", heard: false });
     expect(svg).toContain(">YouTube</text>");
     expect(svg).toContain(">TV</text>");
+  });
+
+  it("falls back to the service's name when the title is not known yet", () => {
+    expect(
+      slotKeySvg({ slot: 3, connected: true, title: "", heard: false, service: "peacock" }),
+    ).toContain(">Peacock</text>");
+    expect(
+      slotKeySvg({ slot: 3, connected: true, title: "", heard: false, service: "paramountPlus" }),
+    ).toContain(">Paramount+</text>");
   });
 
   it("dims an empty slot to just its number", () => {
@@ -172,6 +181,96 @@ describe("openKeySvg", () => {
     const svg = openKeySvg({ connected: true, featureMissing: true, full: true });
     expect(svg).toContain(">Update</text>");
     expect(svg).not.toContain(">Full</text>");
+  });
+
+  it.each([
+    ["peacock", "Peacock", "#000000"],
+    ["paramountPlus", "Paramount+", "#0064ff"],
+  ] as const)("shows %s's name on a play button in its color", (service, name, color) => {
+    const svg = openKeySvg({ connected: true, service });
+    expect(svg).toContain(`>${name}</text>`);
+    expect(svg).toContain(`fill="${color}"`);
+    expect(svg).not.toContain('fill="#ef4444"');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows the dimmed monogram and 'Turn on' when the service is off", () => {
+    const svg = openKeySvg({ connected: true, service: "paramountPlus", off: true, full: true });
+    expect(svg).toContain(">Turn on</text>");
+    expect(svg).toContain(">P+</text>");
+    expect(svg).not.toContain('fill="#0064ff"'); // dimmed
+    expect(svg).not.toContain(">Full</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("prefers 'Update extension' over 'Turn on'", () => {
+    const svg = openKeySvg({
+      connected: true,
+      service: "peacock",
+      off: true,
+      featureMissing: true,
+    });
+    expect(svg).toContain(">extension</text>");
+    expect(svg).not.toContain(">Turn on</text>");
+  });
+});
+
+describe("service badge", () => {
+  const TV = ">TV</text>";
+  const PEACOCK = ">P</text>";
+  const PPLUS = ">P+</text>";
+  const game = { slot: 1, connected: true, title: "NFL GameDay Live", heard: false };
+  const matchup = "San Francisco 49ers at Seattle Seahawks";
+
+  it("marks YouTube TV games, including from extensions that don't send a service", () => {
+    expect(slotKeySvg(game)).toContain(TV);
+    expect(slotKeySvg({ ...game, service: "youtubeTv" })).toContain(TV);
+  });
+
+  it.each([
+    ["peacock", PEACOCK, "#000000"],
+    ["paramountPlus", PPLUS, "#0064ff"],
+  ] as const)("draws %s's monogram in its color", (service, mark, color) => {
+    const svg = slotKeySvg({ ...game, service });
+    expect(svg).toContain(mark);
+    expect(svg).toContain(`fill="${color}"`);
+    expect(svg).not.toContain(TV);
+  });
+
+  it("sits in the bottom-left corner on a dark disc", () => {
+    expect(slotKeySvg({ ...game, service: "peacock" })).toContain(
+      '<circle cx="22" cy="122" r="17" fill="#111418" fill-opacity="0.85"/>',
+    );
+  });
+
+  it("is drawn on heard, team-color and Focus keys", () => {
+    expect(slotKeySvg({ ...game, heard: true, service: "peacock" })).toContain(PEACOCK);
+    expect(slotKeySvg({ ...game, title: matchup, service: "paramountPlus" })).toContain(PPLUS);
+    expect(
+      focusKeySvg({ connected: true, title: "NFL GameDay Live", service: "peacock" }),
+    ).toContain(PEACOCK);
+    expect(focusKeySvg({ connected: true, title: matchup, service: "paramountPlus" })).toContain(
+      PPLUS,
+    );
+    expect(slotKeySvg({ ...game, title: matchup, service: "paramountPlus" })).toMatchSnapshot();
+  });
+
+  it("is not drawn without a game", () => {
+    for (const svg of [
+      slotKeySvg({ slot: 1, connected: true }),
+      slotKeySvg({ slot: 1, connected: false }),
+      slotKeySvg({ slot: 1, connected: true, title: "x", mismatch: "plugin" }),
+      focusKeySvg({ connected: true }),
+      focusKeySvg({ connected: true, title: "x", featureMissing: true }),
+    ]) {
+      expect(svg).not.toContain('cy="122" r="17"');
+    }
+  });
+
+  it("falls back to the service's name on the Focus key", () => {
+    expect(focusKeySvg({ connected: true, title: "", service: "peacock" })).toContain(
+      ">Peacock</text>",
+    );
   });
 });
 
@@ -445,7 +544,7 @@ describe("update badge", () => {
     expect(muteAllKeySvg({ ...view, updateAvailable: true })).toContain(BADGE);
   });
 
-  it("is added to the Open YouTube TV key", () => {
+  it("is added to the Open Service key", () => {
     expect(openKeySvg({ connected: true })).not.toContain(BADGE);
     expect(openKeySvg({ connected: true, updateAvailable: true })).toContain(BADGE);
   });

@@ -32,6 +32,15 @@ describe("plugin manifest", () => {
     }
   });
 
+  it("names the Open action for every service", () => {
+    const open = manifest.Actions.find((a: { UUID: string }) => a.UUID === ACTION_UUIDS.open);
+    expect(open.Name).toBe("Open Service");
+    for (const name of ["YouTube TV", "Peacock", "Paramount+"]) {
+      expect(open.Tooltip).toContain(name);
+      expect(manifest.Description).toContain(name);
+    }
+  });
+
   it("targets Node 24 and Stream Deck 7.1+", () => {
     expect(manifest.Nodejs.Version).toBe("24");
     expect(manifest.Software.MinimumVersion).toBe("7.1");

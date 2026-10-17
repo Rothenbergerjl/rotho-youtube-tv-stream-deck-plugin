@@ -66,6 +66,8 @@ describe("ExtensionServer + Store (integration)", () => {
       allMuted: false,
       canRestore: true,
       features: [],
+      // The sample state is from an extension that doesn't send services.
+      services: ["youtubeTv"],
     });
     expect(store.gameInSlot(2)?.tabId).toBe(102);
     expect(store.gameInSlot(3)).toBeUndefined();

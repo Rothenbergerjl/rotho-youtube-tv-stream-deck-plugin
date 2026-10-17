@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { EXTENSION_ID } from "@rotho/shared";
 import { describe, expect, it } from "vitest";
 import { ICON_SIZES, renderIcon } from "../icons/render";
+import { PARAMOUNT_LIVE_MATCHES, PARAMOUNT_ORIGINS } from "../src/service-settings";
 
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8"));
 
@@ -17,13 +18,26 @@ describe("extension manifest", () => {
     expect(extensionIdFromKey(manifest.key)).toBe(EXTENSION_ID);
   });
 
-  it("is limited to YouTube TV", () => {
+  // New required permissions or content script matches make Chrome disable the extension on
+  // update until the user approves them, so these must not grow.
+  it("requires access to YouTube TV only", () => {
     expect(manifest.manifest_version).toBe(3);
     expect(manifest.host_permissions).toEqual(["https://tv.youtube.com/*"]);
     expect(manifest.permissions).toEqual(["tabs", "storage", "alarms", "scripting"]);
     expect(manifest.content_scripts).toEqual([
       { matches: ["https://tv.youtube.com/*"], js: ["content.js"], run_at: "document_idle" },
     ]);
+  });
+
+  it("asks for Paramount+ access only when it is turned on", () => {
+    expect(manifest.optional_host_permissions).toEqual(PARAMOUNT_ORIGINS);
+    for (const match of PARAMOUNT_LIVE_MATCHES) {
+      expect(match.startsWith(PARAMOUNT_ORIGINS[0]!.replace(/\*$/, ""))).toBe(true);
+    }
+  });
+
+  it("has an options page in its own tab", () => {
+    expect(manifest.options_ui).toEqual({ page: "options.html", open_in_tab: true });
   });
 
   it("lists the icons the build renders", () => {

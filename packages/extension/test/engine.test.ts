@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  enabledServicesFrom,
   type EngineEvent,
   type EngineState,
   initialState,
-  isYouTubeTvUrl,
   reduce,
+  restoreState,
+  tabTitleFor,
   toStateMessage,
 } from "../src/engine";
 
 const YTTV = "https://tv.youtube.com/watch/abc";
 const OTHER = "https://www.espn.com/";
+const PEACOCK = "https://www.peacocktv.com/watch/playback/event/abc";
+const PEACOCK_HOME = "https://www.peacocktv.com/watch/home";
+const PPLUS_LIVE = "https://www.paramountplus.com/live-tv/stream/cbs-sports-golazo";
+const PPLUS_VOD = "https://www.paramountplus.com/shows/video/abc/";
 
 const opened = (tabId: number, title = `Game ${tabId}`): EngineEvent => ({
   type: "tabUpdated",
@@ -23,14 +29,77 @@ function run(events: EngineEvent[], state: EngineState = initialState) {
   return result;
 }
 
-describe("isYouTubeTvUrl", () => {
-  it("matches only https://tv.youtube.com", () => {
-    expect(isYouTubeTvUrl(YTTV)).toBe(true);
-    expect(isYouTubeTvUrl("https://www.youtube.com/watch?v=x")).toBe(false);
-    expect(isYouTubeTvUrl("https://tv.youtube.com.evil.example/")).toBe(false);
-    expect(isYouTubeTvUrl("http://tv.youtube.com/")).toBe(false);
-    expect(isYouTubeTvUrl(undefined)).toBe(false);
-    expect(isYouTubeTvUrl("not a url")).toBe(false);
+const openedAt = (tabId: number, url: string, title = `Game ${tabId}`): EngineEvent => ({
+  type: "tabUpdated",
+  tab: { tabId, url, title },
+});
+
+const slots = (state: EngineState) => state.tabs.map((t) => [t.slot, t.tabId, t.service]);
+
+describe("enabledServicesFrom", () => {
+  it("defaults to YouTube TV and Peacock when nothing is saved", () => {
+    expect(enabledServicesFrom(undefined)).toEqual(["youtubeTv", "peacock"]);
+    expect(enabledServicesFrom("peacock")).toEqual(["youtubeTv", "peacock"]);
+  });
+
+  it("always keeps YouTube TV, drops unknown ids, and sorts", () => {
+    expect(enabledServicesFrom([])).toEqual(["youtubeTv"]);
+    expect(enabledServicesFrom(["paramountPlus", "espn", "peacock", "peacock"])).toEqual([
+      "youtubeTv",
+      "peacock",
+      "paramountPlus",
+    ]);
+  });
+});
+
+describe("restoreState", () => {
+  it("returns the initial state when nothing was saved", () => {
+    expect(restoreState(undefined)).toEqual(initialState);
+  });
+
+  it("fills in a save from before services existed", () => {
+    expect(
+      restoreState({
+        tabs: [{ tabId: 10, slot: 1, title: "A" }],
+        heardTabId: 10,
+        lastHeardTabId: 10,
+      }),
+    ).toEqual({
+      tabs: [{ tabId: 10, slot: 1, title: "A", service: "youtubeTv" }],
+      heardTabId: 10,
+      lastHeardTabId: 10,
+      enabledServices: ["youtubeTv", "peacock"],
+    });
+  });
+
+  it("keeps a current save as is", () => {
+    const saved = run([opened(10), openedAt(20, PEACOCK), { type: "solo", slot: 2 }]).state;
+    expect(restoreState(JSON.parse(JSON.stringify(saved)))).toEqual(saved);
+  });
+});
+
+describe("tabTitleFor", () => {
+  it("cleans tab titles on Peacock and Paramount+ on-demand players", () => {
+    expect(tabTitleFor(PEACOCK, "Chiefs vs. Bills - Peacock")).toBe("Chiefs vs. Bills");
+    expect(tabTitleFor(PPLUS_VOD, "Watch Survivor - Paramount+")).toBe("Survivor");
+  });
+
+  it("ignores tab titles on YouTube TV, Paramount+ live, and non-player pages", () => {
+    expect(tabTitleFor(YTTV, "Home - YouTube TV")).toBeUndefined();
+    expect(tabTitleFor(PPLUS_LIVE, "CBS Sports Golazo")).toBeUndefined();
+    expect(tabTitleFor(PEACOCK_HOME, "Peacock")).toBeUndefined();
+    expect(tabTitleFor(undefined, "Title")).toBeUndefined();
+  });
+
+  it("ignores missing titles and the URL Chrome shows while a page loads", () => {
+    expect(tabTitleFor(PEACOCK, undefined)).toBeUndefined();
+    expect(tabTitleFor(PEACOCK, "")).toBeUndefined();
+    expect(tabTitleFor(PEACOCK, "www.peacocktv.com/watch/playback/event/abc")).toBeUndefined();
+  });
+
+  it("ignores a title that is just the service's name, seen while the player loads", () => {
+    expect(tabTitleFor(PEACOCK, "Peacock")).toBeUndefined();
+    expect(tabTitleFor(PPLUS_VOD, "Paramount+")).toBeUndefined();
   });
 });
 
@@ -233,22 +302,139 @@ describe("engine", () => {
     });
   });
 
+  describe("services", () => {
+    it("tracks Peacock players by default but not Paramount+", () => {
+      const { state, effects } = run([
+        openedAt(10, PEACOCK),
+        openedAt(20, PPLUS_LIVE),
+        openedAt(30, PEACOCK_HOME),
+      ]);
+      expect(slots(state)).toEqual([[1, 10, "peacock"]]);
+      expect(effects).toEqual([]);
+    });
+
+    it("tracks Paramount+ live and on-demand players once enabled", () => {
+      const enabled: EngineState = {
+        ...initialState,
+        enabledServices: ["youtubeTv", "peacock", "paramountPlus"],
+      };
+      const { state } = run([openedAt(10, PPLUS_LIVE), openedAt(20, PPLUS_VOD)], enabled);
+      expect(slots(state)).toEqual([
+        [1, 10, "paramountPlus"],
+        [2, 20, "paramountPlus"],
+      ]);
+    });
+
+    it("turning a service on tracks its open tabs muted", () => {
+      const before = run([opened(10)]).state;
+      const { state, effects, changed } = reduce(before, {
+        type: "servicesChanged",
+        enabled: ["youtubeTv", "peacock", "paramountPlus"],
+        tabs: [
+          { tabId: 10, url: YTTV },
+          { tabId: 20, url: PPLUS_LIVE },
+          { tabId: 5, url: OTHER },
+        ],
+      });
+      expect(changed).toBe(true);
+      expect(state.enabledServices).toEqual(["youtubeTv", "peacock", "paramountPlus"]);
+      expect(slots(state)).toEqual([
+        [1, 10, "youtubeTv"],
+        [2, 20, "paramountPlus"],
+      ]);
+      expect(effects).toEqual([
+        { tabId: 10, muted: true },
+        { tabId: 20, muted: true },
+      ]);
+    });
+
+    it("turning a service off frees its tabs' slots and unmutes them", () => {
+      const before = run([opened(10), openedAt(20, PEACOCK), { type: "solo", slot: 2 }]).state;
+      const { state, effects } = reduce(before, {
+        type: "servicesChanged",
+        enabled: ["youtubeTv"],
+        tabs: [
+          { tabId: 10, url: YTTV },
+          { tabId: 20, url: PEACOCK },
+        ],
+      });
+      expect(slots(state)).toEqual([[1, 10, "youtubeTv"]]);
+      expect(state.heardTabId).toBeNull();
+      expect(state.lastHeardTabId).toBeNull();
+      expect(effects).toEqual([
+        { tabId: 20, muted: false },
+        { tabId: 10, muted: true },
+      ]);
+    });
+
+    it("a new service list without YouTube TV still keeps it", () => {
+      const { state } = reduce(initialState, {
+        type: "servicesChanged",
+        enabled: [],
+        tabs: [{ tabId: 10, url: YTTV }],
+      });
+      expect(state.enabledServices).toEqual(["youtubeTv"]);
+      expect(slots(state)).toEqual([[1, 10, "youtubeTv"]]);
+    });
+
+    it("a tab that moves to another enabled service's player keeps its slot", () => {
+      const { state, effects } = run([
+        opened(10),
+        openedAt(20, PEACOCK, "Chiefs vs. Bills"),
+        { type: "solo", slot: 2 },
+        { type: "tabUpdated", tab: { tabId: 20, url: YTTV } },
+      ]);
+      expect(slots(state)).toEqual([
+        [1, 10, "youtubeTv"],
+        [2, 20, "youtubeTv"],
+      ]);
+      expect(state.tabs[1]?.title).toBe("Chiefs vs. Bills");
+      expect(state.heardTabId).toBe(20);
+      expect(effects).toEqual([]);
+    });
+
+    it("a tab that moves to a disabled service's player loses its slot", () => {
+      const { state, effects } = run([
+        openedAt(10, PEACOCK),
+        { type: "tabUpdated", tab: { tabId: 10, url: PPLUS_VOD } },
+      ]);
+      expect(state.tabs).toEqual([]);
+      expect(effects).toEqual([{ tabId: 10, muted: false }]);
+    });
+
+    it("sync updates the service of a tab that moved while asleep", () => {
+      const saved = run([openedAt(10, PEACOCK)]).state;
+      const { state } = reduce(saved, { type: "sync", tabs: [{ tabId: 10, url: YTTV }] });
+      expect(slots(state)).toEqual([[1, 10, "youtubeTv"]]);
+    });
+  });
+
   describe("toStateMessage", () => {
-    it("reports games by slot with the heard flag", () => {
-      const { state } = run([opened(10, "A"), opened(20, "B"), { type: "solo", slot: 1 }]);
+    it("reports games by slot with the heard flag, service, and enabled services", () => {
+      const { state } = run([
+        opened(10, "A"),
+        openedAt(20, PEACOCK, "B"),
+        { type: "solo", slot: 1 },
+      ]);
       expect(toStateMessage(state)).toEqual({
         type: "state",
         games: [
-          { slot: 1, tabId: 10, title: "A", heard: true },
-          { slot: 2, tabId: 20, title: "B", heard: false },
+          { slot: 1, tabId: 10, title: "A", heard: true, service: "youtubeTv" },
+          { slot: 2, tabId: 20, title: "B", heard: false, service: "peacock" },
         ],
         allMuted: false,
         lastHeardTabId: 10,
+        services: ["youtubeTv", "peacock"],
       });
     });
 
     it("omits lastHeardTabId when there is none", () => {
-      expect(toStateMessage(initialState)).toEqual({ type: "state", games: [], allMuted: true });
+      expect(toStateMessage(initialState)).toEqual({
+        type: "state",
+        games: [],
+        allMuted: true,
+        services: ["youtubeTv", "peacock"],
+      });
     });
   });
 });

@@ -1,8 +1,8 @@
 # Rotho YTTV Multiview
 
-Watch several YouTube TV games at once in separate Chrome windows and use a Stream Deck to choose
-which one you hear. Each open game appears on a Stream Deck key; pressing a key unmutes that game
-and mutes the rest.
+Watch several games at once in separate Chrome windows and use a Stream Deck to choose which one
+you hear. Works with YouTube TV, Peacock and Paramount+, mixed however you like. Each open game
+appears on a Stream Deck key; pressing a key unmutes that game and mutes the rest.
 
 ## Install
 
@@ -45,37 +45,63 @@ Your Stream Deck keys keep working; reload any open YouTube TV tabs if a game do
 1. In the Stream Deck app, open the **Rotho YTTV Multiview** category and drag **Game Slot** keys
    onto your deck, one per game you want to watch. New keys number themselves 1, 2, 3…; to change
    a key's slot, select it and pick a slot in its settings.
-2. Optionally add a **Mute All** key, an **Open YouTube TV** key and a **Focus Heard Game** key.
-   To make Open YouTube TV open a tab instead of a new window, select it and pick **New tab** in
-   its settings.
+2. Optionally add **Mute All**, **Open Service** and **Focus Heard Game** keys. Select an Open
+   Service key to pick its **Service** (YouTube TV, Peacock or Paramount+) and whether it opens a
+   **New window** or **New tab**. Add one Open Service key per service you use.
 3. Game Slot and Focus Heard Game keys show a known matchup in the two teams' colors, away team on
    top. To get plain text instead, select the key and uncheck **Team colors** in its settings.
-4. Open each YouTube TV game in its own Chrome window or tab, or press Open YouTube TV.
+4. Open each game in its own Chrome window or tab, or press an Open Service key.
 
-| Key              | Shows                                                            | Press                                                        |
-| ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| Game Slot        | Slot number, matchup in team colors; green border if heard       | Hear only this game                                          |
-| Game Slot        | Slot number and title as text (show, or unknown teams)           | Hear only this game                                          |
-| Game Slot        | Just a dim number                                                | Empty slot; nothing happens                                  |
-| Mute All         | "Mute all" / "Restore" / "All muted"                             | Mute everything, or bring back the last game                 |
-| Open YouTube TV  | "YouTube TV"                                                     | Open YouTube TV in a new window or tab (set in its settings) |
-| Open YouTube TV  | Dim "Full"                                                       | All 15 slots are taken; nothing happens                      |
-| Focus Heard Game | The matchup you're hearing (team colors), with a green crosshair | Bring that game's window and tab to the front                |
-| Focus Heard Game | Dim "Nothing heard"                                              | Nothing is heard; nothing happens                            |
-| Any key          | "No Chrome"                                                      | The extension isn't connected                                |
-| Any key          | Amber warning, "Update plugin" / "Update extension"              | Nothing until you update that piece                          |
-| Any key          | Small blue arrow in the bottom-right corner                      | Works as usual; a plugin update is available                 |
+### Services
 
-If only the Open YouTube TV and Focus Heard Game keys say "Update extension", your Chrome
-extension is older than the plugin. The other keys keep working until Chrome updates it.
+YouTube TV is always on. Peacock is on by default. Paramount+ is off until you turn it on, because
+the extension needs access to paramountplus.com to read the program on live channels.
+
+To turn services on or off, open the extension's options: open `chrome://extensions`, click
+**Details** on Rotho YTTV Multiview, then **Extension options**. An Open Service key for a service
+that is off shows "Turn on"; pressing it opens the same page. Turning Paramount+ on asks Chrome for access to
+paramountplus.com; if you decline, it stays off.
+
+Which pages count as games:
+
+| Service    | Pages                                                                                |
+| ---------- | ------------------------------------------------------------------------------------ |
+| YouTube TV | Any `tv.youtube.com` page                                                            |
+| Peacock    | The player (`peacocktv.com/watch/playback/…`), live events and clips                 |
+| Paramount+ | Live channels (`/live-tv/stream/…`) and videos (`/shows/video/…`, `/movies/video/…`) |
+
+Game Slot and Focus Heard Game keys show the service in a small badge in the bottom-left corner:
+red "TV" for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
+
+### Keys
+
+| Key              | Shows                                                                     | Press                                                         |
+| ---------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Game Slot        | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game                                           |
+| Game Slot        | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game                                           |
+| Game Slot        | Just a dim number                                                         | Empty slot; nothing happens                                   |
+| Mute All         | "Mute all" / "Restore" / "All muted"                                      | Mute everything, or bring back the last game                  |
+| Open Service     | The service's name on a play button                                       | Open the service in a new window or tab (set in its settings) |
+| Open Service     | Dim service badge, "Turn on"                                              | The service is off; opens the extension's options             |
+| Open Service     | Dim "Full"                                                                | All 15 slots are taken; nothing happens                       |
+| Focus Heard Game | The matchup you're hearing (team colors), with a green crosshair          | Bring that game's window and tab to the front                 |
+| Focus Heard Game | Dim "Nothing heard"                                                       | Nothing is heard; nothing happens                             |
+| Any key          | "No Chrome"                                                               | The extension isn't connected                                 |
+| Any key          | Amber warning, "Update plugin" / "Update extension"                       | Nothing until you update that piece                           |
+| Any key          | Small blue arrow in the bottom-right corner                               | Works as usual; a plugin update is available                  |
+
+If only Open Service and Focus Heard Game keys say "Update extension", your Chrome extension is
+older than the plugin. The other keys keep working until Chrome updates it.
 
 How games get slots and sound:
 
-- Slots are given in the order games open. A game keeps its slot until its tab closes; the next
-  new game takes the lowest free slot.
-- New YouTube TV tabs start muted, so opening a game never interrupts the one you're hearing.
+- Slots are given in the order games open, whatever the service. A game keeps its slot until its
+  tab closes; the next new game takes the lowest free slot.
+- New game tabs start muted, so opening a game never interrupts the one you're hearing.
 - Closing the game you're hearing leaves everything muted.
-- A tab that navigates away from YouTube TV gets its sound back and frees its slot.
+- A tab that navigates away from a game page gets its sound back and frees its slot. A tab that
+  moves from one service's player to another's keeps its slot.
+- Turning a service off frees its games' slots and gives those tabs their sound back.
 - Up to 15 games are tracked.
 
 ## Troubleshooting
@@ -100,9 +126,18 @@ versions that can't talk to each other. Keys ignore presses until they match.
 **Keys have a small blue arrow.** A newer plugin is available; see [Upgrading](#upgrading). The
 keys work normally in the meantime.
 
-**A game doesn't show up, or shows "YouTube TV" instead of the matchup.** The title comes from the
-YouTube TV player; it appears a few seconds after the game starts playing. If the tab was open
-before the extension was installed, reload the tab.
+**A game doesn't show up, or shows the service's name instead of the matchup.**
+
+- Check the service is turned on in the extension's options (see [Services](#services)), and that
+  the tab is on a game page rather than a home or browse page.
+- YouTube TV and Paramount+ live titles come from the player and appear a few seconds after the
+  game starts playing. If the tab was open before the extension was installed, reload the tab.
+- Peacock and Paramount+ videos use the tab's title, which appears once the page has loaded.
+
+**A Peacock or Paramount+ game stays silent when you press its key.** The key unmutes the Chrome
+tab, but the player has its own mute too, and Peacock and Paramount+ remember it. If the tab shows
+no speaker icon after the press, click the speaker button inside the player once to unmute it.
+After that, leave the player's sound on and switch games with the Stream Deck.
 
 **Another program is using port 47731.** The plugin talks to Chrome on `127.0.0.1:47731`. If that
 port is busy, the plugin keeps retrying every 5 seconds and logs `Server error: EADDRINUSE`. Find
@@ -120,10 +155,10 @@ tray and reopen it; newly linked plugins load only when the app starts.
 ## How it works
 
 ```
- Chrome (tv.youtube.com tabs)                       Stream Deck app
+ Chrome (YouTube TV, Peacock, Paramount+ tabs)      Stream Deck app
  ┌──────────────────────────────┐   WebSocket       ┌──────────────────────────────┐
  │ @rotho/extension (MV3)       │ ◄──────────────►  │ @rotho/plugin (Node SDK)     │
- │ - tracks YouTube TV tabs     │  127.0.0.1:47731  │ - WebSocket server           │
+ │ - tracks player tabs         │  127.0.0.1:47731  │ - WebSocket server           │
  │ - assigns slots, mutes tabs  │                   │ - Game Slot / Mute All /     │
  │ - opens + focuses windows    │                   │   Open / Focus keys          │
  │ - source of truth for state  │                   │ - draws titles + audio state │
@@ -135,8 +170,17 @@ tray and reopen it; newly linked plugins load only when the app starts.
 - The extension's `hello` lists the optional features it supports (such as opening and focusing
   windows). A key that needs a missing feature shows "Update extension", and the other keys keep
   working. `PROTOCOL_VERSION` changes only for breaking changes.
-- A content script reads the matchup from the player, because YouTube TV's page title is always
-  "Home - YouTube TV".
+- The services, their player URLs and their badges are listed once in
+  `packages/shared/src/services.ts`, which both sides use.
+- Titles come from where the program is named. On YouTube TV a content script reads the matchup
+  from the player, because the page title is always "Home - YouTube TV". On Paramount+ live
+  channels the tab title is only the channel, so a content script (registered only while
+  Paramount+ is on) reads the program and channel. Peacock and Paramount+ videos use the tab
+  title, minus the service's name.
+- The options page saves the services that are on in `chrome.storage.local`. Paramount+ access is
+  an optional host permission, so adding it doesn't make Chrome disable the extension on update.
+- The state sent to the plugin lists each game's service and which services are on. Older plugins
+  and extensions ignore what they don't know.
 - Nothing leaves your computer except the plugin's update check against GitHub; see the
   [privacy policy](PRIVACY.md). To report a security problem, see [SECURITY.md](SECURITY.md).
 

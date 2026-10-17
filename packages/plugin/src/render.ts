@@ -1,5 +1,5 @@
 // Builds key images as SVG (144×144, the @2x key size) and returns them as data URLs.
-import { formatMatchup, parseTitle, teamColors } from "@rotho/shared";
+import { formatMatchup, parseTitle, SERVICES, type ServiceId, teamColors } from "@rotho/shared";
 import type { UpdateTarget } from "./store";
 
 const SIZE = 144;
@@ -31,6 +31,8 @@ export interface SlotKeyView {
   updateAvailable?: boolean;
   /** Draw a known matchup in team colors; only `false` turns it off. */
   teamColors?: boolean;
+  /** Service of the game in the slot; missing means YouTube TV. */
+  service?: ServiceId;
 }
 
 export interface MuteAllKeyView {
@@ -44,8 +46,15 @@ export interface MuteAllKeyView {
 export interface OpenKeyView {
   connected: boolean;
   mismatch?: UpdateTarget;
-  /** The connected extension doesn't list the `openYouTubeTv` feature: it needs updating. */
+  /** Service the key opens (its Service setting); missing means YouTube TV. */
+  service?: ServiceId;
+  /**
+   * The connected extension can't open this service (`openYouTubeTv`, or `openService` for the
+   * others): it needs updating.
+   */
   featureMissing?: boolean;
+  /** The service is turned off in the extension; pressing opens its options page. */
+  off?: boolean;
   /** Every slot is taken, so a new game would go untracked. */
   full?: boolean;
   updateAvailable?: boolean;
@@ -61,6 +70,8 @@ export interface FocusKeyView {
   updateAvailable?: boolean;
   /** Draw a known matchup in team colors; only `false` turns it off. */
   teamColors?: boolean;
+  /** Service of the heard game; missing means YouTube TV. */
+  service?: ServiceId;
 }
 
 export function toDataUrl(svg: string): string {
@@ -110,6 +121,7 @@ function slotKeyBody(view: SlotKeyView): string {
   }
 
   const heard = view.heard === true;
+  const service = view.service ?? "youtubeTv";
   const split = view.teamColors === false ? undefined : teamSplit(view.title);
   if (split) {
     const tone = heard ? colors.heard : colors.text;
@@ -119,15 +131,18 @@ function slotKeyBody(view: SlotKeyView): string {
       heard ? border(colors.heard) : "",
       badge(view.slot, heard ? colors.heard : colors.badge),
       onDisc(SIZE - 28, 26, speaker(SIZE - 28, 26, heard ? "on" : "off", tone)),
+      serviceBadge(service),
     );
   }
-  const label = formatMatchup(view.title) || "YouTube TV";
+  const label = formatMatchup(view.title) || SERVICES[service].name;
   return svg(
     heard ? colors.backgroundHeard : colors.background,
     heard ? border(colors.heard) : "",
     badge(view.slot, heard ? colors.heard : colors.badge),
     speaker(SIZE - 30, 24, heard ? "on" : "off", heard ? colors.heard : colors.dim),
-    lines(wrap(label), colors.text),
+    // Raised from the key's centre so a second line clears the service badge.
+    lines(wrap(label), colors.text, 34, SIZE / 2 - 2),
+    serviceBadge(service),
   );
 }
 
@@ -176,6 +191,14 @@ function openKeyBody(view: OpenKeyView): string {
       lines(["Update", update], colors.text, 24, 100),
     );
   }
+  const service = view.service ?? "youtubeTv";
+  if (view.off) {
+    return svg(
+      colors.dimBackground,
+      monogram(SIZE / 2, 48, 28, service, true),
+      lines(["Turn on"], colors.text, 22, 112),
+    );
+  }
   if (view.full) {
     return svg(
       colors.dimBackground,
@@ -183,10 +206,12 @@ function openKeyBody(view: OpenKeyView): string {
       lines(["Full"], colors.dim, 22, 112),
     );
   }
+  // YouTube TV keeps the red play button it always had; other services use their badge color.
+  const fill = service === "youtubeTv" ? colors.play : SERVICES[service].badge.color;
   return svg(
     colors.background,
-    play(SIZE / 2, 50, colors.play, true),
-    lines(["YouTube TV"], colors.text, 22, 112),
+    play(SIZE / 2, 50, fill, true),
+    lines([SERVICES[service].name], colors.text, 22, 112),
   );
 }
 
@@ -213,19 +238,23 @@ function focusKeyBody(view: FocusKeyView): string {
       lines(["Nothing", "heard"], colors.dim, 22, 102),
     );
   }
+  const service = view.service ?? "youtubeTv";
   const split = view.teamColors === false ? undefined : teamSplit(view.title);
   if (split) {
     return svg(
       split.fills[1],
       matchupSplit(split),
       onDisc(26, 26, target(26, 26, colors.heard, 0.9)),
+      serviceBadge(service),
     );
   }
-  const label = formatMatchup(view.title) || "YouTube TV";
+  const label = formatMatchup(view.title) || SERVICES[service].name;
   return svg(
     colors.background,
-    target(SIZE / 2, 32, colors.heard),
-    lines(wrap(label), colors.text, 30, 92),
+    target(SIZE / 2, 28, colors.heard),
+    // Smaller and higher than a Game Slot label so a second line clears the service badge.
+    lines(wrap(label), colors.text, 26, 74),
+    serviceBadge(service),
   );
 }
 
@@ -326,22 +355,42 @@ export function inkFor(fill: string): string {
   return contrast(colors.text) >= contrast(colors.background) ? colors.text : colors.background;
 }
 
-/** Two team-colored halves with an abbreviation in each and the separator on the seam. */
+/**
+ * Two team-colored halves with an abbreviation in each and the separator on the seam. Both
+ * abbreviations sit right of centre, clear of the slot badge (top) and service badge (bottom).
+ */
 function matchupSplit({ abbrs, separator, fills }: TeamSplit): string {
   const half = SIZE / 2;
-  const font = Math.min(30, Math.floor(112 / (Math.max(...abbrs.map((a) => a.length)) * 0.62)));
+  const font = Math.min(30, Math.floor(84 / (Math.max(...abbrs.map((a) => a.length)) * 0.62)));
   return (
     `<rect width="${SIZE}" height="${half}" fill="${fills[0]}"/>` +
     text(half + 8, 60, abbrs[0], inkFor(fills[0]), font) +
-    text(half, 122, abbrs[1], inkFor(fills[1]), font) +
+    text(half + 10, 122, abbrs[1], inkFor(fills[1]), font) +
     `<circle cx="${half}" cy="${half}" r="11" fill="${colors.background}"/>` +
     text(half, half + 5, separator, colors.text, 14)
   );
 }
 
 /** Puts a glyph centred at (cx, cy) on a dark disc so it reads on any team color. */
-function onDisc(cx: number, cy: number, glyph: string): string {
-  return `<circle cx="${cx}" cy="${cy}" r="19" fill="${colors.background}" fill-opacity="0.85"/>${glyph}`;
+function onDisc(cx: number, cy: number, glyph: string, r = 19): string {
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colors.background}" fill-opacity="0.85"/>${glyph}`;
+}
+
+/** The service's monogram disc in the bottom-left corner, on a dark disc like other corner glyphs. */
+export function serviceBadge(service: ServiceId): string {
+  const c = 22;
+  return onDisc(c, SIZE - c, monogram(c, SIZE - c, 13, service), 17);
+}
+
+/** A service's monogram on a disc of its color, centred at (cx, cy); grey when `dim`. */
+function monogram(cx: number, cy: number, r: number, service: ServiceId, dim = false): string {
+  const { monogram: letters, color, text: ink } = SERVICES[service].badge;
+  const font = Math.round(r * (letters.length > 1 ? 0.95 : 1.2));
+  return (
+    // The light ring keeps a black disc (Peacock) visible on dark backgrounds.
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${dim ? colors.badge : color}" stroke="${colors.dim}" stroke-width="1.5"/>` +
+    text(cx, Math.round(cy + font * 0.36), letters, dim ? colors.dim : ink, font)
+  );
 }
 
 function svg(background: string, ...children: string[]): string {

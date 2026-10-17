@@ -3,6 +3,38 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-10-17
+
+Peacock and Paramount+ games work alongside YouTube TV. Update both the plugin and the extension.
+With an older extension the new services don't appear, and an Open Service key set to Peacock or
+Paramount+ shows "Update extension"; everything else keeps working. The extension doesn't ask for
+any new permission on update.
+
+If a Peacock or Paramount+ game stays silent when you press its key, unmute the player itself once
+with its speaker button; both services remember their own mute setting.
+
+### Added
+
+- **Peacock and Paramount+** player tabs take Game Slots and switch audio just like YouTube TV,
+  in any mix. Peacock live events and clips, Paramount+ live channels and Paramount+ shows and
+  movies are tracked.
+- An **options page** in the extension with a switch per service. YouTube TV is always on and
+  Peacock is on by default. Paramount+ is off until you turn it on; Chrome then asks for access to
+  paramountplus.com, which is used only to read the program name on live channels.
+- A **service badge** in the bottom-left corner of Game Slot and Focus Heard Game keys: red "TV"
+  for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
+- A **Service** setting on the Open key (YouTube TV, Peacock or Paramount+). For a service that's
+  off, the key shows "Turn on", and pressing it opens the extension's options.
+
+### Changed
+
+- **Open YouTube TV** is now called **Open Service**. Existing keys keep opening YouTube TV.
+- Paramount+ live keys show the program with the channel, so league names help pick team colors
+  (for example "Bologna vs. Inter (Serie A)").
+- Turning a service off frees its games' slots and gives those tabs their sound back.
+- Text on Game Slot and Focus Heard Game keys sits a little higher, and the bottom team's
+  abbreviation a little further right, to make room for the badge.
+
 ## [0.4.0] - 2026-10-17
 
 Game keys show the two teams' colors. Only the plugin changed; the extension's version moves to

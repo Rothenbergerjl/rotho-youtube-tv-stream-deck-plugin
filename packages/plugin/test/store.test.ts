@@ -80,6 +80,40 @@ describe("Store.setFeatures", () => {
   });
 });
 
+describe("Store services", () => {
+  it("treats a state without services as only YouTube TV", () => {
+    store.applyState({ ...sampleState, games: [...sampleState.games] });
+    expect(store.current.services).toEqual(["youtubeTv"]);
+    expect(store.isEnabled("youtubeTv")).toBe(true);
+    expect(store.isEnabled("peacock")).toBe(false);
+  });
+
+  it("keeps the services the extension sends", () => {
+    store.applyState({
+      ...sampleState,
+      games: [...sampleState.games],
+      services: ["youtubeTv", "paramountPlus"],
+    });
+    expect(store.isEnabled("paramountPlus")).toBe(true);
+    expect(store.isEnabled("peacock")).toBe(false);
+  });
+
+  it("resets to only YouTube TV on disconnect", () => {
+    store.applyState({ ...sampleState, games: [], services: ["youtubeTv", "peacock"] });
+    store.setConnected(false);
+    expect(store.current.services).toEqual(["youtubeTv"]);
+  });
+
+  it("keeps each game's service", () => {
+    store.applyState({
+      type: "state",
+      games: [{ slot: 1, tabId: 1, title: "A", heard: false, service: "peacock" }],
+      allMuted: true,
+    });
+    expect(store.gameInSlot(1)?.service).toBe("peacock");
+  });
+});
+
 describe("Store.setUpdate", () => {
   const update = { version: "0.3.0", url: "https://example.test/v0.3.0" };
 

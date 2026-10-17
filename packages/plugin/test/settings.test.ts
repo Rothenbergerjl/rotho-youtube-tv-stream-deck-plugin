@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { teamColorsSetting } from "../src/settings";
+import { serviceSetting, teamColorsSetting } from "../src/settings";
+
+describe("serviceSetting", () => {
+  it.each([
+    [undefined, "youtubeTv"],
+    ["youtubeTv", "youtubeTv"],
+    ["peacock", "peacock"],
+    ["paramountPlus", "paramountPlus"],
+    ["espn", "youtubeTv"],
+    [1, "youtubeTv"],
+  ])("%j → %s", (value, expected) => {
+    expect(serviceSetting(value)).toBe(expected);
+  });
+});
 
 describe("teamColorsSetting", () => {
   it.each([

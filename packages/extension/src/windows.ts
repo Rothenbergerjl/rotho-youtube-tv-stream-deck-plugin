@@ -1,8 +1,6 @@
-// Opens YouTube TV and brings a game's tab to the front. Takes the Chrome API as a parameter so
-// tests can pass a fake; background.ts passes `chrome`.
+// Opens a service's home page and brings a game's tab to the front. Takes the Chrome API as a
+// parameter so tests can pass a fake; background.ts passes `chrome`.
 import type { OpenTarget } from "@rotho/shared";
-
-export const YOUTUBE_TV_URL = "https://tv.youtube.com";
 
 /** The parts of `chrome.windows` and `chrome.tabs` used here. */
 export interface WindowsApi {
@@ -20,11 +18,11 @@ export interface WindowsApi {
 }
 
 /**
- * Opens YouTube TV in a new focused window, or as a new tab in the last-focused normal window
- * (which is then focused). Tab mode falls back to a new window when no normal window exists.
- * The new tab is muted by the usual tabs.onCreated handling.
+ * Opens `url` (a service's home page) in a new focused window, or as a new tab in the
+ * last-focused normal window (which is then focused). Tab mode falls back to a new window when no
+ * normal window exists. A new player tab is muted by the usual tabs.onCreated handling.
  */
-export async function openYouTubeTv(api: WindowsApi, target: OpenTarget): Promise<void> {
+export async function openPage(api: WindowsApi, url: string, target: OpenTarget): Promise<void> {
   try {
     if (target === "tab") {
       // Rejects when no normal window is open.
@@ -32,14 +30,14 @@ export async function openYouTubeTv(api: WindowsApi, target: OpenTarget): Promis
       const windowTypes = ["normal" as chrome.windows.WindowType];
       const window = await api.windows.getLastFocused({ windowTypes }).catch(() => null);
       if (window?.id !== undefined) {
-        await api.tabs.create({ windowId: window.id, url: YOUTUBE_TV_URL, active: true });
+        await api.tabs.create({ windowId: window.id, url, active: true });
         await focusWindow(api, window.id);
         return;
       }
     }
-    await api.windows.create({ url: YOUTUBE_TV_URL, focused: true });
+    await api.windows.create({ url, focused: true });
   } catch (err) {
-    console.warn("[yttv-multiview] open YouTube TV failed", err);
+    console.warn("[yttv-multiview] open failed", url, err);
   }
 }
 

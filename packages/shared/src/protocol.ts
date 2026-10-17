@@ -1,8 +1,9 @@
 // Messages exchanged over the WebSocket between the Chrome extension and the Stream Deck plugin.
 // Every message is a JSON object with a string `type`.
 import { FEATURES, type Feature, MAX_SLOTS } from "./constants";
+import { isServiceId, type ServiceId } from "./services";
 
-/** One tracked YouTube TV tab, as shown on a Game Slot key. */
+/** One tracked player tab, as shown on a Game Slot key. */
 export interface Game {
   /** Stable slot number, 1..MAX_SLOTS. */
   slot: number;
@@ -11,6 +12,8 @@ export interface Game {
   title: string;
   /** True for the one tab whose audio is currently unmuted. */
   heard: boolean;
+  /** Service the tab plays; missing (extensions before Peacock support) means `youtubeTv`. */
+  service?: ServiceId;
 }
 
 // ---- Extension → plugin ----
@@ -33,6 +36,8 @@ export interface StateMessage {
   allMuted: boolean;
   /** Tab that Mute All will restore, if any. */
   lastHeardTabId?: number;
+  /** Services turned on in the extension; missing means only `youtubeTv`. */
+  services?: ServiceId[];
 }
 
 /** Keeps the connection (and the extension's service worker) alive. */
@@ -75,8 +80,29 @@ export interface FocusMessage {
   slot: number;
 }
 
+/**
+ * Open a service's home page in a new window, or a tab in the last-focused one. Feature
+ * `openService`. The plugin still sends `openYouTubeTv` for YouTube TV so older extensions work.
+ */
+export interface OpenServiceMessage {
+  type: "openService";
+  service: ServiceId;
+  target: OpenTarget;
+}
+
+/** Open the extension's options page, where services are turned on. Feature `openService`. */
+export interface OpenOptionsMessage {
+  type: "openOptions";
+}
+
 export type PluginMessage =
-  SoloMessage | ToggleMuteAllMessage | RequestStateMessage | OpenYouTubeTvMessage | FocusMessage;
+  | SoloMessage
+  | ToggleMuteAllMessage
+  | RequestStateMessage
+  | OpenYouTubeTvMessage
+  | FocusMessage
+  | OpenServiceMessage
+  | OpenOptionsMessage;
 
 // ---- Validation ----
 
@@ -90,15 +116,22 @@ const isOpenTarget = (v: unknown): v is OpenTarget => v === "window" || v === "t
 const knownFeatures: readonly string[] = Object.values(FEATURES);
 const isFeature = (v: string): v is Feature => knownFeatures.includes(v);
 
-function isGame(v: unknown): v is Game {
+/** A game as sent, before unknown services are filtered out. */
+type WireGame = Omit<Game, "service"> & { service?: string };
+
+function isGame(v: unknown): v is WireGame {
   return (
     isObj(v) &&
     isSlot(v.slot) &&
     isInt(v.tabId) &&
     typeof v.title === "string" &&
-    typeof v.heard === "boolean"
+    typeof v.heard === "boolean" &&
+    (v.service === undefined || typeof v.service === "string")
   );
 }
+
+const isStringArray = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((s) => typeof s === "string");
 
 function parseObject(raw: string): Obj | null {
   try {
@@ -134,12 +167,20 @@ export function parseExtensionMessage(raw: string): ExtensionMessage | null {
         return null;
       }
       if (m.lastHeardTabId !== undefined && !isInt(m.lastHeardTabId)) return null;
-      const state: StateMessage = {
-        type: "state",
-        games: m.games.map(({ slot, tabId, title, heard }) => ({ slot, tabId, title, heard })),
-        allMuted: m.allMuted,
-      };
+      if (m.services !== undefined && !isStringArray(m.services)) return null;
+      const games: Game[] = [];
+      for (const { slot, tabId, title, heard, service } of m.games) {
+        if (service === undefined) {
+          games.push({ slot, tabId, title, heard });
+        } else if (isServiceId(service)) {
+          games.push({ slot, tabId, title, heard, service });
+        }
+        // A service this plugin doesn't know comes from a newer extension; it can't draw that
+        // game, so the slot is left out.
+      }
+      const state: StateMessage = { type: "state", games, allMuted: m.allMuted };
       if (m.lastHeardTabId !== undefined) state.lastHeardTabId = m.lastHeardTabId;
+      if (m.services !== undefined) state.services = m.services.filter(isServiceId);
       return state;
     }
     case "heartbeat":
@@ -163,6 +204,12 @@ export function parsePluginMessage(raw: string): PluginMessage | null {
       return isOpenTarget(m.target) ? { type: "openYouTubeTv", target: m.target } : null;
     case "focus":
       return isSlot(m.slot) ? { type: "focus", slot: m.slot } : null;
+    case "openService":
+      return isServiceId(m.service) && isOpenTarget(m.target)
+        ? { type: "openService", service: m.service, target: m.target }
+        : null;
+    case "openOptions":
+      return { type: "openOptions" };
     default:
       return null;
   }

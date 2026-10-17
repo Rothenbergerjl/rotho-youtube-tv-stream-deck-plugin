@@ -1,5 +1,11 @@
 // Latest view of the extension's state plus connection status. Actions subscribe to it.
-import { type Feature, type Game, PROTOCOL_VERSION, type StateMessage } from "@rotho/shared";
+import {
+  type Feature,
+  type Game,
+  PROTOCOL_VERSION,
+  type ServiceId,
+  type StateMessage,
+} from "@rotho/shared";
 import type { UpdateInfo } from "./updates";
 
 /** Which side must be updated when the plugin and extension speak different protocols. */
@@ -16,9 +22,16 @@ export interface PluginState {
   mismatch?: UpdateTarget;
   /** Optional features the connected extension listed in its `hello`; empty while disconnected. */
   features: Feature[];
+  /**
+   * Services turned on in the extension. Extensions from before Peacock support don't send it,
+   * which means only YouTube TV.
+   */
+  services: ServiceId[];
   /** A newer plugin release, from the GitHub check; kept across connects and disconnects. */
   update?: UpdateInfo;
 }
+
+const ONLY_YOUTUBE_TV: readonly ServiceId[] = ["youtubeTv"];
 
 const disconnected: PluginState = {
   connected: false,
@@ -26,6 +39,7 @@ const disconnected: PluginState = {
   allMuted: true,
   canRestore: false,
   features: [],
+  services: [...ONLY_YOUTUBE_TV],
 };
 
 type Listener = (state: PluginState) => void;
@@ -40,6 +54,11 @@ export class Store {
 
   gameInSlot(slot: number): Game | undefined {
     return this.state.games.find((g) => g.slot === slot);
+  }
+
+  /** True when `service` is turned on in the connected extension. */
+  isEnabled(service: ServiceId): boolean {
+    return this.state.services.includes(service);
   }
 
   /** True when the connected extension handles `feature`. */
@@ -95,6 +114,7 @@ export class Store {
         message.lastHeardTabId !== undefined &&
         message.games.some((g) => g.tabId === message.lastHeardTabId),
       features: this.state.features,
+      services: [...(message.services ?? ONLY_YOUTUBE_TV)],
       ...(this.state.mismatch && { mismatch: this.state.mismatch }),
       ...(this.state.update && { update: this.state.update }),
     });
