@@ -1,6 +1,6 @@
 {
   "Name": "Rotho YTTV Multiview",
-  "Version": "0.3.0.0",
+  "Version": "0.4.0.0",
   "Author": "Rothenbergerjl",
   "Actions": [
     {
@@ -52,6 +52,7 @@
       "UUID": "com.rotho.yttv-multiview.focus",
       "Icon": "imgs/actions/focus/icon",
       "Tooltip": "Shows the game you're hearing; press to bring its Chrome window and tab to the front.",
+      "PropertyInspectorPath": "ui/focus.html",
       "Controllers": ["Keypad"],
       "States": [
         {

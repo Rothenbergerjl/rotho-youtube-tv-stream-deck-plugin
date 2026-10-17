@@ -24,6 +24,11 @@ export interface Team {
   abbr: string;
   /** Full name, nickname and any aliases, e.g. ["Buffalo Bills", "Bills"]. */
   names: readonly string[];
+  /**
+   * Team colors for the key, as uppercase "#RRGGBB": the primary first, then a secondary used when
+   * the other team's primary is too close. Missing until a league's colors are filled in.
+   */
+  colors?: readonly [primary: string, secondary: string];
 }
 
 export interface League {

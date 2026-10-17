@@ -48,20 +48,23 @@ Your Stream Deck keys keep working; reload any open YouTube TV tabs if a game do
 2. Optionally add a **Mute All** key, an **Open YouTube TV** key and a **Focus Heard Game** key.
    To make Open YouTube TV open a tab instead of a new window, select it and pick **New tab** in
    its settings.
-3. Open each YouTube TV game in its own Chrome window or tab, or press Open YouTube TV.
+3. Game Slot and Focus Heard Game keys show a known matchup in the two teams' colors, away team on
+   top. To get plain text instead, select the key and uncheck **Team colors** in its settings.
+4. Open each YouTube TV game in its own Chrome window or tab, or press Open YouTube TV.
 
-| Key              | Shows                                                                 | Press                                                        |
-| ---------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Game Slot        | Slot number, matchup (e.g. "SF @ SEA"); green with a speaker if heard | Hear only this game                                          |
-| Game Slot        | Just a dim number                                                     | Empty slot; nothing happens                                  |
-| Mute All         | "Mute all" / "Restore" / "All muted"                                  | Mute everything, or bring back the last game                 |
-| Open YouTube TV  | "YouTube TV"                                                          | Open YouTube TV in a new window or tab (set in its settings) |
-| Open YouTube TV  | Dim "Full"                                                            | All 15 slots are taken; nothing happens                      |
-| Focus Heard Game | The matchup you're hearing, under a green crosshair                   | Bring that game's window and tab to the front                |
-| Focus Heard Game | Dim "Nothing heard"                                                   | Nothing is heard; nothing happens                            |
-| Any key          | "No Chrome"                                                           | The extension isn't connected                                |
-| Any key          | Amber warning, "Update plugin" / "Update extension"                   | Nothing until you update that piece                          |
-| Any key          | Small blue arrow in the bottom-right corner                           | Works as usual; a plugin update is available                 |
+| Key              | Shows                                                            | Press                                                        |
+| ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| Game Slot        | Slot number, matchup in team colors; green border if heard       | Hear only this game                                          |
+| Game Slot        | Slot number and title as text (show, or unknown teams)           | Hear only this game                                          |
+| Game Slot        | Just a dim number                                                | Empty slot; nothing happens                                  |
+| Mute All         | "Mute all" / "Restore" / "All muted"                             | Mute everything, or bring back the last game                 |
+| Open YouTube TV  | "YouTube TV"                                                     | Open YouTube TV in a new window or tab (set in its settings) |
+| Open YouTube TV  | Dim "Full"                                                       | All 15 slots are taken; nothing happens                      |
+| Focus Heard Game | The matchup you're hearing (team colors), with a green crosshair | Bring that game's window and tab to the front                |
+| Focus Heard Game | Dim "Nothing heard"                                              | Nothing is heard; nothing happens                            |
+| Any key          | "No Chrome"                                                      | The extension isn't connected                                |
+| Any key          | Amber warning, "Update plugin" / "Update extension"              | Nothing until you update that piece                          |
+| Any key          | Small blue arrow in the bottom-right corner                      | Works as usual; a plugin update is available                 |
 
 If only the Open YouTube TV and Focus Heard Game keys say "Update extension", your Chrome
 extension is older than the plugin. The other keys keep working until Chrome updates it.
@@ -143,7 +146,7 @@ tray and reopen it; newly linked plugins load only when the app starts.
 
 | Path                 | Package            | What                                               |
 | -------------------- | ------------------ | -------------------------------------------------- |
-| `packages/shared`    | `@rotho/shared`    | Message types, constants, matchup title formatting |
+| `packages/shared`    | `@rotho/shared`    | Message types, constants, team tables and colors   |
 | `packages/extension` | `@rotho/extension` | Chrome Manifest V3 extension, bundled with esbuild |
 | `packages/plugin`    | `@rotho/plugin`    | Stream Deck plugin, bundled with Rollup            |
 | `scripts/`           |                    | Version sync, packaging, release-notes helpers     |
