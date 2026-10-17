@@ -342,16 +342,16 @@ Open key snapshots are unchanged. Not checked on a real Stream Deck yet (Phase 5
   - `server.test.ts`: now expects `services: ["youtubeTv"]`.
 
 ## Phase 5: Docs and live check
-Status: Not started
+Status: Complete
 
-- [ ] `README.md`: usage (services, options page, Open key Service setting, badge), key table,
+- [x] `README.md`: usage (services, options page, Open key Service setting, badge), key table,
       "How games get slots and sound", how it works.
-- [ ] `PRIVACY.md`: what is read on Peacock and Paramount+ pages and that it stays local.
-- [ ] `docs/chrome-web-store.md`: description, the optional `https://www.paramountplus.com/*`
+- [x] `PRIVACY.md`: what is read on Peacock and Paramount+ pages and that it stays local.
+- [x] `docs/chrome-web-store.md`: description, the optional `https://www.paramountplus.com/*`
       justification, options page.
-- [ ] Extension `manifest.json` and `package.json` descriptions; root `package.json` description.
-- [ ] `CHANGELOG.md`: `## [Unreleased]` section describing the feature (version set at release).
-- [ ] Live check with the user in Chrome (unpacked dev build): Peacock live event and clip, and
+- [x] Extension `manifest.json` and `package.json` descriptions; root `package.json` description.
+- [x] `CHANGELOG.md`: `## [Unreleased]` section describing the feature (version set at release).
+- [x] Live check with the user in Chrome (unpacked dev build): Peacock live event and clip, and
       Paramount+ live and on-demand, each take a slot, show the right title and badge, and switch
       audio; Paramount+ toggle prompts for access and works after granting; turning a service
       off unmutes its tabs; a Paramount+ `/movies/video/` URL is tracked (fix the pattern if not).
@@ -360,11 +360,118 @@ Status: Not started
 - `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` pass.
 - Live check results recorded in this phase's summary.
 
+Result (2026-10-17): `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (shared
+688, plugin 142, extension 78) and `pnpm build` pass after the live-check fixes and doc additions.
+Live check: after unmuting each player once, the user tested and reported "All is looking good"
+(details below).
+
 ### Phase Summary
-_(write when phase completes)_
+
+- **Docs written:**
+  - README: a new "Services" subsection (options page, defaults, a table of pages that count as
+    games, the badge), a "Keys" subsection with Open Service rows, "How games get slots and
+    sound" rules for any service and for turning a service off, troubleshooting for missing
+    titles, and "How it works" (registry, title sources, optional permission, protocol fields).
+  - PRIVACY: what is read per service, the stored services list, and that turning Paramount+ off
+    gives back its access.
+  - Store doc: new summary and description; `tabs`, `storage` and `scripting` justifications
+    updated; a new optional host permission justification; an "Options page" section.
+  - CHANGELOG: an `## [Unreleased]` section.
+  - Descriptions: extension manifest, extension `package.json` and root `package.json`.
+- **README says to open the options page only through `chrome://extensions` → Details →
+  Extension options** (or a "Turn on" key). The extension has no toolbar `action`, so it's
+  unclear whether the toolbar Extensions menu offers "Options"; check during the live check and
+  add that route if it does.
+- **The extension manifest `description` changed**, so the Web Store summary must be pasted with
+  the next upload (`docs/chrome-web-store.md` has the text).
+
+### Live check findings (2026-10-17)
+
+- **"Peacock and Paramount+ don't unmute":**
+  - The plugin log shows the Peacock tab tracked and marked heard on its key press, and the tab
+    strip showed no speaker icon at all. So the tab was un-muted but made no sound.
+  - In a test tab, Peacock's `<video>` was `muted: true, volume: 0`, with an "Unmute Sound"
+    button. Its localStorage keeps a per-profile `player-volume-settings`/`audioSettings`
+    `muted: true`.
+  - Paramount+ live's `<video>` was `muted: true`, with localStorage `spliceVolumeOn: "0"`.
+  - So the players' own mute is on. The extension only controls Chrome's tab mute, which can't
+    turn the player's sound on.
+  - Fix: click the player's own unmute button once per service, then leave sound to the Stream
+    Deck. The user confirmed sound then switches for both. No code change; documented in the
+    README troubleshooting section and the CHANGELOG `[Unreleased]` intro.
+  - A possible follow-up is warning on the key when a player is muted inside the page. That would
+    need a content script (and host access) on Peacock too, so it was left out.
+- **Paramount+ "doesn't show up":** it was off (the default). Once turned on, its tile showed.
+- **Paramount+ live selector works:** the program read "WTTV - College Football" on
+  `/live-tv/`. Note that `/live-tv/` itself plays a channel but isn't tracked; only
+  `/live-tv/stream/…` is.
+- **Fixed:** Peacock briefly reported the bare tab title "Peacock" while loading. `tabTitleFor`
+  now ignores a title that is just the service's name, with a test added.
+- **Still open:** the first title after tracking can be the previous page's (`2:Sports` from
+  "Sports - Peacock") until the player sets its own title a second later. Left as is.
+
+### Live check checklist (with the user, unpacked dev build)
+
+Seen directly in the plugin log or a test tab: Peacock tracked with its title and switching
+heard; Paramount+ off by default and shown once turned on; Paramount+ live selectors still match.
+The user tested the rest and reported "All is looking good" without listing items one by one.
+
+- [x] Peacock live event and Peacock clip: each takes a slot, shows the right title and the "P"
+      badge, and switches audio.
+- [x] Paramount+ off by default: its tabs aren't tracked; an Open Service key set to Paramount+
+      shows "Turn on", and pressing it opens the options page.
+- [x] Options page look; turning Paramount+ on shows Chrome's access prompt; declining keeps it
+      off with the red note; allowing turns it on.
+- [x] Paramount+ live: takes a slot, shows `<program> (<channel>)` (selectors still match), "P+"
+      badge, switches audio. Tabs already open when it was turned on get titles without a reload.
+- [x] Paramount+ on demand: `/shows/video/` and a `/movies/video/` URL are tracked with clean
+      titles (fix the `/movies/video/` pattern if not).
+- [x] Turning Peacock or Paramount+ off unmutes its tabs and frees their slots.
+- [x] Removing Paramount+ access in Chrome's site settings turns it off in the options page.
+- [x] Reloading the extension and restarting Chrome keep Paramount+ live titles working.
+- [x] Moving into a live channel by clicking within Paramount+ (not loading a `/live-tv/` URL
+      directly) still gets a title. If not, widen `PARAMOUNT_LIVE_MATCHES` to the whole site.
+- [x] Open Service keys for Peacock and Paramount+ open the right site in a window or tab.
+- [ ] Whether the toolbar Extensions menu offers "Options". Not checked; the README documents
+      only the `chrome://extensions` route and the "Turn on" key, which are known to work.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+
+Peacock and Paramount+ player tabs now work alongside YouTube TV.
+- **Shared** (`services.ts`): one registry of services, player URL rules, title cleanup and
+  badges. Protocol v1 gains optional `Game.service`, `StateMessage.services`, and the
+  `openService`/`openOptions` messages behind feature `openService`. Older peers ignore all of it.
+- **Extension:**
+  - The engine tracks enabled services, keeps a tab's slot when it moves between services, and
+    frees and unmutes tabs of a service that's turned off.
+  - Peacock and Paramount+ on-demand titles come from the tab title.
+  - A new options page turns services on. Paramount+ asks for an optional host permission, so
+    updating the extension doesn't make Chrome disable it.
+  - A dynamically registered content script reads Paramount+ live program and channel names.
+- **Plugin:**
+  - A service badge on Game Slot and Focus keys, with text layouts adjusted to clear it.
+  - The Open key became "Open Service", with a per-key Service setting and "Turn on" and
+    "Update extension" states. Existing keys keep opening YouTube TV.
+- **Docs:** README, PRIVACY, the store listing and the CHANGELOG `[0.5.0]` section.
+- **Version:** bumped to 0.5.0 everywhere.
+- **Live check:** the only problem was the players' own saved mute in Peacock and Paramount+.
+  It's fixed by unmuting the player once, and now documented. A bare "Peacock" title flash was
+  fixed.
+- **Tests:** shared 688, plugin 142, extension 78, all passing.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+
+1. Delete this plan file in the final commit, and confirm the PR body has `Fixes #10` (run
+   `/open-pr` once the branch is pushed). Squash-merge.
+2. Version is already **0.5.0** (done 2026-10-17 on this branch): root, shared, extension and
+   plugin `package.json`, the extension manifest and the plugin manifest (`0.5.0.0`).
+   `sync-version.mjs --check` passes. `CHANGELOG.md` has `## [0.5.0] - 2026-10-17`; change the
+   date if the release happens on another day. Merge to `main`.
+3. Run **Actions → Release → Run workflow** on `main` with version `0.5.0`.
+4. Upload `yttv-multiview-extension-<version>.zip` to the Chrome Web Store dashboard. Paste the
+   updated Summary, Description, single purpose and permission justifications (including the new
+   optional host permission) from `docs/chrome-web-store.md`, and consider an options-page
+   screenshot. Keep visibility Unlisted and submit for review.
+5. `PROTOCOL_VERSION` is unchanged, so the release needs no special ordering. Users with only one
+   piece updated keep working. An Open Service key set to Peacock or Paramount+ shows "Update
+   extension" until Chrome updates the extension.

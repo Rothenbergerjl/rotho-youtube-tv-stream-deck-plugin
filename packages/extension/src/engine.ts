@@ -5,6 +5,7 @@ import {
   cleanTabTitle,
   isServiceId,
   SERVICE_IDS,
+  SERVICES,
   type ServiceId,
   serviceForUrl,
   type StateMessage,
@@ -112,8 +113,11 @@ export function tabTitleFor(
   const match = serviceForUrl(url);
   if (!match || match.titleSource !== "tab" || !title) return undefined;
   const cleaned = cleanTabTitle(match.service, title);
-  // While a page loads Chrome uses (part of) its URL as the title.
-  if (!cleaned || url!.includes(cleaned)) return undefined;
+  // While a page loads Chrome uses (part of) its URL as the title, and the player may briefly
+  // show just the service's name.
+  if (!cleaned || url!.includes(cleaned) || cleaned === SERVICES[match.service].name) {
+    return undefined;
+  }
   return cleaned;
 }
 

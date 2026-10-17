@@ -17,29 +17,35 @@ the dashboard with the next upload.
 
 - Name: `Rotho YTTV Multiview` (from the manifest)
 - Summary: the manifest `description`, `Lets the Rotho YTTV Multiview Stream Deck plugin switch
-audio between YouTube TV tabs.`
+audio between YouTube TV, Peacock and Paramount+ tabs.`
 - Description:
 
   ```text
-  Watch several YouTube TV games at once and pick which one you hear from your Stream Deck.
+  Watch several games at once on YouTube TV, Peacock and Paramount+, and pick which one you hear
+  from your Stream Deck.
 
   This extension is the Chrome half of Rotho YTTV Multiview. It needs the Rotho YTTV Multiview
   Stream Deck plugin (Windows, Stream Deck 7.1+), available from
   https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/releases
 
   How it works:
-  • Open each YouTube TV game in its own Chrome window or tab.
-  • Each game appears on a Stream Deck "Game Slot" key with its matchup (e.g. "SF @ SEA").
-  • Press a key to hear only that game; every other YouTube TV tab is muted.
+  • Open each game in its own Chrome window or tab, on any mix of services.
+  • Each game appears on a Stream Deck "Game Slot" key with its matchup (e.g. "SF @ SEA") and a
+    small badge for its service.
+  • Press a key to hear only that game; every other game tab is muted.
   • A "Mute All" key mutes everything or brings back the last game.
-  • An "Open YouTube TV" key opens YouTube TV in a new Chrome window or tab.
+  • An "Open Service" key opens YouTube TV, Peacock or Paramount+ in a new Chrome window or tab.
   • A "Focus Heard Game" key brings the window and tab of the game you're hearing to the front.
-  • New YouTube TV tabs start muted, so opening a game never interrupts the one you're hearing.
+  • New game tabs start muted, so opening a game never interrupts the one you're hearing.
 
-  Privacy: the extension only looks at tv.youtube.com tabs and talks only to the Stream Deck plugin
-  on your own computer (127.0.0.1). Nothing is sent over the internet.
+  Services: YouTube TV is always on and Peacock is on by default. Turn Paramount+ on in the
+  extension's options; Chrome then asks for access to paramountplus.com, used only to read the
+  program name on live channels.
 
-  Not affiliated with YouTube, Google or Elgato.
+  Privacy: the extension only looks at the game pages of the services you turn on and talks only
+  to the Stream Deck plugin on your own computer (127.0.0.1). Nothing is sent over the internet.
+
+  Not affiliated with YouTube, Google, Peacock, NBCUniversal, Paramount or Elgato.
   ```
 
 - Category: Productivity → Tools. Language: English.
@@ -52,26 +58,42 @@ audio between YouTube TV tabs.`
 
 ## Privacy tab
 
-- Single purpose: `Mutes and unmutes YouTube TV tabs and reports which games are open, so the
-Rotho YTTV Multiview Stream Deck plugin can show each game on a key and switch which one is
-heard.`
+- Single purpose: `Mutes and unmutes streaming TV tabs (YouTube TV, Peacock, Paramount+) and
+reports which games are open, so the Rotho YTTV Multiview Stream Deck plugin can show each game on
+a key and switch which one is heard.`
 - Permission justifications:
-  - `tabs`: `Finds open tv.youtube.com tabs, reads their titles to label Stream Deck keys, and
-mutes or unmutes them when a key is pressed. Also opens a new YouTube TV tab or window, and brings
-a game's tab to the front, when the matching key is pressed.`
+  - `tabs`: `Finds open YouTube TV, Peacock and Paramount+ player tabs by their address, reads the
+Peacock and Paramount+ video tab titles to label Stream Deck keys, and mutes or unmutes those tabs
+when a key is pressed. Also opens a new tab or window of a service, and brings a game's tab to the
+front, when the matching key is pressed.`
   - `storage`: `Keeps the slot assignments and the currently heard tab in session storage so they
-survive the service worker restarting.`
+survive the service worker restarting, and saves which services the user turned on in the options
+page.`
   - `alarms`: `Wakes the service worker periodically to reconnect to the local Stream Deck plugin
 and keep the connection alive.`
   - `scripting`: `Injects the content script into YouTube TV tabs that were already open when the
-extension was installed or updated, so their game titles appear without a reload.`
+extension was installed or updated, so their game titles appear without a reload. When the user
+turns Paramount+ on, registers the Paramount+ live-channel content script and injects it into
+live tabs that are already open.`
   - Host permission `https://tv.youtube.com/*`: `Reads the game matchup from the YouTube TV player,
-since the page title is always "Home - YouTube TV". No other sites are accessed.`
+since the page title is always "Home - YouTube TV".`
+  - Optional host permission `https://www.paramountplus.com/*`: `Requested only when the user turns
+Paramount+ on in the extension's options, and given back when they turn it off. Reads the program
+and channel names from the Paramount+ live player, since the live tab title is only the channel
+name. Nothing else on the site is read.`
 - Remote code: `No, I am not using remote code.`
-- Data usage: tick **Website content** (tab titles and the player's matchup text). Tick all three
+- Data usage: tick **Website content** (tab titles and the player's program text). Tick all three
   certifications (not sold, not used for unrelated purposes, not used for credit decisions).
 - Privacy policy URL:
   `https://github.com/Rothenbergerjl/rotho-youtube-tv-stream-deck-plugin/blob/main/PRIVACY.md`
+
+## Options page
+
+The extension has an options page (`options.html`, opened in its own tab from
+`chrome://extensions` → Details → Extension options, or by pressing an Open Service key that shows
+"Turn on"). It has one switch per service: YouTube TV (always on), Peacock (on by default) and
+Paramount+ (off by default; turning it on asks for the optional host permission above). A
+screenshot of it can go in the listing's screenshots.
 
 ## Distribution tab
 

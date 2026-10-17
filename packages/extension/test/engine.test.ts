@@ -96,6 +96,11 @@ describe("tabTitleFor", () => {
     expect(tabTitleFor(PEACOCK, "")).toBeUndefined();
     expect(tabTitleFor(PEACOCK, "www.peacocktv.com/watch/playback/event/abc")).toBeUndefined();
   });
+
+  it("ignores a title that is just the service's name, seen while the player loads", () => {
+    expect(tabTitleFor(PEACOCK, "Peacock")).toBeUndefined();
+    expect(tabTitleFor(PPLUS_VOD, "Paramount+")).toBeUndefined();
+  });
 });
 
 describe("engine", () => {
