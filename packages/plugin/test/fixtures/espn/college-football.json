@@ -1,0 +1,256 @@
+{
+  "events": [
+    {
+      "id": "401856719",
+      "date": "2026-10-17T19:30Z",
+      "name": "Auburn Tigers at Georgia Bulldogs",
+      "shortName": "AUB @ UGA",
+      "status": {
+        "displayClock": "1:30",
+        "period": 2,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "1:30 - 2nd"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "61",
+              "homeAway": "home",
+              "score": "14",
+              "team": {
+                "id": "61",
+                "abbreviation": "UGA",
+                "displayName": "Georgia Bulldogs",
+                "shortDisplayName": "Georgia",
+                "name": "Bulldogs",
+                "location": "Georgia"
+              }
+            },
+            {
+              "id": "2",
+              "homeAway": "away",
+              "score": "14",
+              "team": {
+                "id": "2",
+                "abbreviation": "AUB",
+                "displayName": "Auburn Tigers",
+                "shortDisplayName": "Auburn",
+                "name": "Tigers",
+                "location": "Auburn"
+              }
+            }
+          ],
+          "situation": {
+            "possession": "2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "401856721",
+      "date": "2026-10-17T19:30Z",
+      "name": "Missouri Tigers at Ole Miss Rebels",
+      "shortName": "MIZ @ MISS",
+      "status": {
+        "displayClock": "2:00",
+        "period": 2,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "2:00 - 2nd"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "145",
+              "homeAway": "home",
+              "score": "21",
+              "team": {
+                "id": "145",
+                "abbreviation": "MISS",
+                "displayName": "Ole Miss Rebels",
+                "shortDisplayName": "Ole Miss",
+                "name": "Rebels",
+                "location": "Ole Miss"
+              }
+            },
+            {
+              "id": "142",
+              "homeAway": "away",
+              "score": "3",
+              "team": {
+                "id": "142",
+                "abbreviation": "MIZ",
+                "displayName": "Missouri Tigers",
+                "shortDisplayName": "Missouri",
+                "name": "Tigers",
+                "location": "Missouri"
+              }
+            }
+          ],
+          "situation": {
+            "possession": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "401858264",
+      "date": "2026-10-17T19:30Z",
+      "name": "Georgia Tech Yellow Jackets at Virginia Tech Hokies",
+      "shortName": "GT @ VT",
+      "status": {
+        "displayClock": "0:00",
+        "period": 2,
+        "type": {
+          "name": "STATUS_HALFTIME",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "Halftime"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "259",
+              "homeAway": "home",
+              "score": "24",
+              "team": {
+                "id": "259",
+                "abbreviation": "VT",
+                "displayName": "Virginia Tech Hokies",
+                "shortDisplayName": "Virginia Tech",
+                "name": "Hokies",
+                "location": "Virginia Tech"
+              }
+            },
+            {
+              "id": "59",
+              "homeAway": "away",
+              "score": "3",
+              "team": {
+                "id": "59",
+                "abbreviation": "GT",
+                "displayName": "Georgia Tech Yellow Jackets",
+                "shortDisplayName": "Georgia Tech",
+                "name": "Yellow Jackets",
+                "location": "Georgia Tech"
+              }
+            }
+          ],
+          "situation": {
+            "possession": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "401866478",
+      "date": "2026-10-17T19:30Z",
+      "name": "Akron Zips at Miami (OH) RedHawks",
+      "shortName": "AKR @ M-OH",
+      "status": {
+        "displayClock": "0:41",
+        "period": 2,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "0:41 - 2nd"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "193",
+              "homeAway": "home",
+              "score": "17",
+              "team": {
+                "id": "193",
+                "abbreviation": "M-OH",
+                "displayName": "Miami (OH) RedHawks",
+                "shortDisplayName": "Miami OH",
+                "name": "RedHawks",
+                "location": "Miami (OH)"
+              }
+            },
+            {
+              "id": "2006",
+              "homeAway": "away",
+              "score": "7",
+              "team": {
+                "id": "2006",
+                "abbreviation": "AKR",
+                "displayName": "Akron Zips",
+                "shortDisplayName": "Akron",
+                "name": "Zips",
+                "location": "Akron"
+              }
+            }
+          ],
+          "situation": {
+            "possession": "193"
+          }
+        }
+      ]
+    },
+    {
+      "id": "401856720",
+      "date": "2026-10-17T16:00Z",
+      "name": "Mississippi State Bulldogs at LSU Tigers",
+      "shortName": "MSST @ LSU",
+      "status": {
+        "displayClock": "0:00",
+        "period": 4,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "99",
+              "homeAway": "home",
+              "score": "31",
+              "team": {
+                "id": "99",
+                "abbreviation": "LSU",
+                "displayName": "LSU Tigers",
+                "shortDisplayName": "LSU",
+                "name": "Tigers",
+                "location": "LSU"
+              }
+            },
+            {
+              "id": "344",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "344",
+                "abbreviation": "MSST",
+                "displayName": "Mississippi State Bulldogs",
+                "shortDisplayName": "Mississippi St",
+                "name": "Bulldogs",
+                "location": "Mississippi State"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

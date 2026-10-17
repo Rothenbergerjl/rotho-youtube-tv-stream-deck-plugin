@@ -1,0 +1,148 @@
+{
+  "events": [
+    {
+      "id": "401872995",
+      "date": "2026-10-16T00:15Z",
+      "name": "Seattle Seahawks at Denver Broncos",
+      "shortName": "SEA @ DEN",
+      "status": {
+        "displayClock": "0:00",
+        "period": 5,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final/OT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "7",
+              "homeAway": "home",
+              "score": "17",
+              "team": {
+                "id": "7",
+                "abbreviation": "DEN",
+                "displayName": "Denver Broncos",
+                "shortDisplayName": "Broncos",
+                "name": "Broncos",
+                "location": "Denver"
+              }
+            },
+            {
+              "id": "26",
+              "homeAway": "away",
+              "score": "14",
+              "team": {
+                "id": "26",
+                "abbreviation": "SEA",
+                "displayName": "Seattle Seahawks",
+                "shortDisplayName": "Seahawks",
+                "name": "Seahawks",
+                "location": "Seattle"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401873008",
+      "date": "2026-10-20T00:15Z",
+      "name": "Washington Commanders at San Francisco 49ers",
+      "shortName": "WSH @ SF",
+      "status": {
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "shortDetail": "10/19 - 8:15 PM EDT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "25",
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "id": "25",
+                "abbreviation": "SF",
+                "displayName": "San Francisco 49ers",
+                "shortDisplayName": "49ers",
+                "name": "49ers",
+                "location": "San Francisco"
+              }
+            },
+            {
+              "id": "28",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "28",
+                "abbreviation": "WSH",
+                "displayName": "Washington Commanders",
+                "shortDisplayName": "Commanders",
+                "name": "Commanders",
+                "location": "Washington"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401873005",
+      "date": "2026-10-18T20:25Z",
+      "name": "Buffalo Bills at Las Vegas Raiders",
+      "shortName": "BUF @ LV",
+      "status": {
+        "displayClock": "0:00",
+        "period": 0,
+        "type": {
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "shortDetail": "10/18 - 4:25 PM EDT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "13",
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "id": "13",
+                "abbreviation": "LV",
+                "displayName": "Las Vegas Raiders",
+                "shortDisplayName": "Raiders",
+                "name": "Raiders",
+                "location": "Las Vegas"
+              }
+            },
+            {
+              "id": "2",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "2",
+                "abbreviation": "BUF",
+                "displayName": "Buffalo Bills",
+                "shortDisplayName": "Bills",
+                "name": "Bills",
+                "location": "Buffalo"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

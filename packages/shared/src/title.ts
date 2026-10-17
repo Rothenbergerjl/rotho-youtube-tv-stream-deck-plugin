@@ -34,7 +34,7 @@ interface Entry {
  * Lower-cases, strips accents and straightens apostrophes so "Atlético" matches "atletico" and
  * "A’s" matches "a's". Used for matching only.
  */
-const fold = (s: string) =>
+export const fold = (s: string) =>
   s.normalize("NFD").replace(/\p{M}/gu, "").replace(/’/g, "'").toLowerCase();
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

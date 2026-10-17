@@ -1,0 +1,100 @@
+{
+  "events": [
+    {
+      "id": "401820788",
+      "date": "2026-03-07T23:30Z",
+      "name": "North Carolina Tar Heels at Duke Blue Devils",
+      "shortName": "UNC @ DUKE",
+      "status": {
+        "displayClock": "0:00",
+        "period": 2,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "150",
+              "homeAway": "home",
+              "score": "76",
+              "team": {
+                "id": "150",
+                "abbreviation": "DUKE",
+                "displayName": "Duke Blue Devils",
+                "shortDisplayName": "Duke",
+                "name": "Blue Devils",
+                "location": "Duke"
+              }
+            },
+            {
+              "id": "153",
+              "homeAway": "away",
+              "score": "61",
+              "team": {
+                "id": "153",
+                "abbreviation": "UNC",
+                "displayName": "North Carolina Tar Heels",
+                "shortDisplayName": "North Carolina",
+                "name": "Tar Heels",
+                "location": "North Carolina"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "900000005",
+      "date": "2026-03-07T23:30Z",
+      "name": "North Carolina Tar Heels at Duke Blue Devils",
+      "shortName": "UNC @ DUKE",
+      "status": {
+        "displayClock": "9:15",
+        "period": 2,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "9:15 - 2nd Half"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "150",
+              "homeAway": "home",
+              "score": "41",
+              "team": {
+                "id": "150",
+                "abbreviation": "DUKE",
+                "displayName": "Duke Blue Devils",
+                "shortDisplayName": "Duke",
+                "name": "Blue Devils",
+                "location": "Duke"
+              }
+            },
+            {
+              "id": "153",
+              "homeAway": "away",
+              "score": "38",
+              "team": {
+                "id": "153",
+                "abbreviation": "UNC",
+                "displayName": "North Carolina Tar Heels",
+                "shortDisplayName": "North Carolina",
+                "name": "Tar Heels",
+                "location": "North Carolina"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "events": [
+    {
+      "id": "401879262",
+      "date": "2026-10-17T14:00Z",
+      "name": "Liverpool at Brentford",
+      "shortName": "LIV @ BRE",
+      "status": {
+        "displayClock": "90'+7'",
+        "period": 2,
+        "type": {
+          "name": "STATUS_FULL_TIME",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "FT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "337",
+              "homeAway": "home",
+              "score": "1",
+              "team": {
+                "id": "337",
+                "abbreviation": "BRE",
+                "displayName": "Brentford",
+                "shortDisplayName": "Brentford",
+                "name": "Brentford",
+                "location": "Brentford"
+              }
+            },
+            {
+              "id": "364",
+              "homeAway": "away",
+              "score": "2",
+              "team": {
+                "id": "364",
+                "abbreviation": "LIV",
+                "displayName": "Liverpool",
+                "shortDisplayName": "Liverpool",
+                "name": "Liverpool",
+                "location": "Liverpool"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401879259",
+      "date": "2026-10-17T14:00Z",
+      "name": "Ipswich Town at Manchester City",
+      "shortName": "IPS @ MNC",
+      "status": {
+        "displayClock": "90'+13'",
+        "period": 2,
+        "type": {
+          "name": "STATUS_FULL_TIME",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "FT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "382",
+              "homeAway": "home",
+              "score": "3",
+              "team": {
+                "id": "382",
+                "abbreviation": "MNC",
+                "displayName": "Manchester City",
+                "shortDisplayName": "Man City",
+                "name": "Manchester City",
+                "location": "Manchester City"
+              }
+            },
+            {
+              "id": "373",
+              "homeAway": "away",
+              "score": "2",
+              "team": {
+                "id": "373",
+                "abbreviation": "IPS",
+                "displayName": "Ipswich Town",
+                "shortDisplayName": "Ipswich",
+                "name": "Ipswich Town",
+                "location": "Ipswich Town"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "900000003",
+      "date": "2026-10-17T14:00Z",
+      "name": "Liverpool at Brentford",
+      "shortName": "LIV @ BRE",
+      "status": {
+        "displayClock": "67'",
+        "period": 2,
+        "type": {
+          "name": "STATUS_SECOND_HALF",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "67'"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "337",
+              "homeAway": "home",
+              "score": "1",
+              "team": {
+                "id": "337",
+                "abbreviation": "BRE",
+                "displayName": "Brentford",
+                "shortDisplayName": "Brentford",
+                "name": "Brentford",
+                "location": "Brentford"
+              }
+            },
+            {
+              "id": "364",
+              "homeAway": "away",
+              "score": "1",
+              "team": {
+                "id": "364",
+                "abbreviation": "LIV",
+                "displayName": "Liverpool",
+                "shortDisplayName": "Liverpool",
+                "name": "Liverpool",
+                "location": "Liverpool"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "900000004",
+      "date": "2026-10-17T14:00Z",
+      "name": "Ipswich Town at Manchester City",
+      "shortName": "IPS @ MNC",
+      "status": {
+        "displayClock": "45'+2'",
+        "period": 1,
+        "type": {
+          "name": "STATUS_HALFTIME",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "HT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "382",
+              "homeAway": "home",
+              "score": "1",
+              "team": {
+                "id": "382",
+                "abbreviation": "MNC",
+                "displayName": "Manchester City",
+                "shortDisplayName": "Man City",
+                "name": "Manchester City",
+                "location": "Manchester City"
+              }
+            },
+            {
+              "id": "373",
+              "homeAway": "away",
+              "score": "1",
+              "team": {
+                "id": "373",
+                "abbreviation": "IPS",
+                "displayName": "Ipswich Town",
+                "shortDisplayName": "Ipswich",
+                "name": "Ipswich Town",
+                "location": "Ipswich Town"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

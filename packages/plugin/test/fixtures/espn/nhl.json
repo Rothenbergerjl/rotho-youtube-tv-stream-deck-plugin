@@ -1,0 +1,103 @@
+{
+  "events": [
+    {
+      "id": "401892519",
+      "date": "2026-10-17T17:00Z",
+      "name": "New Jersey Devils at Washington Capitals",
+      "shortName": "NJ @ WSH",
+      "status": {
+        "displayClock": "0:00",
+        "period": 3,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "23",
+              "homeAway": "home",
+              "score": "4",
+              "team": {
+                "id": "23",
+                "abbreviation": "WSH",
+                "displayName": "Washington Capitals",
+                "shortDisplayName": "Capitals",
+                "name": "Capitals",
+                "location": "Washington"
+              }
+            },
+            {
+              "id": "11",
+              "homeAway": "away",
+              "score": "2",
+              "team": {
+                "id": "11",
+                "abbreviation": "NJ",
+                "displayName": "New Jersey Devils",
+                "shortDisplayName": "Devils",
+                "name": "Devils",
+                "location": "New Jersey"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401892520",
+      "date": "2026-10-17T19:30Z",
+      "name": "Carolina Hurricanes at Winnipeg Jets",
+      "shortName": "CAR @ WPG",
+      "status": {
+        "displayClock": "12:04",
+        "period": 2,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "12:04 - 2nd"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "28",
+              "homeAway": "home",
+              "score": "1",
+              "team": {
+                "id": "28",
+                "abbreviation": "WPG",
+                "displayName": "Winnipeg Jets",
+                "shortDisplayName": "Jets",
+                "name": "Jets",
+                "location": "Winnipeg"
+              }
+            },
+            {
+              "id": "7",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "7",
+                "abbreviation": "CAR",
+                "displayName": "Carolina Hurricanes",
+                "shortDisplayName": "Hurricanes",
+                "name": "Hurricanes",
+                "location": "Carolina"
+              }
+            }
+          ],
+          "situation": {
+            "possession": ""
+          }
+        }
+      ]
+    }
+  ]
+}

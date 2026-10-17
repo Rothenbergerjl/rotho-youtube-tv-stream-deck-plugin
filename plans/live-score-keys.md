@@ -67,32 +67,32 @@ recipes live in `.github/gh-recipes.md` (project id `PVT_kwHOBLWqFc4BmmYP`, Stat
 
 ## Phase 1: ESPN client and matching
 
-Status: Not started
+Status: Complete
 
-- [ ] Save trimmed real scoreboard responses as fixtures in
+- [x] Save trimmed real scoreboard responses as fixtures in
       `packages/plugin/test/fixtures/espn/` (fetch to the scratchpad, trim to a few events, write
       with the file tools): NFL, college football, men's college basketball, MLB, NHL, NBA, EPL,
       Champions League. Each should include `pre`, `in` and `post` events where available, a
       halftime, and a baseball half inning.
-- [ ] Add `packages/plugin/src/scores/feeds.ts`: `LeagueId` → ESPN paths. `ncaa` →
+- [x] Add `packages/plugin/src/scores/feeds.ts`: `LeagueId` → ESPN paths. `ncaa` →
       `football/college-football` (with `groups=80`), `basketball/mens-college-basketball` and
       `basketball/womens-college-basketball` (with `groups=50`); a "Basketball" / "Football" hint in
       the title narrows it. Pool `europe` with no shared league → `soccer/uefa.champions`,
       `soccer/uefa.europa` and both teams' domestic feeds. `intl` → a fixed list of international
       competition feeds (World Cup, qualifiers, Nations League, friendlies, Gold Cup). Export
       `feedsFor(matchup, title): string[]`.
-- [ ] Add `packages/plugin/src/scores/espn.ts`: `parseScoreboard(json): EspnEvent[]` with event
+- [x] Add `packages/plugin/src/scores/espn.ts`: `parseScoreboard(json): EspnEvent[]` with event
       id, start time, state (`pre` | `in` | `post`), both competitors (names, `homeAway`, score as a
       number), possession team id, sport. Malformed events are skipped, not thrown.
-- [ ] Status text for the band in `espn.ts` (`statusText(event, sport)`), from `status.period`,
+- [x] Status text for the band in `espn.ts` (`statusText(event, sport)`), from `status.period`,
       `displayClock` and `status.type.name`: football and basketball "Q4 2:08" (college basketball
       "2H 9:15"), "HALF", hockey "P2 12:01", baseball "▲ 7th" / "▼ 7th", soccer "67'" and "HT",
       "FINAL" (also "F/OT"), pregame local time "8:15P". Keep each at 8 characters or fewer.
-- [ ] Add `packages/plugin/src/scores/match.ts`: `matchEvent(matchup, events)` returns the event
+- [x] Add `packages/plugin/src/scores/match.ts`: `matchEvent(matchup, events)` returns the event
       whose two competitors fold-match the matchup's two teams (by `names` from the team tables),
       plus the scores and possession reordered to the title's order. No match, or more than one,
       returns undefined.
-- [ ] Tests in `packages/plugin/test/scores.test.ts`: parsing each fixture, status text per sport,
+- [x] Tests in `packages/plugin/test/scores.test.ts`: parsing each fixture, status text per sport,
       matching both orders, the code mismatches (Commanders, Warriors, Devils), a European
       cross-league pair, no match and double match.
 
@@ -103,7 +103,37 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Done 2026-10-17. All checks pass: `pnpm test` (shared 688, plugin 166 including 24 new score
+tests, extension 78), `pnpm typecheck`, `pnpm lint`, `pnpm format:check`.
+
+- **Files:** `packages/plugin/src/scores/{feeds,espn,match}.ts`,
+  `packages/plugin/test/scores.test.ts`, eight fixtures in `packages/plugin/test/fixtures/espn/`.
+  Fixtures are trimmed real responses (only the fields we read). Events with ids starting
+  `9000000` are real events hand-edited into live states that weren't on air at capture time.
+- **Shared:** exported `fold` from `title.ts` and added `teamById(teamId)` to `teams/index.ts`
+  (team plus league), used by feeds and matching.
+- **feeds.ts:** `feedsFor(matchup, title)` returns `Feed` objects (`path`, `sport`, `query`,
+  `halves`) instead of strings, because status text needs the sport and halves. `feedKey` and
+  `feedUrl` build the map key and URL. Domestic leagues also search their cups (FA Cup, League Cup,
+  Copa del Rey, DFB-Pokal, Coppa Italia, Coupe de France), and European clubs also search the
+  Conference League. `ucl-extras` clubs only search UEFA feeds. Teams from different pools
+  return no feeds.
+- **espn.ts:** `parseScoreboard` keeps `displayName`, `shortDisplayName` and `location` as names.
+  ESPN's `name` (the mascot) is left out so "Rebels" or "Tigers" can't match the wrong school.
+  Possession is the side (`home` / `away`) from `situation.possession`, or Top / Bot in the detail
+  for baseball. `statusText(event, feed, { now, timeZone })` covers live, breaks, overtime,
+  finals (`F/OT`, `F/SO`, `F/10`, soccer `F/ET` and `F/PK`), postponed and delayed games. Pregame
+  shows kickoff from the event's `date`, because soccer's detail just says "Scheduled".
+- **match.ts:** `matchEvent(matchup, events, now)` only considers events starting within 18 h of
+  now, because soccer feeds return the nearest match day even when it isn't today. When several
+  match (an MLB doubleheader), the live game wins, then the closest start. A pair whose names fit
+  both ways round is skipped.
+- **Changes from the plan text:** status text can be 9 characters ("MON 8:15P" for a kickoff on
+  another day); matching takes `now` and picks the best of several matches instead of returning
+  undefined; ESPN `name` isn't used for matching.
+- **Next (Phase 2):** the tracker should call `feedsFor`, then fetch `feedUrl(feed)`, then run
+  `parseScoreboard` and `matchEvent` with the slot's matchup. It can stop polling a game's other
+  candidate feeds once one of them has matched it.
 
 ## Phase 2: Score tracker
 

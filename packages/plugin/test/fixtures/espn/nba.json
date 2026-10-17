@@ -1,0 +1,148 @@
+{
+  "events": [
+    {
+      "id": "401811031",
+      "date": "2026-04-10T23:30Z",
+      "name": "Toronto Raptors at New York Knicks",
+      "shortName": "TOR @ NY",
+      "status": {
+        "displayClock": "12:00",
+        "period": 4,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "18",
+              "homeAway": "home",
+              "score": "112",
+              "team": {
+                "id": "18",
+                "abbreviation": "NY",
+                "displayName": "New York Knicks",
+                "shortDisplayName": "Knicks",
+                "name": "Knicks",
+                "location": "New York"
+              }
+            },
+            {
+              "id": "28",
+              "homeAway": "away",
+              "score": "95",
+              "team": {
+                "id": "28",
+                "abbreviation": "TOR",
+                "displayName": "Toronto Raptors",
+                "shortDisplayName": "Raptors",
+                "name": "Raptors",
+                "location": "Toronto"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401811039",
+      "date": "2026-04-11T02:00Z",
+      "name": "Golden State Warriors at Sacramento Kings",
+      "shortName": "GS @ SAC",
+      "status": {
+        "displayClock": "12:00",
+        "period": 4,
+        "type": {
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "shortDetail": "Final"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "23",
+              "homeAway": "home",
+              "score": "124",
+              "team": {
+                "id": "23",
+                "abbreviation": "SAC",
+                "displayName": "Sacramento Kings",
+                "shortDisplayName": "Kings",
+                "name": "Kings",
+                "location": "Sacramento"
+              }
+            },
+            {
+              "id": "9",
+              "homeAway": "away",
+              "score": "118",
+              "team": {
+                "id": "9",
+                "abbreviation": "GS",
+                "displayName": "Golden State Warriors",
+                "shortDisplayName": "Warriors",
+                "name": "Warriors",
+                "location": "Golden State"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "900000006",
+      "date": "2026-04-10T23:30Z",
+      "name": "Toronto Raptors at New York Knicks",
+      "shortName": "TOR @ NY",
+      "status": {
+        "displayClock": "0:41",
+        "period": 4,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "0:41 - 4th"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "18",
+              "homeAway": "home",
+              "score": "108",
+              "team": {
+                "id": "18",
+                "abbreviation": "NY",
+                "displayName": "New York Knicks",
+                "shortDisplayName": "Knicks",
+                "name": "Knicks",
+                "location": "New York"
+              }
+            },
+            {
+              "id": "28",
+              "homeAway": "away",
+              "score": "95",
+              "team": {
+                "id": "28",
+                "abbreviation": "TOR",
+                "displayName": "Toronto Raptors",
+                "shortDisplayName": "Raptors",
+                "name": "Raptors",
+                "location": "Toronto"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
