@@ -17,7 +17,32 @@ const colors = {
   warning: "#f59e0b",
   update: "#3b82f6",
   play: "#ef4444",
+  /** Text and glyphs on the green band of a heard scoreboard key. */
+  heardInk: "#06210f",
 };
+
+/** A live score drawn in the scoreboard layout; see ScoreSnapshot in scores/tracker.ts. */
+export interface ScoreView {
+  state: "pre" | "in" | "post";
+  /** Info band text, e.g. "Q4 2:08", "8:15P", "FINAL". */
+  status: string;
+  /** In the title's team order. */
+  scores: readonly [number, number];
+  /** Index of the team with the ball or at bat; drawn only while live. */
+  possession?: 0 | 1;
+  alert?: ScoreAlert;
+}
+
+/**
+ * One frame of a score alert for `team`: "row" frames blink that team's row white (`on`), and
+ * "band" shows "+N ABBR" in the info band in that team's color.
+ */
+export interface ScoreAlert {
+  team: 0 | 1;
+  points: number;
+  mode: "row" | "band";
+  on: boolean;
+}
 
 export interface SlotKeyView {
   slot: number;
@@ -33,6 +58,8 @@ export interface SlotKeyView {
   teamColors?: boolean;
   /** Service of the game in the slot; missing means YouTube TV. */
   service?: ServiceId;
+  /** Live score; a matchup title with a score draws the scoreboard layout. */
+  score?: ScoreView;
 }
 
 export interface MuteAllKeyView {
@@ -79,7 +106,7 @@ export function toDataUrl(svg: string): string {
 }
 
 export function slotKeySvg(view: SlotKeyView): string {
-  return withUpdateBadge(slotKeyBody(view), view.updateAvailable);
+  return scoreboardKey(view) ?? withUpdateBadge(slotKeyBody(view), view.updateAvailable);
 }
 
 export function muteAllKeySvg(view: MuteAllKeyView): string {
@@ -143,6 +170,110 @@ function slotKeyBody(view: SlotKeyView): string {
     // Raised from the key's centre so a second line clears the service badge.
     lines(wrap(label), colors.text, 34, SIZE / 2 - 2),
     serviceBadge(service),
+  );
+}
+
+// Scoreboard layout: a 60 px row per team (abbreviation left, score right) around a 24 px info
+// band with the slot, service, status and speaker.
+const ROW_HEIGHT = 60;
+const ROWS = [
+  { top: 0, mid: 30 },
+  { top: 84, mid: 114 },
+] as const;
+const BAND = { top: 60, height: 24, mid: 72 } as const;
+const ROW_LEFT = 12;
+const ROW_RIGHT = SIZE - 10;
+
+/**
+ * The scoreboard layout for a matchup with a score, or undefined to draw the normal key. Rows use
+ * the team colors (dark when Team colors is off or the teams are unknown). A heard game turns the
+ * band green instead of drawing the border; an update badge sits in the band, not the corner.
+ */
+function scoreboardKey(view: SlotKeyView): string | undefined {
+  const { score } = view;
+  if (!score || !view.connected || view.mismatch || view.title === undefined) return undefined;
+  const matchup = parseTitle(view.title).matchup;
+  if (!matchup) return undefined;
+  const split = view.teamColors === false ? undefined : teamSplit(view.title);
+  const fills: readonly [string, string] = split?.fills ?? [colors.background, colors.background];
+  const abbrs = [matchup.teams[0].abbr, matchup.teams[1].abbr] as const;
+  const { alert } = score;
+  const pre = score.state === "pre";
+
+  // Scores shrink for three digits; abbreviations shrink to clear the score and possession dot.
+  const digits = Math.max(...score.scores.map((s) => String(s).length));
+  const scoreFont = Math.min(42, Math.floor(70 / (digits * 0.6)));
+  const scoreWidth = pre ? 0 : digits * 0.6 * scoreFont;
+  const longest = Math.max(...abbrs.map((a) => a.length));
+  const abbrRoom = ROW_RIGHT - ROW_LEFT - scoreWidth - 16;
+  const abbrFont = Math.min(pre ? 30 : 24, Math.floor(abbrRoom / (longest * 0.62)));
+
+  const rows = ROWS.map(({ top, mid }, i) => {
+    const flash = alert?.mode === "row" && alert.on && alert.team === i;
+    const fill = flash ? colors.text : fills[i]!;
+    const ink = inkFor(fill);
+    const abbr = abbrs[i]!;
+    let row =
+      `<rect y="${top}" width="${SIZE}" height="${ROW_HEIGHT}" fill="${fill}"/>` +
+      text(ROW_LEFT, mid + Math.round(abbrFont * 0.37), abbr, ink, abbrFont, "start");
+    if (!pre) {
+      const own = score.scores[i]!;
+      const lost = score.state === "post" && own < score.scores[1 - i]!;
+      row += text(
+        ROW_RIGHT,
+        mid + Math.round(scoreFont * 0.36),
+        String(own),
+        ink,
+        scoreFont,
+        "end",
+        lost ? 0.5 : undefined,
+      );
+    }
+    if (score.state === "in" && score.possession === i) {
+      const x = Math.round(ROW_LEFT + abbr.length * 0.62 * abbrFont + 8);
+      row += `<circle cx="${x}" cy="${mid + 1}" r="4.5" fill="${ink}"/>`;
+    }
+    return row;
+  });
+
+  return svg(colors.background, ...rows, infoBand(view, score, fills, abbrs));
+}
+
+function infoBand(
+  view: SlotKeyView,
+  score: ScoreView,
+  fills: readonly [string, string],
+  abbrs: readonly [string, string],
+): string {
+  const callout = score.alert?.mode === "band" && score.alert.on ? score.alert : undefined;
+  const heard = view.heard === true && !callout;
+  const fill = callout ? fills[callout.team] : heard ? colors.heard : colors.dimBackground;
+  const ink = callout ? inkFor(fill) : heard ? colors.heardInk : colors.text;
+  const glyph = callout ? ink : heard ? colors.heardInk : colors.dim;
+  const { top, height, mid } = BAND;
+
+  // The status is centred between the service monogram and the update badge or speaker.
+  const left = 46;
+  const right = view.updateAvailable ? 97 : 117;
+  const status = callout ? `+${callout.points} ${abbrs[callout.team]}` : score.status;
+  const font = Math.min(14, Math.floor((right - left) / (Math.max(1, status.length) * 0.6)));
+
+  return (
+    `<rect y="${top}" width="${SIZE}" height="${height}" fill="${fill}"/>` +
+    `<circle cx="14" cy="${mid}" r="10" fill="${heard ? colors.heardInk : colors.badge}"/>` +
+    text(14, mid + 5, String(view.slot), colors.text, 13) +
+    monogram(35, mid, 8.5, view.service ?? "youtubeTv") +
+    text((left + right) / 2, mid + Math.round(font * 0.36), status, ink, font) +
+    (view.updateAvailable ? bandUpdateBadge(106, mid) : "") +
+    speaker(127, mid, view.heard === true ? "on" : "off", glyph, 0.55)
+  );
+}
+
+/** The blue up-arrow dot, small enough for the info band. */
+function bandUpdateBadge(cx: number, cy: number): string {
+  return (
+    `<circle cx="${cx}" cy="${cy}" r="8" fill="${colors.update}"/>` +
+    `<path d="M${cx} ${cy + 4} V${cy - 3.5} M${cx - 3.5} ${cy} L${cx} ${cy - 4} L${cx + 3.5} ${cy}" fill="none" stroke="${colors.text}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`
   );
 }
 
@@ -423,8 +554,17 @@ function lines(textLines: string[], color: string, maxFont = 34, centerY = SIZE 
     .join("");
 }
 
-function text(x: number, y: number, value: string, color: string, size: number): string {
-  return `<text x="${x}" y="${y}" fill="${color}" font-family="${FONT}" font-size="${size}" font-weight="700" text-anchor="middle">${escapeXml(value)}</text>`;
+function text(
+  x: number,
+  y: number,
+  value: string,
+  color: string,
+  size: number,
+  anchor: "start" | "middle" | "end" = "middle",
+  opacity?: number,
+): string {
+  const fade = opacity === undefined ? "" : ` opacity="${opacity}"`;
+  return `<text x="${x}" y="${y}" fill="${color}" font-family="${FONT}" font-size="${size}" font-weight="700" text-anchor="${anchor}"${fade}>${escapeXml(value)}</text>`;
 }
 
 /** Speaker glyph centred at (cx, cy): sound waves when "on", a cross when "off". */

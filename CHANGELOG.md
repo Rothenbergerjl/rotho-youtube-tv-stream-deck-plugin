@@ -3,6 +3,32 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-17
+
+Game Slot keys show the live score, with an alert when a team scores. Only the plugin changed; the
+extension's version moves to 0.6.0 to stay in step, with no code changes, so there's no need to
+wait for Chrome to update it.
+
+### Added
+
+- **Live scores** on Game Slot keys for games between two teams the plugin knows: each team gets
+  a row in its colors with its abbreviation and score, and a band across the middle shows the slot,
+  service and game status (clock and period, inning, soccer minute, kickoff time, or FINAL). A dot
+  marks the team with the ball or at bat, and the losing score dims at the final. Scores come from
+  ESPN's public scoreboard for every league the plugin knows.
+- **Score alerts:** when a team scores, its row flashes white, then the band shows the points
+  ("+3 BUF") in that team's color for 10 seconds.
+- Three Game Slot settings: **Show score** and **Score alerts** (both on by default) and **Score
+  delay** (none to 90 seconds, default 30), which holds new scores back so the key doesn't spoil
+  plays the stream hasn't shown yet.
+
+### Changed
+
+- With a score on the key, the game you're hearing turns the middle band green instead of
+  drawing a green border, and the update arrow sits in the band.
+- The plugin now contacts ESPN while a slot holds a game between known teams; see the
+  [privacy policy](PRIVACY.md).
+
 ## [0.5.0] - 2026-10-17
 
 Peacock and Paramount+ games work alongside YouTube TV. Update both the plugin and the extension.

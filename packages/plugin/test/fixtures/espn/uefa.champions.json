@@ -1,0 +1,100 @@
+{
+  "events": [
+    {
+      "id": "401915399",
+      "date": "2026-10-20T19:00Z",
+      "name": "Barcelona at Paris Saint-Germain",
+      "shortName": "BAR @ PSG",
+      "status": {
+        "displayClock": "0'",
+        "period": null,
+        "type": {
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "shortDetail": "Scheduled"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "160",
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "id": "160",
+                "abbreviation": "PSG",
+                "displayName": "Paris Saint-Germain",
+                "shortDisplayName": "PSG",
+                "name": "Paris Saint-Germain",
+                "location": "Paris Saint-Germain"
+              }
+            },
+            {
+              "id": "83",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "83",
+                "abbreviation": "BAR",
+                "displayName": "Barcelona",
+                "shortDisplayName": "Barcelona",
+                "name": "Barcelona",
+                "location": "Barcelona"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401915392",
+      "date": "2026-10-20T19:00Z",
+      "name": "Atlético Madrid at VfB Stuttgart",
+      "shortName": "ATM @ VFB",
+      "status": {
+        "displayClock": "0'",
+        "period": null,
+        "type": {
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "shortDetail": "Scheduled"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "134",
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "id": "134",
+                "abbreviation": "VFB",
+                "displayName": "VfB Stuttgart",
+                "shortDisplayName": "Stuttgart",
+                "name": "VfB Stuttgart",
+                "location": "VfB Stuttgart"
+              }
+            },
+            {
+              "id": "1068",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "1068",
+                "abbreviation": "ATM",
+                "displayName": "Atlético Madrid",
+                "shortDisplayName": "Atlético",
+                "name": "Atlético Madrid",
+                "location": "Atlético Madrid"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

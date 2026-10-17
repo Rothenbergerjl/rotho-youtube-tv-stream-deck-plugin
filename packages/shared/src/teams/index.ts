@@ -55,3 +55,13 @@ const colorsById = new Map<string, NonNullable<Team["colors"]>>(
 
 /** A team's [primary, secondary] colors by its teamId, e.g. "nfl:BUF"; undefined when unknown. */
 export const teamColors = (teamId: string): Team["colors"] => colorsById.get(teamId);
+
+const entriesById = new Map<string, { league: League; team: Team }>(
+  LEAGUES.flatMap((league) =>
+    league.teams.map((team) => [`${league.id}:${team.abbr}`, { league, team }] as const),
+  ),
+);
+
+/** A team and its league by teamId, e.g. "nfl:BUF"; undefined when unknown. */
+export const teamById = (teamId: string): { league: League; team: Team } | undefined =>
+  entriesById.get(teamId);

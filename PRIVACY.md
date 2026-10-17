@@ -30,6 +30,15 @@ computer. Neither one collects, sells or shares personal data.
 
 - Receives the data above from the extension and shows it on your Stream Deck keys. It writes a
   local log file in the Stream Deck plugins folder.
+- While a Game Slot holds a game between two teams it knows, it asks ESPN's public scoreboard
+  (`site.api.espn.com`) for that league's scores, to show the live score on the key: every 15
+  seconds while the game is on, every 5 minutes before it starts or after it ends, and not at all
+  when no slot holds such a game. The request names only the league (for example
+  `football/nfl`); it contains no program titles, tab details or personal data. ESPN sees your IP
+  address as with any web request (see
+  [The Walt Disney Company's privacy policy](https://privacy.thewaltdisneycompany.com/en/)).
+  Turning Show score off on a key hides the score on that key; the requests continue while the
+  game is in a slot.
 - About every 12 hours it asks GitHub's public API for the latest release of this project, to
   show when an update is available. The request contains no personal data; GitHub sees your IP
   address as with any web request (see

@@ -1,6 +1,6 @@
 {
   "name": "@rotho/extension",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Chrome extension that tracks YouTube TV, Peacock and Paramount+ tabs and controls their audio for the Stream Deck plugin.",
   "type": "module",

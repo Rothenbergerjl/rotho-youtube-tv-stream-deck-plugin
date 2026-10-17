@@ -1,0 +1,100 @@
+{
+  "events": [
+    {
+      "id": "401908027",
+      "date": "2026-10-18T00:00Z",
+      "name": "Tampa Bay Rays at Cleveland Guardians",
+      "shortName": "TB @ CLE",
+      "status": {
+        "displayClock": "0:00",
+        "period": 1,
+        "type": {
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "shortDetail": "10/17 - 8:00 PM EDT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "5",
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "id": "5",
+                "abbreviation": "CLE",
+                "displayName": "Cleveland Guardians",
+                "shortDisplayName": "Guardians",
+                "name": "Guardians",
+                "location": "Cleveland"
+              }
+            },
+            {
+              "id": "30",
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "id": "30",
+                "abbreviation": "TB",
+                "displayName": "Tampa Bay Rays",
+                "shortDisplayName": "Rays",
+                "name": "Rays",
+                "location": "Tampa Bay"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "900000001",
+      "date": "2026-10-18T00:00Z",
+      "name": "Tampa Bay Rays at Cleveland Guardians",
+      "shortName": "TB @ CLE",
+      "status": {
+        "displayClock": "0:00",
+        "period": 7,
+        "type": {
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "shortDetail": "Top 7th"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "id": "5",
+              "homeAway": "home",
+              "score": "2",
+              "team": {
+                "id": "5",
+                "abbreviation": "CLE",
+                "displayName": "Cleveland Guardians",
+                "shortDisplayName": "Guardians",
+                "name": "Guardians",
+                "location": "Cleveland"
+              }
+            },
+            {
+              "id": "30",
+              "homeAway": "away",
+              "score": "3",
+              "team": {
+                "id": "30",
+                "abbreviation": "TB",
+                "displayName": "Tampa Bay Rays",
+                "shortDisplayName": "Rays",
+                "name": "Rays",
+                "location": "Tampa Bay"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

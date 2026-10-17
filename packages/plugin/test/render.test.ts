@@ -5,6 +5,8 @@ import {
   muteAllKeySvg,
   openKeySvg,
   pickFills,
+  type ScoreView,
+  type SlotKeyView,
   slotKeySvg,
   teamSplit,
   toDataUrl,
@@ -588,5 +590,155 @@ describe("wrap", () => {
 describe("toDataUrl", () => {
   it("base64-encodes the SVG", () => {
     expect(decode(toDataUrl("<svg/>"))).toBe("<svg/>");
+  });
+});
+
+describe("scoreboard layout", () => {
+  const KC_BUF = "Kansas City Chiefs at Buffalo Bills";
+  const key = (view: Partial<SlotKeyView> = {}, score: Partial<ScoreView> = {}) =>
+    slotKeySvg({
+      slot: 2,
+      connected: true,
+      title: KC_BUF,
+      heard: false,
+      ...view,
+      score: { state: "in", status: "Q4 2:08", scores: [17, 20], possession: 0, ...score },
+    });
+  const rowFill = (svg: string, top: 0 | 84) =>
+    new RegExp(`<rect y="${top}" width="144" height="60" fill="(#[0-9A-Fa-f]{6})"/>`).exec(
+      svg,
+    )?.[1];
+  const bandFill = (svg: string) =>
+    /<rect y="60" width="144" height="24" fill="(#[0-9A-Fa-f]{6})"\/>/.exec(svg)?.[1];
+
+  it("draws a row per team with its score, and the status in the band", () => {
+    const svg = key();
+    expect(rowFill(svg, 0)).toBe("#E31837"); // KC
+    expect(rowFill(svg, 84)).toBe("#00338D"); // BUF
+    expect(svg).toContain('text-anchor="start">KC</text>');
+    expect(svg).toContain('text-anchor="end">17</text>');
+    expect(svg).toContain('text-anchor="end">20</text>');
+    expect(svg).toContain(">Q4 2:08</text>");
+    expect(svg).toContain(">2</text>"); // slot number in the band
+    expect(svg).toContain(">TV</text>");
+    expect(svg).toContain('r="4.5"'); // possession dot
+    expect(svg).not.toContain('stroke-width="8"');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("puts the possession dot on the right row, only while live", () => {
+    expect(key({}, { possession: 1 })).toContain('cy="115" r="4.5"');
+    expect(key({}, { possession: 0 })).toContain('cy="31" r="4.5"');
+    expect(key({}, { possession: undefined })).not.toContain('r="4.5"');
+    expect(key({}, { state: "post", status: "FINAL" })).not.toContain('r="4.5"');
+  });
+
+  it("shows larger abbreviations and the kickoff time before the game", () => {
+    const svg = key({}, { state: "pre", status: "8:15P", scores: [0, 0], possession: undefined });
+    expect(svg).toContain('font-size="30" font-weight="700" text-anchor="start">KC</text>');
+    expect(svg).not.toContain('text-anchor="end"');
+    expect(svg).toContain(">8:15P</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("dims the loser's score at the final", () => {
+    const svg = key(
+      { title: "Toronto Maple Leafs at Boston Bruins" },
+      { state: "post", status: "FINAL", scores: [2, 4] },
+    );
+    expect(svg).toContain('text-anchor="end" opacity="0.5">2</text>');
+    expect(svg).toContain('text-anchor="end">4</text>');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("dims neither score in a tie", () => {
+    const svg = key({}, { state: "post", status: "FINAL", scores: [20, 20] });
+    expect(svg).not.toContain("opacity");
+  });
+
+  it("shrinks three-digit scores and the abbreviations beside them", () => {
+    const svg = key(
+      { title: "Boston Celtics at New York Knicks" },
+      { status: "Q4 0:41", scores: [108, 112], possession: undefined },
+    );
+    expect(svg).toContain('font-size="38" font-weight="700" text-anchor="end">112</text>');
+    expect(svg).toContain('font-size="20" font-weight="700" text-anchor="start">NYK</text>');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it.each([
+    ["Boston Red Sox at New York Yankees", "▲ 7th", [3, 2]],
+    ["Premier League: Arsenal vs. Liverpool", "67'", [1, 1]],
+    ["Auburn Tigers at Georgia Bulldogs", "HALF", [7, 14]],
+  ] as const)("draws %s at %s", (title, status, scores) => {
+    const svg = key({ title }, { status, scores, possession: undefined });
+    expect(svg).toContain(`>${status}</text>`);
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("turns the band green for the heard game instead of drawing a border", () => {
+    const svg = key({ heard: true });
+    expect(bandFill(svg)).toBe("#22c55e");
+    expect(svg).toContain('fill="#06210f"'); // dark ink on the green band
+    expect(svg).not.toContain('stroke-width="8"');
+    expect(bandFill(key())).toBe("#0a0a0a");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("uses dark rows with Team colors off or for unknown teams", () => {
+    const plain = key({ teamColors: false });
+    expect(rowFill(plain, 0)).toBe("#111418");
+    expect(rowFill(plain, 84)).toBe("#111418");
+    expect(plain).toContain(">KC</text>");
+
+    const unknown = key(
+      { title: "College Basketball: Gonzaga at Saint Mary's" },
+      { status: "2H 9:15", scores: [41, 38], possession: undefined },
+    );
+    expect(rowFill(unknown, 0)).toBe("#111418");
+    expect(unknown).toContain('font-size="22" font-weight="700" text-anchor="start">GONZ</text>');
+    expect(unknown).toMatchSnapshot();
+  });
+
+  it("blinks the scoring team's row white on a row alert frame", () => {
+    const on = key({}, { alert: { team: 1, points: 3, mode: "row", on: true } });
+    expect(rowFill(on, 84)).toBe("#f5f5f5");
+    expect(rowFill(on, 0)).toBe("#E31837");
+    expect(on).toContain('fill="#111418" font-family="Segoe UI, Arial, sans-serif" font-size="42"');
+    expect(on).toMatchSnapshot();
+    // An "off" frame is the normal key.
+    expect(key({}, { alert: { team: 1, points: 3, mode: "row", on: false } })).toBe(key());
+  });
+
+  it("shows the callout in the scoring team's color on a band alert", () => {
+    const svg = key({ heard: true }, { alert: { team: 1, points: 3, mode: "band", on: true } });
+    expect(bandFill(svg)).toBe("#00338D");
+    expect(svg).toContain(">+3 BUF</text>");
+    expect(svg).not.toContain(">Q4 2:08</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("moves the update badge into the band", () => {
+    const svg = key({ updateAvailable: true });
+    expect(svg).toContain('cx="106" cy="72" r="8" fill="#3b82f6"');
+    expect(svg).not.toContain('r="12" fill="#3b82f6"'); // the corner badge
+    // The status gets less room, so a long one shrinks.
+    expect(key({ updateAvailable: true }, { status: "MON 8:15P", state: "pre" })).toContain(
+      'font-size="9" font-weight="700" text-anchor="middle">MON 8:15P</text>',
+    );
+    expect(key({}, { status: "MON 8:15P", state: "pre" })).toContain(
+      'font-size="13" font-weight="700" text-anchor="middle">MON 8:15P</text>',
+    );
+  });
+
+  it("keeps the normal key without a matchup, a connection or a matching protocol", () => {
+    const plain = (view: Partial<SlotKeyView>) =>
+      slotKeySvg({ slot: 2, connected: true, title: KC_BUF, heard: false, ...view });
+    const withScore = (view: Partial<SlotKeyView>) => key(view);
+    expect(withScore({ title: "NFL GameDay Live" })).toBe(plain({ title: "NFL GameDay Live" }));
+    expect(withScore({ connected: false })).toBe(plain({ connected: false }));
+    expect(withScore({ mismatch: "plugin" })).toBe(plain({ mismatch: "plugin" }));
+    expect(withScore({ title: undefined })).toBe(plain({ title: undefined }));
+    expect(key().startsWith("<svg")).toBe(true);
   });
 });
