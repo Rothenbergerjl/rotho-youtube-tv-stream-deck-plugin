@@ -8,10 +8,10 @@ describe("formatMatchup", () => {
     ["Monday Night Football with Peyton and Eli: Buffalo Bills at Los Angeles Rams", "BUF @ LAR"],
     ["Prime Vision Alt Cast: Seattle Seahawks at Denver Broncos", "SEA @ DEN"],
     ["CBS 4 News at 6", "CBS 4 News at 6"],
-    ["WRTV News at 6:00", "WRTV News at 6:…"],
+    ["WRTV News at 6:00", "WRTV News at…"],
     ["FOX 59", "FOX 59"],
     ["NFL GameDay Live", "NFL GameDay Live"],
-    ["Disney Season Kickoff Tournament: U18/19 Boys (Final)", "Disney Season K…"],
+    ["Disney Season Kickoff Tournament: U18/19 Boys (Final)", "Disney Season…"],
   ])("real title %j → %j", (raw, expected) => {
     expect(formatMatchup(raw)).toBe(expected);
   });
@@ -30,8 +30,8 @@ describe("formatMatchup", () => {
   });
 
   it("does not match team names inside other words", () => {
-    expect(formatMatchup("Rams at Billsville")).toBe("Rams at Billsvi…");
-    expect(formatMatchup("Superrams at Bills")).toBe("Superrams at Bi…");
+    expect(formatMatchup("Rams at Billsville")).toBe("Rams at…");
+    expect(formatMatchup("Superrams at Bills")).toBe("Superrams at…");
   });
 
   it("ignores accents when matching", () => {
@@ -46,6 +46,33 @@ describe("formatMatchup", () => {
   it("never returns more than MAX_TITLE_LENGTH characters", () => {
     expect(formatMatchup("x".repeat(50))).toHaveLength(MAX_TITLE_LENGTH);
     expect(formatMatchup("x".repeat(MAX_TITLE_LENGTH))).toBe("x".repeat(MAX_TITLE_LENGTH));
+    for (const raw of ["The Price Is Right at Night", "A: B C D E F G H I J K L M N O P"]) {
+      expect(formatMatchup(raw).length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+    }
+  });
+});
+
+describe("non-sports titles", () => {
+  it.each([
+    // Filler
+    ["Live: The Kelly Clarkson Show", "The Kelly…"],
+    ["LIVE: Jeopardy!", "Jeopardy!"],
+    ["New: Survivor", "Survivor"],
+    ["Survivor (New)", "Survivor"],
+    ["Good Morning America (Live)", "Good Morning…"],
+    // "Series: Episode" keeps the series when over the limit.
+    ["The Simpsons: Treehouse of Horror XXXVII", "The Simpsons"],
+    ["Law & Order: Special Victims Unit", "Law & Order"],
+    // ...but not when the whole title fits.
+    ["CSI: Vegas", "CSI: Vegas"],
+    // Word boundary, and a hard cut only for one over-long word.
+    ["Wheel of Fortune Celebrity", "Wheel of…"],
+    ["Supercalifragilisticexpialidocious", "Supercalifragil…"],
+    // "Live" and "New" elsewhere stay.
+    ["Saturday Night Live", "Saturday Night…"],
+    ["New Amsterdam", "New Amsterdam"],
+  ])("%j → %j", (raw, expected) => {
+    expect(formatMatchup(raw)).toBe(expected);
   });
 });
 

@@ -143,14 +143,20 @@ const genericPattern = new RegExp(
 /**
  * Parses a program title. A matchup anywhere in the title becomes "AWAY @ HOME" or "A v B", e.g.
  * "Monday Night Football: Buffalo Bills at Los Angeles Rams" → "BUF @ LAR", with the league and
- * team ids in `matchup`. Anything else is whitespace-normalised, has a trailing " - YouTube TV"
- * removed, and is cut to MAX_TITLE_LENGTH.
+ * team ids in `matchup` (see findMatchup for how teams are resolved).
+ *
+ * Any other title is whitespace-normalised and loses a trailing " - YouTube TV" and filler such as
+ * "Live:" or "(New)". If it is still over MAX_TITLE_LENGTH, a "Series: Episode" title keeps just the
+ * series, and the result is cut at a word boundary with "…" (mid-word only when the first word
+ * alone is too long).
  */
 export function parseTitle(raw: string): ParsedTitle {
   const text = raw
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/ - YouTube TV$/i, "");
+    .replace(/ - YouTube TV$/i, "")
+    .replace(/^(?:live|new)\s*:\s*/i, "")
+    .replace(/\s*\((?:live|new)\)$/i, "");
 
   const matchup = findMatchup(text);
   if (matchup) {
@@ -158,10 +164,17 @@ export function parseTitle(raw: string): ParsedTitle {
     return { display: `${first.abbr} ${matchup.separator} ${second.abbr}`, matchup };
   }
 
-  return {
-    display:
-      text.length > MAX_TITLE_LENGTH ? `${text.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…` : text,
-  };
+  return { display: shorten(text) };
+}
+
+function shorten(text: string): string {
+  if (text.length <= MAX_TITLE_LENGTH) return text;
+  const series = text.split(": ")[0]!;
+  if (series !== text && series.length > 0) return shorten(series);
+
+  const cut = text.slice(0, MAX_TITLE_LENGTH - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }
 
 /** The key text for a title; see parseTitle. */

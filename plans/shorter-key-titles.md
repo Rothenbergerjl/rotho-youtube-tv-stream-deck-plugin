@@ -298,27 +298,93 @@ Status: Complete
   could read as FLA @ FLA). Not handled.
 
 ## Phase 5: Non-sports shortening and final checks
-Status: Not started
+Status: Complete
 
-- [ ] Implement the light rules in `parseTitle`'s non-matchup path: filler prefix and suffix removal,
+- [x] Implement the light rules in `parseTitle`'s non-matchup path: filler prefix and suffix removal,
       "Series: Episode" → series name, word-boundary cut with "…".
-- [ ] Update the existing real-title expectations ("WRTV News at 6:00" → "WRTV News at…", "Disney
+- [x] Update the existing real-title expectations ("WRTV News at 6:00" → "WRTV News at…", "Disney
       Season Kickoff Tournament: U18/19 Boys (Final)" → "Disney Season…", "Rams at Billsville" →
       "Rams at…") and add cases for each rule, including a single over-long word (still hard-cut).
-- [ ] Keep the `MAX_TITLE_LENGTH` invariant test.
-- [ ] Add one render test in `packages/plugin/test/render.test.ts` for a soccer `v` label, checking it
+- [x] Keep the `MAX_TITLE_LENGTH` invariant test.
+- [x] Add one render test in `packages/plugin/test/render.test.ts` for a soccer `v` label, checking it
       renders on one line.
-- [ ] Update the doc comments on `parseTitle`/`formatMatchup` to describe the new behaviour.
+- [x] Update the doc comments on `parseTitle`/`formatMatchup` to describe the new behaviour.
 
 ### Verification Plan
 - `pnpm test`, `pnpm typecheck`, `pnpm lint` and `pnpm format:check` all exit 0.
 - `pnpm build` succeeds (the shared tables bundle into the plugin and extension).
 
+**Result (2026-10-17):** `pnpm test` passes (shared 179, plugin 91, extension 53). `pnpm typecheck`,
+`pnpm lint` and `pnpm format:check` are clean. `pnpm build` succeeds. The extension's
+`background.js` went from 45.4 kB to 13.2 kB after the `sideEffects` fix below, with no team data
+left in it. The plugin bundle still includes the tables, as it should.
+
 ### Phase Summary
-_(write when phase completes)_
+- `parseTitle` now strips a leading "Live:" / "New:" and a trailing "(Live)" / "(New)"
+  (case-insensitive) along with " - YouTube TV". This runs before matchup detection, so "LIVE:
+  Chiefs at Bills" still matches. A non-matchup title over 16 characters keeps the part before the
+  first ": " (applied recursively), then is cut at the last space within 15 characters plus "…".
+  It hard-cuts only when the first word alone is too long. That logic is in `shorten()`.
+- Real-title expectations changed as planned ("WRTV News at…", "Disney Season…", "Rams at…",
+  "Superrams at…"). New `non-sports titles` tests cover each rule, plus "Saturday Night Live" and
+  "New Amsterdam" to show that "Live"/"New" elsewhere in a title are kept.
+- Render test "fits a soccer 'v' matchup on one line" checks that "MCI v ARS" is a single `<text>` next
+  to the slot badge. No snapshots changed.
+- **Beyond the plan:** the build check showed the extension bundling every team table and building
+  the regexes at service-worker startup, even though it never formats titles. Adding
+  `"sideEffects": false` to `packages/shared/package.json` lets esbuild drop the unused modules.
+  Nothing in `@rotho/shared` relies on import side effects, and all extension tests pass. The plan's
+  verification note "bundle into the plugin and extension" is out of date: only the plugin bundles
+  the tables now.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Key titles now shorten matchups across 15 tables:
+- NFL, NBA, WNBA, MLB and NHL
+- Power-conference college plus Notre Dame
+- Premier League, EFL Championship, LaLiga, Bundesliga, Serie A, Ligue 1 and regular Champions
+  League clubs
+- Liga MX and national teams
+
+US leagues use their league codes, soccer uses broadcast or FIFA codes. Matchups display as
+"AWY @ HOM" for "at" titles and "A v B" for "vs" titles (so NFL "KC vs BUF" is now "KC v BUF").
+
+The shared package exposes `parseTitle()`, which returns `{ display, matchup? }`. A matchup has
+`league` (when both teams share one), `separator`, and per-team `abbr` plus `teamId` (e.g.
+`epl:ARS`) for #7's logos. `formatMatchup()` is kept as a wrapper, so plugin call sites are
+unchanged. The data lives in `packages/shared/src/teams/`, one file per league, with season and
+source headers.
+
+How a matchup resolves:
+- Matching ignores case and accents, and the longest name wins.
+- Teams pair within a **pool**: one league, or all European club leagues together (posted as a
+  deviation on #6).
+- League hints ("NHL Hockey:", "Premier League:", "College Football:") and sport hints ("Soccer")
+  narrow the pools.
+- When no single pool fits, each side shortens on its own; a side with one candidate keeps its
+  code.
+- Unknown teams use a guarded generic form (first word, at most 4 letters). It needs a hint or
+  sport word and is blocked by show words. This narrower guard was also posted as a deviation on #6.
+
+Non-sports titles drop filler, keep the series name before ":", and cut at word boundaries. A
+`sideEffects` flag keeps the tables out of the extension bundle.
+
+Known limits:
+- Non-NFL fixtures are best-guess formats and are not verified against the live app.
+- 2026–27 promotions and college membership weren't checked against official sites.
+- A table name inside a longer unknown name can match first ("South Florida at Florida").
+- MLS isn't covered.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Delete this plan file in the final commit (per the GitHub sync section), then push the branch and
+   run `/open-pr`. The PR body must include `Fixes #6`.
+2. After review, squash-merge the PR on GitHub. #6 closes and the board moves it to Done.
+3. To ship it, bump the version in the root `package.json`, run `pnpm version:sync`, add a
+   `CHANGELOG.md` section (e.g. "Shorter key titles for NBA, WNBA, MLB, NHL, college and soccer;
+   'vs' matchups now show as 'v'"), and merge that.
+4. Run the **Release** workflow from the Actions tab on `main` with the same version. It tags the
+   commit and publishes both packages to a GitHub Release.
+5. Install the new plugin, and the extension too, since its bundle changed size from the
+   `sideEffects` fix. Then open a few live games on YouTube TV (an NBA, NHL or college game, a
+   Premier League or Liga MX match, and a non-sports show) and check the Game Slot and Focus keys.
+   If a real title doesn't shorten, capture it and add it as a fixture: the formats in
+   `title.test.ts` marked "Unverified format" are guesses.
