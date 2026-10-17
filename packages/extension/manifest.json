@@ -12,6 +12,11 @@
   },
   "permissions": ["tabs", "storage", "alarms", "scripting"],
   "host_permissions": ["https://tv.youtube.com/*"],
+  "optional_host_permissions": ["https://www.paramountplus.com/*"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"

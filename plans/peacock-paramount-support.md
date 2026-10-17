@@ -193,27 +193,27 @@ Result (2026-10-17): extension tests pass (6 files, 69 tests); `pnpm test` (shar
 - The `onInstalled` content-script injection is still YouTube TV only; Phase 3 adds Paramount+.
 
 ## Phase 3: Options page and Paramount+ content script
-Status: Not started
+Status: Complete
 
-- [ ] `manifest.json`: `options_ui { page: "options.html", open_in_tab: true }` and
+- [x] `manifest.json`: `options_ui { page: "options.html", open_in_tab: true }` and
       `optional_host_permissions: ["https://www.paramountplus.com/*"]`. `host_permissions` and
       `content_scripts` stay YouTube TV only.
-- [ ] Add `src/options.html` + `src/options.ts`: a toggle per service (YouTube TV shown as always
+- [x] Add `src/options.html` + `src/options.ts`: a toggle per service (YouTube TV shown as always
       on). Turning Paramount+ on calls `chrome.permissions.request` from the click handler and
       saves only if granted; turning it off saves and calls `chrome.permissions.remove`. Writes
       `services` to `chrome.storage.local`. Follows the key art's dark look.
-- [ ] Add `src/paramount-content.ts`: on `/live-tv/stream/` pages reports
+- [x] Add `src/paramount-content.ts`: on `/live-tv/stream/` pages reports
       `<program> (<channel>)` (or just the program when the channel is missing) with the same
       throttled MutationObserver and `pageTitle` message as `content.ts`; share the reporter by
       moving it to `src/report-title.ts`. Selectors and extraction in
       `src/paramount-title.ts`, unit-tested like `page-title.ts`.
-- [ ] `background.ts`: when Paramount+ is enabled and access is granted, register the content
+- [x] `background.ts`: when Paramount+ is enabled and access is granted, register the content
       script (`registerContentScripts`, id `paramountPlus`, matches
       `https://www.paramountplus.com/live-tv/*`) and inject it into open live tabs; unregister when
       disabled. On startup reconcile registration with `chrome.permissions.contains`. On
       `chrome.permissions.onRemoved` for that origin, turn Paramount+ off.
-- [ ] `build.mjs`: bundle `options.ts` and `paramount-content.ts`, copy `options.html`.
-- [ ] `test/manifest.test.ts`: assert the new fields and that required host permissions are
+- [x] `build.mjs`: bundle `options.ts` and `paramount-content.ts`, copy `options.html`.
+- [x] `test/manifest.test.ts`: assert the new fields and that required host permissions are
       unchanged (guards against the re-approval prompt).
 
 ### Verification Plan
@@ -221,8 +221,52 @@ Status: Not started
   `dist/` contains `options.html`, `options.js`, `paramount-content.js`.
 - `pnpm typecheck` and `pnpm lint` pass.
 
+Result (2026-10-17): extension tests pass (7 files, 77 tests); the build writes `options.html`,
+`options.js` and `paramount-content.js` to `dist/`; `pnpm test`, `pnpm typecheck`, `pnpm lint`
+and Prettier on the extension pass. The options page, permission prompt, script registration and
+Paramount+ selectors are not checked in Chrome yet (Phase 5).
+
 ### Phase Summary
-_(write when phase completes)_
+- **`src/service-settings.ts`** (new, used by the options page and the worker): `SERVICES_KEY`
+  (`"services"`), `PARAMOUNT_ORIGINS`, `PARAMOUNT_LIVE_MATCHES`, `PARAMOUNT_SCRIPT_ID`,
+  `loadServices()`, `saveServices()` and `setServiceEnabled(service, on)`. Saves always go through
+  `enabledServicesFrom`, so the stored list always has `youtubeTv` and is in `SERVICE_IDS` order.
+  The `SERVICES_KEY` constant moved here from `background.ts`.
+- **Options page:** `options.html` is static (dark palette from the key art, badge discs, CSS
+  switches); `options.ts` builds one row per `SERVICE_IDS` entry.
+  - YouTube TV's switch is disabled and always on.
+  - Peacock just saves.
+  - Turning Paramount+ on calls `chrome.permissions.request` synchronously in the change
+    handler. It saves only if access is granted; otherwise it shows a red note and reverts.
+  - Turning Paramount+ off saves, then calls `permissions.remove`.
+  - The page shows Paramount+ as on only while access is granted, and re-renders on storage and
+    permission changes.
+- **Content scripts:**
+  - The throttled MutationObserver reporter moved to `report-title.ts`
+    (`startTitleReporter(read)`), and `content.ts` is now a two-line wrapper.
+  - `read` may return `null` (report nothing). That also clears the last title, so a tab that
+    leaves the live player and comes back gets its title resent.
+  - `paramount-title.ts` `extractParamountTitle(root, pathname)` returns null off
+    `/live-tv/stream/` pages. Otherwise it returns `program (channel)`, or just the program or
+    the channel, or `""`. A program equal to the channel isn't repeated.
+- **Worker (`background.ts`):**
+  - `checkServices` treats Paramount+ as off without host access and saves the corrected list.
+  - `reconcileParamountScript` registers or unregisters the `paramountPlus` script to match.
+    When it registers, it also injects the script into open `/live-tv/*` tabs. Errors are only
+    logged, so tracking keeps working.
+  - Both run at startup (before the sync) and on every `services` storage change (before
+    `servicesChanged`).
+  - When Chrome reports the Paramount+ origin removed (`permissions.onRemoved`), the worker
+    saves Paramount+ as off, and the storage change handles the rest.
+  - `onInstalled` is now queued after startup. It injects the YouTube TV script as before, and
+    injects the Paramount+ script only if startup didn't already.
+  - `pageTitle` messages are now ignored unless the sender tab's URL has title source
+    `content`.
+- **Phase 5 live check should cover:** the options page look and the permission prompt; that the
+  registered script survives a browser restart and an extension reload (startup re-registers it
+  if Chrome dropped it); the Paramount+ selectors; and SPA navigation into `/live-tv/` from
+  another Paramount+ page. That last case gets no script, because only `/live-tv/*` is matched.
+  Widen the matches to the whole site if that's a problem.
 
 ## Phase 4: Plugin badge and Open key service setting
 Status: Not started
