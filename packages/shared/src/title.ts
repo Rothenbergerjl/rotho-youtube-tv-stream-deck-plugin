@@ -1,5 +1,5 @@
 // Shortens a YouTube TV program title so it fits on a 72×72 Stream Deck key.
-import { LEAGUES, type League, type LeagueId, type Team } from "./teams";
+import { LEAGUES, poolOf, SPORT_HINTS, type League, type LeagueId, type Team } from "./teams";
 
 /** Longest text kept for non-matchup titles (about two 8-character lines on a key). */
 export const MAX_TITLE_LENGTH = 16;
@@ -52,8 +52,12 @@ const AFTER = "(?![\\p{L}\\p{N}])";
 
 /** Folded team name → every team that uses it. More than one entry means a collision. */
 const entriesByName = new Map<string, Entry[]>();
-/** Folded hint phrase → the leagues it points to. */
-const leaguesByHint = new Map<string, LeagueId[]>();
+/** Folded hint phrase → the pools it allows. */
+const poolsByHint = new Map<string, string[]>();
+const addHint = (hint: string, pool: string) => {
+  const key = fold(hint);
+  poolsByHint.set(key, [...(poolsByHint.get(key) ?? []), pool]);
+};
 for (const league of LEAGUES) {
   for (const team of league.teams) {
     for (const name of team.names) {
@@ -61,10 +65,8 @@ for (const league of LEAGUES) {
       entriesByName.set(key, [...(entriesByName.get(key) ?? []), { league, team }]);
     }
   }
-  for (const hint of league.hints) {
-    const key = fold(hint);
-    leaguesByHint.set(key, [...(leaguesByHint.get(key) ?? []), league.id]);
-  }
+  for (const hint of league.hints) addHint(hint, poolOf(league));
+  for (const hint of SPORT_HINTS[league.sport] ?? []) addHint(hint, poolOf(league));
 }
 
 const teamPattern = alternation(entriesByName.keys());
@@ -72,7 +74,7 @@ const matchupPattern = new RegExp(
   `${BEFORE}(${teamPattern})\\s+(at|@|vs\\.?|v\\.?)\\s+(${teamPattern})${AFTER}`,
   "u",
 );
-const hintPattern = new RegExp(`${BEFORE}(${alternation(leaguesByHint.keys())})${AFTER}`, "gu");
+const hintPattern = new RegExp(`${BEFORE}(${alternation(poolsByHint.keys())})${AFTER}`, "gu");
 
 /**
  * Parses a program title. A matchup anywhere in the title becomes "AWAY @ HOME" or "A v B", e.g.
@@ -104,25 +106,24 @@ export function formatMatchup(raw: string): string {
 }
 
 /**
- * Resolves the first "X at Y" / "X vs Y" in a folded title. A league hint in the title limits the
- * candidates to that league; otherwise exactly one league must have both teams. Ambiguous or
- * unknown matchups return undefined rather than guessing.
+ * Resolves the first "X at Y" / "X vs Y" in a folded title. A league or sport hint in the title
+ * limits the candidates to its pools; otherwise exactly one pool must have both teams (a pool is
+ * one league, or a group of leagues whose teams meet, like European clubs). Ambiguous or unknown
+ * matchups return undefined rather than guessing. `league` is set when both teams share one.
  */
 function findMatchup(folded: string): Matchup | undefined {
   const match = matchupPattern.exec(folded);
   if (!match) return undefined;
 
-  const hinted = new Set(
-    [...folded.matchAll(hintPattern)].flatMap((m) => leaguesByHint.get(m[1]!)!),
-  );
+  const hinted = new Set([...folded.matchAll(hintPattern)].flatMap((m) => poolsByHint.get(m[1]!)!));
   const candidates = (name: string) => {
     const entries = entriesByName.get(name)!;
-    return hinted.size > 0 ? entries.filter((e) => hinted.has(e.league.id)) : entries;
+    return hinted.size > 0 ? entries.filter((e) => hinted.has(poolOf(e.league))) : entries;
   };
   const firsts = candidates(match[1]!);
   const seconds = candidates(match[3]!);
   const pairs = firsts.flatMap((a) =>
-    seconds.filter((b) => b.league === a.league).map((b) => [a, b] as const),
+    seconds.filter((b) => poolOf(b.league) === poolOf(a.league)).map((b) => [a, b] as const),
   );
   if (pairs.length !== 1) return undefined;
 
@@ -132,7 +133,7 @@ function findMatchup(folded: string): Matchup | undefined {
     teamId: `${league.id}:${team.abbr}`,
   });
   return {
-    league: first.league.id,
+    ...(first.league === second.league && { league: first.league.id }),
     separator: match[2]!.startsWith("v") ? "v" : "@",
     teams: [side(first), side(second)],
   };

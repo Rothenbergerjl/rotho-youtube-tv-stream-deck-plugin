@@ -1,0 +1,45 @@
+// Regular Champions League and Europa League clubs from outside the top-5 leagues, 2025–26.
+// Source: uefa.com club pages. Also carries the European cup hints for the whole "europe" pool.
+import type { League } from "./types";
+
+export const UCL_EXTRAS: League = {
+  id: "ucl-extras",
+  sport: "soccer",
+  pool: "europe",
+  hints: [
+    "UEFA Champions League",
+    "Champions League",
+    "UCL",
+    "UEFA Europa League",
+    "Europa League",
+    "Conference League",
+    "UEFA Super Cup",
+    "Scottish Premiership",
+    "Eredivisie",
+    "Primeira Liga",
+  ],
+  teams: [
+    { abbr: "AJA", names: ["AFC Ajax", "Ajax"] },
+    { abbr: "BEN", names: ["SL Benfica", "Benfica"] },
+    { abbr: "BOD", names: ["Bodø/Glimt", "Bodo/Glimt"] },
+    { abbr: "BRU", names: ["Club Brugge", "Brugge"] },
+    { abbr: "CEL", names: ["Celtic"] },
+    { abbr: "COP", names: ["FC Copenhagen", "Copenhagen", "København"] },
+    { abbr: "DZG", names: ["Dinamo Zagreb"] },
+    { abbr: "FEN", names: ["Fenerbahçe"] },
+    { abbr: "FEY", names: ["Feyenoord"] },
+    { abbr: "GAL", names: ["Galatasaray"] },
+    { abbr: "OLY", names: ["Olympiacos", "Olympiakos"] },
+    { abbr: "POR", names: ["FC Porto", "Porto"] },
+    { abbr: "PSV", names: ["PSV Eindhoven", "PSV"] },
+    { abbr: "RAN", names: ["Rangers"] },
+    { abbr: "RSB", names: ["Red Star Belgrade", "Crvena Zvezda", "Red Star"] },
+    { abbr: "SAL", names: ["Red Bull Salzburg", "RB Salzburg", "Salzburg"] },
+    { abbr: "SHA", names: ["Shakhtar Donetsk", "Shakhtar"] },
+    { abbr: "SLA", names: ["Slavia Prague", "Slavia Praha"] },
+    { abbr: "SPA", names: ["Sparta Prague", "Sparta Praha"] },
+    { abbr: "SCP", names: ["Sporting CP", "Sporting Lisbon"] },
+    { abbr: "USG", names: ["Union Saint-Gilloise", "Union SG"] },
+    { abbr: "YBO", names: ["BSC Young Boys", "Young Boys"] },
+  ],
+};

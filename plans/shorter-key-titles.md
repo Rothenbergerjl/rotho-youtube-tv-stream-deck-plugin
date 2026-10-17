@@ -181,23 +181,23 @@ Status: Complete
   The headers name the official sites, but I didn't fetch those pages.
 
 ## Phase 3: Soccer
-Status: Not started
+Status: Complete
 
-- [ ] Add `teams/epl.ts`, `teams/efl-championship.ts`, `teams/laliga.ts`, `teams/bundesliga.ts`,
+- [x] Add `teams/epl.ts`, `teams/efl-championship.ts`, `teams/laliga.ts`, `teams/bundesliga.ts`,
       `teams/seriea.ts`, `teams/ligue1.ts`, `teams/ucl-extras.ts`, `teams/ligamx.ts`,
       `teams/national.ts`, using broadcast 3-letter / FIFA codes and the common aliases.
-- [ ] Add hints: "Premier League", "EPL", "EFL Championship", "Sky Bet Championship", "LaLiga"/
+- [x] Add hints: "Premier League", "EPL", "EFL Championship", "Sky Bet Championship", "LaLiga"/
       "La Liga", "Bundesliga", "Serie A", "Ligue 1", "Liga MX", "UEFA Champions League", "Champions
       League", "Europa League", "Conference League" (European hints cover every European club
       league), "World Cup", "WC Qualifier", "Gold Cup", "Nations League", "Copa América",
       "International Friendly" (national teams). A soccer-wide hint ("Soccer", "Fútbol") limits the
       search to soccer leagues.
-- [ ] Handle soccer collisions in tests: "Rangers" (Scottish club vs NHL/MLB; "Champions League:
+- [x] Handle soccer collisions in tests: "Rangers" (Scottish club vs NHL/MLB; "Champions League:
       Rangers vs. Ajax" → RAN v AJA), "Athletic Club" vs "Athletics", "Inter" (Inter Milan only, since
       MLS is out), "Arsenal vs. Chelsea" (no hint, one league → ARS v CHE), "Real Madrid vs Barcelona",
       "Club América vs. Chivas" and "América vs. Guadalajara" (accents and aliases), "United States vs.
       Mexico" (→ USA v MEX), "Mexico" national team vs a Liga MX side, "Man City v Spurs".
-- [ ] Test that a club shared between the EPL and Championship tables in a promotion year isn't
+- [x] Test that a club shared between the EPL and Championship tables in a promotion year isn't
       listed twice. Each club is in exactly one table.
 
 ### Verification Plan
@@ -205,8 +205,37 @@ Status: Not started
 - The uniqueness test from Phase 2 covers the new leagues.
 - `pnpm typecheck` and `pnpm lint` exit 0.
 
+**Result (2026-10-17):** 138/138 shared and 90/90 plugin tests pass. `pnpm typecheck`, `pnpm lint` and
+`prettier --check packages/shared plans` are clean.
+
 ### Phase Summary
-_(write when phase completes)_
+- **Deviation: pools.** The plan said a matchup needs "one league that has both teams". That would
+  have blocked every Champions League game (Arsenal is `epl`, Real Madrid is `laliga`), FA Cup ties
+  between divisions, and promoted clubs still listed in the wrong English table. So `League` now has
+  an optional `pool`, which defaults to the league id. Every European club table uses
+  `pool: "europe"`, while Liga MX (`ligamx`) and national teams (`intl`) each have their own pool.
+  Pairing, ambiguity checks and hints all work per pool, and a hint for any league allows its whole
+  pool. `matchup.league` is set only when both teams share a league; each side's `teamId` always
+  carries its own league (e.g. `epl:ARS`, `laliga:RMA`). The pool and sport-hint helpers are
+  `poolOf()` and `SPORT_HINTS` in `teams/index.ts` (soccer: "Soccer", "Fútbol"); Phase 4 can add
+  basketball, hockey and the like there.
+- Nine new tables: `epl` (20), `efl-championship` (27, adds Cardiff, Luton, Plymouth), `laliga` (23),
+  `bundesliga` (20), `seriea` (23), `ligue1` (21), `ucl-extras` (22, including Bodø/Glimt and Union SG),
+  `ligamx` (18), `intl` (65 national teams with FIFA codes and the Spanish names Univision and
+  Telemundo use). The European tables are 2025–26 clubs plus the 2025 relegations. 2026–27
+  promotions weren't verified: a missing promoted club just falls back to Phase 4's generic form,
+  and with the shared pool a club in the "wrong" table still matches.
+- The European cup hints (Champions/Europa/Conference League, Super Cup, Scottish Premiership,
+  Eredivisie, Primeira Liga) live in `ucl-extras.ts`. The English cup hints (FA Cup, Carabao Cup)
+  are in `efl-championship.ts`.
+- The uniqueness test now checks names per **pool** (folded), not per league, which covers "each
+  club in exactly one table". Abbreviations are still checked per league. A few codes repeat across
+  leagues in the pool (POR is Porto and Portsmouth, CEL is Celtic and Celta, BRE is Brentford and
+  Brest), but `teamId` keeps them distinct.
+- Known ambiguity: "Spurs vs. Wolves" fits the NBA and the Premier League, so it has no matchup
+  without a hint. "Mexico vs. Club América" (national team vs club) has no matchup because they're
+  in different pools.
+- Deviation comment posted on #6 with the user's OK (2026-10-17).
 
 ## Phase 4: College and generic fallback
 Status: Not started

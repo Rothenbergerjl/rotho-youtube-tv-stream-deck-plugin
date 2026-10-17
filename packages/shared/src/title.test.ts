@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMatchup, LEAGUES, MAX_TITLE_LENGTH, parseTitle } from ".";
+import { formatMatchup, LEAGUES, MAX_TITLE_LENGTH, parseTitle, poolOf } from ".";
 
 describe("formatMatchup", () => {
   // Real titles captured from tv.youtube.com on 2026-10-11.
@@ -102,6 +102,82 @@ describe("nickname collisions", () => {
   });
 });
 
+describe("soccer", () => {
+  // Unverified format: best guesses at YouTube TV titles, not captured from the app.
+  it.each([
+    ["Premier League: Arsenal vs. Chelsea", "ARS v CHE"],
+    ["Arsenal vs. Chelsea", "ARS v CHE"],
+    ["Man City v Spurs", "MCI v TOT"],
+    ["Wolves vs. Manchester United", "WOL v MUN"],
+    ["EFL Championship: Leeds United vs. Sheffield Wednesday", "LEE v SHW"],
+    ["Real Madrid vs Barcelona", "RMA v BAR"],
+    ["Champions League: Rangers vs. Ajax", "RAN v AJA"],
+    ["LaLiga: Atlético de Madrid vs. Sevilla", "ATM v SEV"],
+    ["Athletic Club vs. Real Sociedad", "ATH v RSO"],
+    ["Bundesliga: Bayern München vs. Borussia Dortmund", "BAY v BVB"],
+    ["Serie A: Inter Milan vs. AC Milan", "INT v ACM"],
+    ["Juventus vs. Napoli", "JUV v NAP"],
+    ["Ligue 1: Paris Saint-Germain vs. Marseille", "PSG v MAR"],
+    ["Liga MX: Club América vs. Chivas", "AME v GDL"],
+    ["América vs. Guadalajara", "AME v GDL"],
+    ["Tigres UANL vs. Rayados", "TIG v MTY"],
+    ["Atlético San Luis vs. Toluca", "ASL v TOL"],
+    ["United States vs. Mexico", "USA v MEX"],
+    ["USMNT vs. México", "USA v MEX"],
+    ["Copa América: Argentina vs. Brasil", "ARG v BRA"],
+    ["World Cup Qualifier: England vs. Republic of Ireland", "ENG v IRL"],
+    ["Estados Unidos vs. Canada", "USA v CAN"],
+  ])("%j → %j", (raw, expected) => {
+    expect(formatMatchup(raw)).toBe(expected);
+  });
+
+  it.each([
+    // Different leagues in the European pool: the matchup has no single league.
+    ["UEFA Champions League: Arsenal vs. Real Madrid", "ARS v RMA"],
+    ["Champions League: Celtic vs. Bayern Munich", "CEL v BAY"],
+    ["Bodø/Glimt vs. Tottenham Hotspur", "BOD v TOT"],
+    ["FA Cup: Sunderland vs. Wrexham", "SUN v WRE"],
+  ])("cross-league %j → %j", (raw, expected) => {
+    const parsed = parseTitle(raw);
+    expect(parsed.display).toBe(expected);
+    expect(parsed.matchup?.league).toBeUndefined();
+    expect(parsed.matchup?.teams.every((t) => t.teamId)).toBe(true);
+  });
+
+  it("records each side's own league in its team id", () => {
+    expect(parseTitle("Arsenal vs. Real Madrid").matchup?.teams.map((t) => t.teamId)).toEqual([
+      "epl:ARS",
+      "laliga:RMA",
+    ]);
+  });
+
+  it.each([
+    // Rangers is also NHL and MLB; only the Scottish club's pool has Celtic.
+    ["Rangers vs. Celtic", "RAN v CEL"],
+    // Spurs and Wolves are also NBA nicknames, so this needs a hint.
+    ["Premier League: Spurs vs. Wolves", "TOT v WOL"],
+    ["Spurs at Lakers", "SAS @ LAL"],
+    ["Wolves at Celtics", "MIN @ BOS"],
+    // "Celtic" is not "Celtics".
+    ["Celtics at Knicks", "BOS @ NYK"],
+    // "Atlético" alone is Atlético Madrid; the full name wins for San Luis.
+    ["Atlético vs. Barcelona", "ATM v BAR"],
+    // Inter Miami is not in any table (MLS is out of scope), so "Inter" doesn't match it.
+    ["Inter vs. Juventus", "INT v JUV"],
+  ])("collision %j → %j", (raw, expected) => {
+    expect(formatMatchup(raw)).toBe(expected);
+  });
+
+  it.each([
+    "Mexico vs. Club América", // national team vs club: different pools
+    "Orlando City vs. Inter Miami", // MLS
+    "Soccer: Rangers at Kings", // sport hint excludes the NHL
+    "Spurs vs. Wolves", // NBA (SAS, MIN) and Premier League (TOT, WOL) both fit
+  ])("%j has no matchup", (raw) => {
+    expect(parseTitle(raw).matchup).toBeUndefined();
+  });
+});
+
 describe("parseTitle", () => {
   it("returns league, separator and team ids for a matchup", () => {
     expect(parseTitle("Monday Night Football: Buffalo Bills at Los Angeles Rams")).toEqual({
@@ -130,16 +206,20 @@ describe("parseTitle", () => {
 });
 
 describe("LEAGUES", () => {
-  it.each(LEAGUES.map((l) => [l.id, l] as const))(
-    "%s has unique abbreviations and names",
-    (_, league) => {
-      const abbrs = league.teams.map((t) => t.abbr);
-      // Folded the same way parseTitle matches, so "Montréal" and "Montreal" count as one name.
-      const names = league.teams.flatMap((t) =>
-        t.names.map((n) => n.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase()),
-      );
-      expect(new Set(abbrs).size).toBe(abbrs.length);
-      expect(new Set(names).size).toBe(names.length);
-    },
-  );
+  // Folded the same way parseTitle matches, so "Montréal" and "Montreal" count as one name.
+  const fold = (n: string) => n.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+  it.each(LEAGUES.map((l) => [l.id, l] as const))("%s has unique abbreviations", (_, league) => {
+    const abbrs = league.teams.map((t) => t.abbr);
+    expect(new Set(abbrs).size).toBe(abbrs.length);
+  });
+
+  // A name repeated within a pool (e.g. a club in both English tables) would make it ambiguous.
+  const pools = [...new Set(LEAGUES.map(poolOf))];
+  it.each(pools)("pool %s has unique names", (pool) => {
+    const names = LEAGUES.filter((l) => poolOf(l) === pool).flatMap((l) =>
+      l.teams.flatMap((t) => t.names.map(fold)),
+    );
+    expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
+  });
 });
