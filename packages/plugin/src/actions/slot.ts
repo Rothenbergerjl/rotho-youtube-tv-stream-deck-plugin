@@ -10,11 +10,13 @@ import streamDeck, {
 import { MAX_SLOTS } from "@rotho/shared";
 import { slotKeySvg, toDataUrl } from "../render";
 import type { ExtensionServer } from "../server";
+import { teamColorsSetting } from "../settings";
 import type { Store } from "../store";
 import type { UpdateInfo } from "../updates";
 
 type SlotSettings = {
   slot?: number;
+  teamColors?: boolean;
 };
 
 // Messages with ui/slot.html. The property inspector asks for the update status when it loads
@@ -26,6 +28,8 @@ type FromPropertyInspector = { type: "getUpdate" } | { type: "openUpdate" };
 export class SlotAction extends SingletonAction<SlotSettings> {
   /** Slot number for each visible key, by action id. */
   private readonly slots = new Map<string, number>();
+  /** The Team colors setting for each visible key, by action id. */
+  private readonly teamColors = new Map<string, boolean>();
   private sentUpdate: UpdateInfo | undefined;
 
   constructor(
@@ -53,18 +57,21 @@ export class SlotAction extends SingletonAction<SlotSettings> {
       // New key: default to the lowest slot no other visible key uses.
       const used = new Set(this.slots.values());
       slot = Array.from({ length: MAX_SLOTS }, (_, i) => i + 1).find((s) => !used.has(s)) ?? 1;
-      await ev.action.setSettings({ slot });
+      await ev.action.setSettings({ ...ev.payload.settings, slot });
     }
     this.slots.set(ev.action.id, slot);
+    this.teamColors.set(ev.action.id, teamColorsSetting(ev.payload.settings.teamColors));
     await this.render(ev.action.id);
   }
 
   override onWillDisappear(ev: WillDisappearEvent<SlotSettings>): void {
     this.slots.delete(ev.action.id);
+    this.teamColors.delete(ev.action.id);
   }
 
   override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<SlotSettings>): Promise<void> {
     this.slots.set(ev.action.id, validSlot(ev.payload.settings.slot) ?? 1);
+    this.teamColors.set(ev.action.id, teamColorsSetting(ev.payload.settings.teamColors));
     await this.render(ev.action.id);
   }
 
@@ -99,6 +106,7 @@ export class SlotAction extends SingletonAction<SlotSettings> {
           heard: game?.heard,
           mismatch,
           updateAvailable: update !== undefined,
+          teamColors: this.teamColors.get(id) ?? true,
         }),
       ),
     );

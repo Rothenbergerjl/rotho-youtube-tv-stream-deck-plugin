@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { ACTION_UUIDS, PLUGIN_UUID } from "@rotho/shared";
 import { describe, expect, it } from "vitest";
 
@@ -15,6 +15,21 @@ describe("plugin manifest", () => {
       ACTION_UUIDS.open,
       ACTION_UUIDS.focus,
     ]);
+  });
+
+  it("points each settings panel at a file that exists", () => {
+    const paths = Object.fromEntries(
+      manifest.Actions.map((a: { UUID: string; PropertyInspectorPath?: string }) => [
+        a.UUID,
+        a.PropertyInspectorPath,
+      ]),
+    );
+    expect(paths[ACTION_UUIDS.slot]).toBe("ui/slot.html");
+    expect(paths[ACTION_UUIDS.open]).toBe("ui/open.html");
+    expect(paths[ACTION_UUIDS.focus]).toBe("ui/focus.html");
+    for (const path of Object.values(paths).filter(Boolean)) {
+      expect(existsSync(new URL(`../${PLUGIN_UUID}.sdPlugin/${path}`, import.meta.url))).toBe(true);
+    }
   });
 
   it("targets Node 24 and Stream Deck 7.1+", () => {

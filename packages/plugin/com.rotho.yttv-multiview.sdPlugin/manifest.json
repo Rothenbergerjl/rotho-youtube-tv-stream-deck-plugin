@@ -52,6 +52,7 @@
       "UUID": "com.rotho.yttv-multiview.focus",
       "Icon": "imgs/actions/focus/icon",
       "Tooltip": "Shows the game you're hearing; press to bring its Chrome window and tab to the front.",
+      "PropertyInspectorPath": "ui/focus.html",
       "Controllers": ["Keypad"],
       "States": [
         {

@@ -165,18 +165,18 @@ match the approved mockup. PIT @ GB and BUF @ LAR are covered by assertions rath
 The Phase 4 "MCI v ARS" test still passes `teamColors: false`, so adding EPL colors won't change it.
 
 ## Phase 3: Team-colors toggle
-Status: Not started
+Status: Complete
 
-- [ ] `ui/slot.html`: add an `sdpi-checkbox` with `setting="teamColors"`, label "Team colors",
+- [x] `ui/slot.html`: add an `sdpi-checkbox` with `setting="teamColors"`, label "Team colors",
       default checked, above the slot help text
-- [ ] New `ui/focus.html` using the same sdpi-components script, with the same checkbox and a one-line
+- [x] New `ui/focus.html` using the same sdpi-components script, with the same checkbox and a one-line
       description
-- [ ] `manifest.json`: add `"PropertyInspectorPath": "ui/focus.html"` to the Focus Heard Game action
-- [ ] `actions/slot.ts`: extend `SlotSettings` with `teamColors?: boolean`; keep a per-action map of
+- [x] `manifest.json`: add `"PropertyInspectorPath": "ui/focus.html"` to the Focus Heard Game action
+- [x] `actions/slot.ts`: extend `SlotSettings` with `teamColors?: boolean`; keep a per-action map of
       the setting (filled in `onWillAppear` / `onDidReceiveSettings`) and pass it to `slotKeySvg`
-- [ ] `actions/focus.ts`: add settings handling (`onWillAppear` and `onDidReceiveSettings`), render
+- [x] `actions/focus.ts`: add settings handling (`onWillAppear` and `onDidReceiveSettings`), render
       each Focus key with its own setting instead of one shared image
-- [ ] Tests: `manifest.test.ts` asserts Focus has `ui/focus.html` and the file exists; a settings
+- [x] Tests: `manifest.test.ts` asserts Focus has `ui/focus.html` and the file exists; a settings
       helper (`teamColorsSetting(value: unknown): boolean`, `undefined` → true, also accepting
       the string forms sdpi may send) is unit tested
 
@@ -187,7 +187,21 @@ Status: Not started
   colors and text immediately; a key placed before the update shows colors
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. `src/settings.ts` holds `teamColorsSetting(value)`: anything but `false` or
+`"false"` is on, so keys without the setting show colors. `SlotAction` and `FocusAction` each keep
+a `teamColors` map by action id, filled in `onWillAppear` / `onDidReceiveSettings` and cleared in
+`onWillDisappear`. `FocusAction.renderAll` draws at most two images (colors on and off) and gives
+each key the one for its setting. A new Game Slot key now saves `{ ...settings, slot }` instead of
+`{ slot }`, so it can't drop a `teamColors` value. The checkbox is
+`<sdpi-checkbox setting="teamColors" default="true">` (sdpi-components v4: `default` is what it
+shows while nothing is saved; it saves a boolean). Both panels' help text mentions the setting.
+`manifest.test.ts` now checks each action's `PropertyInspectorPath` and that the file exists;
+`settings.test.ts` covers the helper.
+
+Verification: `pnpm test` (shared 328, plugin 116, extension 53), `pnpm typecheck`, `pnpm lint`,
+`pnpm format:check` pass; `pnpm build` succeeds and `ui/focus.html` is in the `.sdPlugin` folder.
+Not yet done: the manual check on hardware (toggling both keys, and a pre-update key showing
+colors). It is in the Phase 6 hardware checklist.
 
 ## Phase 4: Soccer and national teams
 Status: Not started
