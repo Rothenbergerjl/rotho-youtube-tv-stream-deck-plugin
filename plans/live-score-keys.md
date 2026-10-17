@@ -192,18 +192,18 @@ Done 2026-10-17. All checks pass: `pnpm test` (plugin 174 including 8 new tracke
 
 Status: Not started
 
-- [ ] Add an optional `score` to `SlotKeyView` in `packages/plugin/src/render.ts`: state, status,
+- [x] Add an optional `score` to `SlotKeyView` in `packages/plugin/src/render.ts`: state, status,
       scores in title order, possession index, and an optional `alert`
       (`{ team: 0 | 1, points, mode: "row" | "band", on: boolean }`).
-- [ ] Add `scoreboardKey(view)` drawing layout A as in the mockups: rows at y 0–60 and 84–144,
+- [x] Add `scoreboardKey(view)` drawing layout A as in the mockups: rows at y 0–60 and 84–144,
       abbreviation at x 12 (24 px; 30 px pregame), score right-aligned at x 134 (up to 42 px,
       shrunk for 3 digits), possession dot, band with slot disc, monogram, status and speaker,
       green band when heard, loser dimmed at FINAL, dark rows when team colors are off or unknown.
-- [ ] Alert frames: `mode: "row"` with `on` fills the scoring row with `#f5f5f5` and dark ink;
+- [x] Alert frames: `mode: "row"` with `on` fills the scoring row with `#f5f5f5` and dark ink;
       `mode: "band"` fills the band with the scoring team's fill and reads "+N ABBR".
-- [ ] `slotKeySvg` uses `scoreboardKey` when `score` is set and the slot holds a matchup; otherwise
+- [x] `slotKeySvg` uses `scoreboardKey` when `score` is set and the slot holds a matchup; otherwise
       today's paths, unchanged. Move the update badge into the band for this layout.
-- [ ] Tests in `packages/plugin/test/render.test.ts` with snapshots: pregame, live with
+- [x] Tests in `packages/plugin/test/render.test.ts` with snapshots: pregame, live with
       possession, halftime, baseball inning, soccer, 3-digit scores, final, heard, team colors off,
       each alert frame, update badge. Existing snapshots must not change.
 
@@ -215,7 +215,31 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Done 2026-10-17. All checks pass: `pnpm test` (plugin 189 including 15 new scoreboard tests),
+`pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`. The snapshot file gained 11
+entries (22 lines added) and no existing snapshot changed.
+
+- **API:** `ScoreView` (`state`, `status`, `scores`, `possession?`, `alert?`) and `ScoreAlert`
+  are exported from `render.ts`; a tracker `ScoreSnapshot` fits `ScoreView` as is.
+  `slotKeySvg` tries `scoreboardKey(view)` first. That needs a score, a connection, no protocol
+  mismatch, and a title that parses as a matchup. Otherwise it draws exactly today's key.
+- **Layout:** rows at y 0–60 and 84–144 in team colors (`teamSplit`, so clashing colors are
+  already resolved), dark `#111418` with Team colors off or unknown teams. The band at y 60–84 is
+  `#0a0a0a`, or `#22c55e` with `#06210f` ink when heard.
+  - **Sizing:** scores are 42 px, 38 px for three digits. Abbreviations are 24 px (30 px pregame,
+    with no scores) and shrink to clear the score, e.g. NYK at 20 px beside 112, GONZ at 22 px.
+    The status is centred between the monogram and the speaker, up to 14 px, shrinking to fit
+    ("MON 8:15P" is 13 px, or 9 px when the update badge takes room).
+  - **Update badge:** a smaller 8 px badge at (106, 72) in the band replaces the corner badge.
+- **Alerts:** a row frame with `on` paints that row `#f5f5f5` with dark ink; an "off" frame is
+  identical to the normal key. A band frame paints the band in the scoring team's row color with
+  "+N ABBR"; on a team without colors that band is dark, and only the text marks it.
+- **Helper change:** `text()` takes an optional anchor and opacity; existing output is
+  byte-identical.
+- **Visual check:** the snapshots, rendered to PNG with headless Edge at 144 px and key size,
+  match the mockups.
+- **Next (Phase 4):** pass `tracker.scoreFor(slot, delay)` as `score` and drive `alert` frames
+  from `SlotAction`.
 
 ## Phase 4: Slot key integration
 
