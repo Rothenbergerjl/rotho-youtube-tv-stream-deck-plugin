@@ -65,6 +65,7 @@ describe("ExtensionServer + Store (integration)", () => {
       games: sampleState.games,
       allMuted: false,
       canRestore: true,
+      features: [],
     });
     expect(store.gameInSlot(2)?.tabId).toBe(102);
     expect(store.gameInSlot(3)).toBeUndefined();

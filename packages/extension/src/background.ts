@@ -1,6 +1,6 @@
 // Service worker: feeds Chrome tab events into the engine, applies mute changes, persists state,
 // and keeps the Stream Deck plugin updated over the WebSocket connection.
-import { PROTOCOL_VERSION, type PluginMessage, WS_PORT } from "@rotho/shared";
+import { FEATURES, MAX_SLOTS, PROTOCOL_VERSION, type PluginMessage, WS_PORT } from "@rotho/shared";
 import { PluginConnection } from "./connection";
 import {
   type EngineEvent,
@@ -11,6 +11,7 @@ import {
   toStateMessage,
 } from "./engine";
 import { isPageTitleMessage } from "./page-title";
+import { focusTab, openYouTubeTv } from "./windows";
 
 const STORAGE_KEY = "engine";
 const KEEPALIVE_ALARM = "keepalive";
@@ -31,18 +32,35 @@ const connection = new PluginConnection({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
       extensionVersion: chrome.runtime.getManifest().version,
+      features: [FEATURES.openYouTubeTv, FEATURES.focus],
     });
     enqueue(async () => {
       connection.send(toStateMessage(state));
     });
   },
   onMessage: (message: PluginMessage) => {
-    if (message.type === "requestState") {
-      enqueue(async () => {
-        connection.send(toStateMessage(state));
-      });
-    } else {
-      dispatch(message);
+    switch (message.type) {
+      case "requestState":
+        enqueue(async () => {
+          connection.send(toStateMessage(state));
+        });
+        break;
+      case "solo":
+      case "toggleMuteAll":
+        dispatch(message);
+        break;
+      case "openYouTubeTv":
+        enqueue(async () => {
+          // A new tab with no free slot would play with sound; the plugin checks this too.
+          if (state.tabs.length < MAX_SLOTS) await openYouTubeTv(chrome, message.target);
+        });
+        break;
+      case "focus":
+        enqueue(async () => {
+          const tab = state.tabs.find((t) => t.slot === message.slot);
+          if (tab) await focusTab(chrome, tab.tabId);
+        });
+        break;
     }
   },
 });

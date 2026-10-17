@@ -32,6 +32,8 @@ audio between YouTube TV tabs.`
   • Each game appears on a Stream Deck "Game Slot" key with its matchup (e.g. "SF @ SEA").
   • Press a key to hear only that game; every other YouTube TV tab is muted.
   • A "Mute All" key mutes everything or brings back the last game.
+  • An "Open YouTube TV" key opens YouTube TV in a new Chrome window or tab.
+  • A "Focus Heard Game" key brings the window and tab of the game you're hearing to the front.
   • New YouTube TV tabs start muted, so opening a game never interrupts the one you're hearing.
 
   Privacy: the extension only looks at tv.youtube.com tabs and talks only to the Stream Deck plugin
@@ -55,7 +57,8 @@ Rotho YTTV Multiview Stream Deck plugin can show each game on a key and switch w
 heard.`
 - Permission justifications:
   - `tabs`: `Finds open tv.youtube.com tabs, reads their titles to label Stream Deck keys, and
-mutes or unmutes them when a key is pressed.`
+mutes or unmutes them when a key is pressed. Also opens a new YouTube TV tab or window, and brings
+a game's tab to the front, when the matching key is pressed.`
   - `storage`: `Keeps the slot assignments and the currently heard tab in session storage so they
 survive the service worker restarting.`
   - `alarms`: `Wakes the service worker periodically to reconnect to the local Stream Deck plugin

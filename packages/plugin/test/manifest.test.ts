@@ -12,6 +12,8 @@ describe("plugin manifest", () => {
     expect(manifest.Actions.map((a: { UUID: string }) => a.UUID)).toEqual([
       ACTION_UUIDS.slot,
       ACTION_UUIDS.muteAll,
+      ACTION_UUIDS.open,
+      ACTION_UUIDS.focus,
     ]);
   });
 

@@ -5,6 +5,8 @@ export const PLUGIN_UUID = "com.rotho.yttv-multiview";
 export const ACTION_UUIDS = {
   slot: `${PLUGIN_UUID}.slot`,
   muteAll: `${PLUGIN_UUID}.muteall`,
+  open: `${PLUGIN_UUID}.open`,
+  focus: `${PLUGIN_UUID}.focus`,
 } as const;
 
 /**
@@ -22,5 +24,19 @@ export const WS_PORT = 47731;
 /** Highest slot number; one per key on a Stream Deck MK.2. */
 export const MAX_SLOTS = 15;
 
-/** Bumped whenever the message protocol changes incompatibly. */
+/**
+ * Bumped whenever the message protocol changes incompatibly. Optional additions don't bump it;
+ * they add a name to FEATURES instead.
+ */
 export const PROTOCOL_VERSION = 1;
+
+/**
+ * Optional messages the extension can handle, listed in its `hello`. The plugin enables a key
+ * only when the connected extension lists the feature that key needs.
+ */
+export const FEATURES = {
+  openYouTubeTv: "openYouTubeTv",
+  focus: "focus",
+} as const;
+
+export type Feature = (typeof FEATURES)[keyof typeof FEATURES];

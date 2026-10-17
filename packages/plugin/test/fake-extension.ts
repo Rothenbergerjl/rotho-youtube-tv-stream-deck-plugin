@@ -3,7 +3,12 @@
 // Run against the real plugin with `pnpm --filter @rotho/plugin fake-extension`.
 import { pathToFileURL } from "node:url";
 import { WebSocket } from "ws";
-import { EXTENSION_ORIGIN, PROTOCOL_VERSION, WS_PORT } from "../../shared/src/constants.ts";
+import {
+  EXTENSION_ORIGIN,
+  FEATURES,
+  PROTOCOL_VERSION,
+  WS_PORT,
+} from "../../shared/src/constants.ts";
 
 export const sampleState = {
   type: "state",
@@ -30,7 +35,14 @@ export interface FakeExtension {
 }
 
 export function connectFakeExtension(
-  options: { port?: number; origin?: string; state?: unknown; protocolVersion?: number } = {},
+  options: {
+    port?: number;
+    origin?: string;
+    state?: unknown;
+    protocolVersion?: number;
+    /** Sent in hello; undefined leaves the field out, like an extension older than 0.3.0. */
+    features?: string[];
+  } = {},
 ): Promise<FakeExtension> {
   const {
     port = WS_PORT,
@@ -38,6 +50,7 @@ export function connectFakeExtension(
     state = sampleState,
     protocolVersion = PROTOCOL_VERSION,
   } = options;
+  const features = "features" in options ? options.features : Object.values(FEATURES);
   const socket = new WebSocket(`ws://127.0.0.1:${port}`, { origin });
   const commands: unknown[] = [];
   const send = (message: unknown) => socket.send(JSON.stringify(message));
@@ -50,7 +63,7 @@ export function connectFakeExtension(
       reject(new Error(`Server refused connection: HTTP ${res.statusCode}`)),
     );
     socket.once("open", () => {
-      send({ type: "hello", protocolVersion, extensionVersion: "fake" });
+      send({ type: "hello", protocolVersion, extensionVersion: "fake", features });
       send(state);
       resolve({
         socket,
@@ -69,12 +82,17 @@ export function connectFakeExtension(
 
 // Script mode: connect to the running plugin and log commands until Ctrl+C.
 // `--protocol <n>` sends a different protocol version to show the mismatch keys.
+// `--no-features` leaves features out of hello, like an extension older than 0.3.0.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const flag = process.argv.indexOf("--protocol");
   const protocolVersion = flag === -1 ? PROTOCOL_VERSION : Number(process.argv[flag + 1]);
-  const fake = await connectFakeExtension({ protocolVersion });
+  const noFeatures = process.argv.includes("--no-features");
+  const fake = await connectFakeExtension({
+    protocolVersion,
+    ...(noFeatures && { features: undefined }),
+  });
   console.log(
-    `Connected to ws://127.0.0.1:${WS_PORT}; sent hello (protocol ${protocolVersion}) + state. Press keys on the Stream Deck.`,
+    `Connected to ws://127.0.0.1:${WS_PORT}; sent hello (protocol ${protocolVersion}${noFeatures ? ", no features" : ""}) + state. Press keys on the Stream Deck.`,
   );
   fake.socket.on("message", (data) => console.log("command:", data.toString()));
   setInterval(() => fake.send({ type: "heartbeat" }), 20_000);

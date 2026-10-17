@@ -45,17 +45,26 @@ Your Stream Deck keys keep working; reload any open YouTube TV tabs if a game do
 1. In the Stream Deck app, open the **Rotho YTTV Multiview** category and drag **Game Slot** keys
    onto your deck, one per game you want to watch. New keys number themselves 1, 2, 3…; to change
    a key's slot, select it and pick a slot in its settings.
-2. Optionally add a **Mute All** key.
-3. Open each YouTube TV game in its own Chrome window or tab.
+2. Optionally add a **Mute All** key, an **Open YouTube TV** key and a **Focus Heard Game** key.
+   To make Open YouTube TV open a tab instead of a new window, select it and pick **New tab** in
+   its settings.
+3. Open each YouTube TV game in its own Chrome window or tab, or press Open YouTube TV.
 
-| Key       | Shows                                                                 | Press                                        |
-| --------- | --------------------------------------------------------------------- | -------------------------------------------- |
-| Game Slot | Slot number, matchup (e.g. "SF @ SEA"); green with a speaker if heard | Hear only this game                          |
-| Game Slot | Just a dim number                                                     | Empty slot; nothing happens                  |
-| Game Slot | "No Chrome"                                                           | The extension isn't connected                |
-| Mute All  | "Mute all" / "Restore" / "All muted"                                  | Mute everything, or bring back the last game |
-| Any key   | Amber warning, "Update plugin" / "Update extension"                   | Nothing until you update that piece          |
-| Any key   | Small blue arrow in the bottom-right corner                           | Works as usual; a plugin update is available |
+| Key              | Shows                                                                 | Press                                                        |
+| ---------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Game Slot        | Slot number, matchup (e.g. "SF @ SEA"); green with a speaker if heard | Hear only this game                                          |
+| Game Slot        | Just a dim number                                                     | Empty slot; nothing happens                                  |
+| Mute All         | "Mute all" / "Restore" / "All muted"                                  | Mute everything, or bring back the last game                 |
+| Open YouTube TV  | "YouTube TV"                                                          | Open YouTube TV in a new window or tab (set in its settings) |
+| Open YouTube TV  | Dim "Full"                                                            | All 15 slots are taken; nothing happens                      |
+| Focus Heard Game | The matchup you're hearing, under a green crosshair                   | Bring that game's window and tab to the front                |
+| Focus Heard Game | Dim "Nothing heard"                                                   | Nothing is heard; nothing happens                            |
+| Any key          | "No Chrome"                                                           | The extension isn't connected                                |
+| Any key          | Amber warning, "Update plugin" / "Update extension"                   | Nothing until you update that piece                          |
+| Any key          | Small blue arrow in the bottom-right corner                           | Works as usual; a plugin update is available                 |
+
+If only the Open YouTube TV and Focus Heard Game keys say "Update extension", your Chrome
+extension is older than the plugin. The other keys keep working until Chrome updates it.
 
 How games get slots and sound:
 
@@ -112,13 +121,17 @@ tray and reopen it; newly linked plugins load only when the app starts.
  ┌──────────────────────────────┐   WebSocket       ┌──────────────────────────────┐
  │ @rotho/extension (MV3)       │ ◄──────────────►  │ @rotho/plugin (Node SDK)     │
  │ - tracks YouTube TV tabs     │  127.0.0.1:47731  │ - WebSocket server           │
- │ - assigns slots, mutes tabs  │                   │ - Game Slot / Mute All keys  │
+ │ - assigns slots, mutes tabs  │                   │ - Game Slot / Mute All /     │
+ │ - opens + focuses windows    │                   │   Open / Focus keys          │
  │ - source of truth for state  │                   │ - draws titles + audio state │
  └──────────────────────────────┘                   └──────────────────────────────┘
                      both use @rotho/shared (protocol types + constants)
 ```
 
 - The extension connects to the plugin; the plugin only accepts the extension's fixed origin.
+- The extension's `hello` lists the optional features it supports (such as opening and focusing
+  windows). A key that needs a missing feature shows "Update extension", and the other keys keep
+  working. `PROTOCOL_VERSION` changes only for breaking changes.
 - A content script reads the matchup from the player, because YouTube TV's page title is always
   "Home - YouTube TV".
 - Nothing leaves your computer except the plugin's update check against GitHub; see the

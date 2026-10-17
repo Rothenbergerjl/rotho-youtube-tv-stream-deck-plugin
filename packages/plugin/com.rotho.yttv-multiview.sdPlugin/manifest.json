@@ -1,6 +1,6 @@
 {
   "Name": "Rotho YTTV Multiview",
-  "Version": "0.2.0.0",
+  "Version": "0.3.0.0",
   "Author": "Rothenbergerjl",
   "Actions": [
     {
@@ -27,6 +27,35 @@
       "States": [
         {
           "Image": "imgs/actions/muteall/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "Open YouTube TV",
+      "UUID": "com.rotho.yttv-multiview.open",
+      "Icon": "imgs/actions/open/icon",
+      "Tooltip": "Opens YouTube TV in a new Chrome window or tab; the new game starts muted.",
+      "PropertyInspectorPath": "ui/open.html",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/open/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "Focus Heard Game",
+      "UUID": "com.rotho.yttv-multiview.focus",
+      "Icon": "imgs/actions/focus/icon",
+      "Tooltip": "Shows the game you're hearing; press to bring its Chrome window and tab to the front.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/focus/key",
           "TitleAlignment": "middle",
           "ShowTitle": false
         }

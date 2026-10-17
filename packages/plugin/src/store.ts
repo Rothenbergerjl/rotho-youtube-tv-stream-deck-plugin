@@ -1,5 +1,5 @@
 // Latest view of the extension's state plus connection status. Actions subscribe to it.
-import { type Game, PROTOCOL_VERSION, type StateMessage } from "@rotho/shared";
+import { type Feature, type Game, PROTOCOL_VERSION, type StateMessage } from "@rotho/shared";
 import type { UpdateInfo } from "./updates";
 
 /** Which side must be updated when the plugin and extension speak different protocols. */
@@ -14,6 +14,8 @@ export interface PluginState {
   canRestore: boolean;
   /** Set when the connected extension speaks a different protocol; keys then refuse presses. */
   mismatch?: UpdateTarget;
+  /** Optional features the connected extension listed in its `hello`; empty while disconnected. */
+  features: Feature[];
   /** A newer plugin release, from the GitHub check; kept across connects and disconnects. */
   update?: UpdateInfo;
 }
@@ -23,6 +25,7 @@ const disconnected: PluginState = {
   games: [],
   allMuted: true,
   canRestore: false,
+  features: [],
 };
 
 type Listener = (state: PluginState) => void;
@@ -37,6 +40,11 @@ export class Store {
 
   gameInSlot(slot: number): Game | undefined {
     return this.state.games.find((g) => g.slot === slot);
+  }
+
+  /** True when the connected extension handles `feature`. */
+  has(feature: Feature): boolean {
+    return this.state.features.includes(feature);
   }
 
   setConnected(connected: boolean): void {
@@ -71,6 +79,13 @@ export class Store {
     this.update(next);
   }
 
+  /** Records the features from the extension's `hello`; an older extension sends none. */
+  setFeatures(features: Feature[] = []): void {
+    const current = this.state.features;
+    if (features.length === current.length && features.every((f) => current.includes(f))) return;
+    this.update({ ...this.state, features: [...features] });
+  }
+
   applyState(message: StateMessage): void {
     this.update({
       connected: true,
@@ -79,6 +94,7 @@ export class Store {
       canRestore:
         message.lastHeardTabId !== undefined &&
         message.games.some((g) => g.tabId === message.lastHeardTabId),
+      features: this.state.features,
       ...(this.state.mismatch && { mismatch: this.state.mismatch }),
       ...(this.state.update && { update: this.state.update }),
     });
