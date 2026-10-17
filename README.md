@@ -79,6 +79,7 @@ red "TV" for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
 | ---------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Game Slot        | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game                                           |
 | Game Slot        | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game                                           |
+| Game Slot        | Live score rows and game status band (see below); flashes on a score      | Hear only this game                                           |
 | Game Slot        | Just a dim number                                                         | Empty slot; nothing happens                                   |
 | Mute All         | "Mute all" / "Restore" / "All muted"                                      | Mute everything, or bring back the last game                  |
 | Open Service     | The service's name on a play button                                       | Open the service in a new window or tab (set in its settings) |
@@ -103,6 +104,22 @@ How games get slots and sound:
   moves from one service's player to another's keeps its slot.
 - Turning a service off frees its games' slots and gives those tabs their sound back.
 - Up to 15 games are tracked.
+
+Live scores on Game Slot keys:
+
+- A game between two teams the plugin knows (the same ones that get team colors) shows the score
+  from ESPN. Each team gets a row with its abbreviation and score, and a band across the middle
+  shows the slot, the service and the game status: the clock and period, the inning, the soccer
+  minute, the kickoff time before the game, or FINAL. A dot marks the team with the ball, or the
+  team at bat. When the key's game is the one you're hearing, the band turns green.
+- When a team scores, its row flashes white, then the band shows the points ("+3 BUF") in that
+  team's color for 10 seconds.
+- The stream runs behind the live game, so each key holds new scores back by its **Score delay**
+  (default 30 seconds) to avoid spoilers. Raise it if the key still changes before you see the
+  play.
+- Each Game Slot key's settings have **Show score**, **Score alerts** and **Score delay**. Turn
+  Show score off for the normal key. Games ESPN doesn't list, shows, and teams the plugin doesn't
+  know keep the normal key.
 
 ## Troubleshooting
 
@@ -138,6 +155,12 @@ keys work normally in the meantime.
 tab, but the player has its own mute too, and Peacock and Paramount+ remember it. If the tab shows
 no speaker icon after the press, click the speaker button inside the player once to unmute it.
 After that, leave the player's sound on and switch games with the Stream Deck.
+
+**A game shows no score.** Scores need both teams to be ones the plugin knows (the key shows team
+colors), and the game to be on ESPN's scoreboard today. Check that **Show score** is on in the
+key's settings. If ESPN can't be reached for 2 minutes, keys go back to the normal look until it
+answers again; the log shows `Scores: … failed` lines. If a key spoils plays, raise its **Score
+delay**.
 
 **Another program is using port 47731.** The plugin talks to Chrome on `127.0.0.1:47731`. If that
 port is busy, the plugin keeps retrying every 5 seconds and logs `Server error: EADDRINUSE`. Find
@@ -181,8 +204,13 @@ tray and reopen it; newly linked plugins load only when the app starts.
   an optional host permission, so adding it doesn't make Chrome disable the extension on update.
 - The state sent to the plugin lists each game's service and which services are on. Older plugins
   and extensions ignore what they don't know.
-- Nothing leaves your computer except the plugin's update check against GitHub; see the
-  [privacy policy](PRIVACY.md). To report a security problem, see [SECURITY.md](SECURITY.md).
+- Scores come from ESPN's public scoreboard JSON, fetched by the plugin, so the extension needs no
+  new permission. `packages/plugin/src/scores/` maps each league to its ESPN feeds, matches a
+  slot's game by team names, polls every 15 s while it's live, and keeps a short history so each
+  key can show the score as it was its Score delay ago.
+- Nothing leaves your computer except the plugin's update check against GitHub and its score
+  requests to ESPN; see the [privacy policy](PRIVACY.md). To report a security problem, see
+  [SECURITY.md](SECURITY.md).
 
 ## Development
 

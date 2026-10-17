@@ -299,15 +299,18 @@ check should confirm the plugin's own requests in its log.
 
 ## Phase 5: Docs and hardware check
 
-Status: Not started
+Status: Complete
 
-- [ ] `PRIVACY.md`: under the Stream Deck plugin, describe the ESPN requests (which games trigger
+- [x] `PRIVACY.md`: under the Stream Deck plugin, describe the ESPN requests (which games trigger
       them, how often, that they hold only league names, and that ESPN sees the IP address).
-- [ ] `README.md`: Game Slot scores, alerts and the three settings in the Keys section; a line in
+- [x] `README.md`: Game Slot scores, alerts and the three settings in the Keys section; a line in
       How it works.
-- [ ] `CHANGELOG.md`: an Unreleased section with the new scores and settings, noting that only the
-      plugin needs updating.
-- [ ] User check on hardware during a live game: run the dev build plus
+- [x] `CHANGELOG.md`: an Unreleased section with the new scores and settings, noting that only the
+      plugin needs updating. (Done as a `[0.6.0] - 2026-10-17` section instead; see below.)
+- [x] Version 0.6.0 (asked for by the user during this phase): root `package.json` plus every
+      package and both manifests (`0.6.0.0` for Stream Deck); `node scripts/sync-version.mjs
+      --check` passes, and `node scripts/changelog-section.mjs 0.6.0` prints the new section.
+- [x] User check on hardware during a live game: run the dev build plus
       `pnpm --filter @rotho/plugin fake-extension --title "<a game live on ESPN now>"`, then confirm
       score, status, delay and an alert on real keys. Record the result in the Phase Summary.
 
@@ -318,12 +321,69 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Done 2026-10-17. All checks pass: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`
+(shared 688, plugin 220, extension 78), `pnpm build`, `streamdeck validate`, and
+`node scripts/sync-version.mjs --check`.
+
+- **Hardware check (user, 2026-10-17, college football live):** score, status, delay and an alert
+  all looked right on real keys.
+- **PRIVACY.md:** new Stream Deck plugin bullet on the ESPN requests. It covers when they happen
+  (a slot holds a game between known teams), how often (15 s live, 5 min otherwise), and what they
+  contain (only the league path). ESPN sees the IP address, with a link to Disney's privacy policy.
+  It also says Show score off only hides the score; requests continue while the game is in a slot,
+  because the tracker polls per slot, not per key.
+- **README.md:**
+  - Keys: a new Game Slot row and a "Live scores on Game Slot keys" list (layout, alerts, delay,
+    the three settings).
+  - Troubleshooting: a "A game shows no score" entry.
+  - How it works: a bullet on `packages/plugin/src/scores/`, and the network sentence now
+    includes ESPN.
+- **CHANGELOG.md:** a `[0.6.0] - 2026-10-17` section (Added and Changed) instead of Unreleased,
+  because the user asked for the version bump.
+- **Version:** 0.6.0 everywhere; the Stream Deck manifest is `0.6.0.0`. The extension has no code
+  changes, only the version.
 
 ## Final Recap
 
-_(write when all phases complete: summary of the entire piece of work)_
+Game Slot keys now show the live score from ESPN in the "Scoreboard" layout, with an alert when a
+team scores (#22, from the #16 investigation and mockups). The extension and the WebSocket
+protocol are unchanged; everything new is in the plugin, plus two small helpers in
+`@rotho/shared` (`fold` exported, `teamById` added).
+
+- **Feed and matching** (`packages/plugin/src/scores/feeds.ts`, `espn.ts`, `match.ts`): every
+  league in the team tables maps to its ESPN feeds. That includes college football and both
+  basketball feeds narrowed by the title, domestic cups, UEFA competitions for European clubs, and
+  international competitions. Games are matched by team name, both ways round, within 18 h of now,
+  preferring a live game. Status text covers every sport, breaks, overtime, finals, postponements
+  and kickoff times.
+- **Tracker** (`scores/tracker.ts`): polls only the feeds the slots need, every 15 s while live and
+  every 5 min otherwise. It keeps a timed history per slot, so `scoreFor(slot, delay)` gives the
+  score as it was `delay` ago. A feed that hasn't answered for 2 min drops its scores.
+- **Rendering** (`render.ts`): layout A, with team-color rows, an info band, a possession dot, the
+  loser dimmed at the final, a green band when heard, and the update badge in the band, plus both
+  alert frames. Today's keys render byte-identically when there's no score.
+- **Key** (`actions/slot.ts`, `score-alerts.ts`): per-key Show score, Score alerts and Score delay
+  (0–90 s, default 30). The alert is a white row flash, then a 10 s "+N TEAM" band, driven by one
+  timer, and unchanged images aren't re-sent.
+- **Docs and release:** PRIVACY, README, CHANGELOG 0.6.0, version 0.6.0.
+- **Deviations** (commented on #22): matching takes `now` and picks the best of several matches;
+  status text can be 9 characters; ESPN mascot names aren't matched; unmatched games with two
+  known teams are polled every 5 min until found.
+- **Known limit:** Show score off hides the score but doesn't stop the ESPN requests for that
+  slot (documented in PRIVACY.md).
 
 ## Deployment Plan
 
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Commit Phase 5 with this plan file deleted, push `22-live-scores-and-flash`, and open the PR
+   (`/open-pr`) with `Fixes #22`. Squash-merge to `main` once CI passes.
+2. Release from `main` as in the README's Release section: GitHub **Actions → Release → Run
+   workflow**, version `0.6.0`. The workflow checks, builds, tags `v0.6.0` and publishes the GitHub
+   Release with the `.streamDeckPlugin` and the extension zip. Release notes come from the
+   CHANGELOG `[0.6.0]` section.
+3. Installed plugins show the update badge within 12 hours. Users install the new
+   `.streamDeckPlugin`; their Game Slot keys get scores with the default settings.
+4. The extension only changed its version. Uploading the 0.6.0 zip to the Chrome Web Store keeps
+   versions in step, but it isn't urgent: a 0.5.0 extension works with the 0.6.0 plugin, because
+   the protocol and features are unchanged.
+5. After release, watch the plugin log on a live game day for `Scores: … failed` lines, in case
+   ESPN starts refusing the plugin's requests.
