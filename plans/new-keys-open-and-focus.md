@@ -125,21 +125,21 @@ tests), `pnpm typecheck`, `pnpm lint` and `pnpm format:check` all clean.
   or the `--no-features` script flag, to leave them out.
 
 ## Phase 2: Extension open and focus handlers
-Status: Not started
+Status: Complete
 
-- [ ] New `packages/extension/src/windows.ts` with `openYouTubeTv(chromeApi, target)` and
+- [x] New `packages/extension/src/windows.ts` with `openYouTubeTv(chromeApi, target)` and
       `focusTab(chromeApi, tabId)`. They take a minimal injected `WindowsApi` interface
       (`windows.create/getLastFocused/get/update`, `tabs.create/get/update`) so tests can pass a
       fake. Behaviour as in Key decisions: tab mode falls back to a new window; focus restores
       only minimized windows. Errors (e.g. a closed tab) are caught and logged, never thrown.
-- [ ] `packages/extension/src/background.ts`: handle `openYouTubeTv` (skip when
+- [x] `packages/extension/src/background.ts`: handle `openYouTubeTv` (skip when
       `state.tabs.length >= MAX_SLOTS`) and `focus` (look up the slot's `tabId` in `state`; skip
       when the slot is empty). Run both through `enqueue` so they see the loaded state.
-- [ ] `packages/extension/test/windows.test.ts`: window target creates a focused window; tab
+- [x] `packages/extension/test/windows.test.ts`: window target creates a focused window; tab
       target uses the last-focused window and focuses it; tab target with no window falls back
       to a new window; focus activates the tab and focuses its window; a minimized window gets
       `state: "normal"`; a maximized window keeps its state; a missing tab doesn't throw.
-- [ ] `packages/extension/test/manifest.test.ts` still asserts the same permissions (no
+- [x] `packages/extension/test/manifest.test.ts` still asserts the same permissions (no
       `windows` permission needed). Leave it unchanged.
 
 ### Verification Plan
@@ -148,7 +148,21 @@ Status: Not started
 - `pnpm typecheck` and `pnpm lint`: no errors.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-17. Verification passed: `pnpm test` (extension now 53 tests, including 9 in
+`windows.test.ts`), `pnpm build` (`dist/background.js` exists), `pnpm typecheck`, `pnpm lint`
+and `pnpm format:check` all clean. The manifest and its permissions are unchanged.
+
+- `packages/extension/src/windows.ts` exports `YOUTUBE_TV_URL`, `WindowsApi`, `openYouTubeTv`
+  and `focusTab`. Every Chrome error is caught and logged with `console.warn`.
+- `background.ts` passes the real `chrome` object; it type-checks against `WindowsApi`.
+  `getLastFocused` uses `chrome.windows.QueryOptions` for its parameter, because the
+  `@types/chrome` enums aren't assignable from plain strings. The call writes
+  `"normal" as chrome.windows.WindowType`, so tests don't need a `chrome` global.
+- Tab mode: if `getLastFocused` rejects or returns no id, it falls back to a new window. Both the
+  tab path and focus go through `focusWindow`, which sets `state: "normal"` only for a minimized
+  window. So a tab opened in a minimized last-focused window also restores that window.
+- `background.ts` handles both messages through `enqueue`. `openYouTubeTv` is skipped when
+  `state.tabs.length >= MAX_SLOTS`, and `focus` is skipped when the slot is empty.
 
 ## Phase 3: Open YouTube TV key
 Status: Not started
