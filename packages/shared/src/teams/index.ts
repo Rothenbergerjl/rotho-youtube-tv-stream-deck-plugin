@@ -11,7 +11,7 @@ import { NCAA } from "./ncaa";
 import { NFL } from "./nfl";
 import { NHL } from "./nhl";
 import { SERIE_A } from "./seriea";
-import type { League, Sport } from "./types";
+import type { League, Sport, Team } from "./types";
 import { UCL_EXTRAS } from "./ucl-extras";
 import { WNBA } from "./wnba";
 
@@ -43,3 +43,15 @@ export const SPORT_HINTS: Partial<Record<Sport, readonly string[]>> = {
 
 /** The pool a league's teams are paired within; see League.pool. */
 export const poolOf = (league: League): string => league.pool ?? league.id;
+
+/** "<league>:<abbr>" (the Side.teamId format) → that team's colors. */
+const colorsById = new Map<string, NonNullable<Team["colors"]>>(
+  LEAGUES.flatMap((league) =>
+    league.teams.flatMap((team) =>
+      team.colors ? [[`${league.id}:${team.abbr}`, team.colors] as const] : [],
+    ),
+  ),
+);
+
+/** A team's [primary, secondary] colors by its teamId, e.g. "nfl:BUF"; undefined when unknown. */
+export const teamColors = (teamId: string): Team["colors"] => colorsById.get(teamId);

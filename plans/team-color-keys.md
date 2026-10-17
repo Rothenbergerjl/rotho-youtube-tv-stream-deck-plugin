@@ -69,21 +69,21 @@ its board item id is `PVTI_lAHOBLWqFc4BmmYPzhBVnZc`. Board ids and tested recipe
 - Never run git commands that change anything; the user branches (`7-team-color-keys`) and commits.
 
 ## Phase 1: Color data model and pro leagues
-Status: Not started
+Status: Complete
 
-- [ ] Add `colors?: readonly [primary: string, secondary: string]` to `Team` in
+- [x] Add `colors?: readonly [primary: string, secondary: string]` to `Team` in
       `packages/shared/src/teams/types.ts`, with a doc comment (uppercase `#RRGGBB`, primary first;
       optional so leagues can be filled phase by phase)
-- [ ] Add `teamColors(teamId: string): readonly [string, string] | undefined` in
+- [x] Add `teamColors(teamId: string): readonly [string, string] | undefined` in
       `packages/shared/src/teams/index.ts`, built once as a `Map` from `"<league>:<abbr>"` (the
       same id format `tableSide` in `title.ts` produces); export it from `@rotho/shared`
-- [ ] Fill `colors` for every team in `nfl.ts` (32), `nba.ts` (30), `wnba.ts`, `mlb.ts` (30) and
+- [x] Fill `colors` for every team in `nfl.ts` (32), `nba.ts` (30), `wnba.ts`, `mlb.ts` (30) and
       `nhl.ts` (32); add the color source to each file's header comment
-- [ ] Add a shared test file `packages/shared/src/teams/colors.test.ts`:
-  - [ ] every `colors` entry matches `/^#[0-9A-F]{6}$/` and has exactly two values
-  - [ ] every team in NFL, NBA, WNBA, MLB and NHL has `colors` (a `FULL_COVERAGE` list of league
+- [x] Add a shared test file `packages/shared/src/teams/colors.test.ts`:
+  - [x] every `colors` entry matches `/^#[0-9A-F]{6}$/` and has exactly two values
+  - [x] every team in NFL, NBA, WNBA, MLB and NHL has `colors` (a `FULL_COVERAGE` list of league
         ids that later phases extend)
-  - [ ] `teamColors("nfl:BUF")` returns the Bills' colors; an unknown id returns `undefined`
+  - [x] `teamColors("nfl:BUF")` returns the Bills' colors; an unknown id returns `undefined`
 
 ### Verification Plan
 - `pnpm --filter @rotho/shared test` passes, including the new colors tests
@@ -92,7 +92,16 @@ Status: Not started
   is defined for both sides (covered by a test)
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. `Team.colors` is optional `[primary, secondary]`; `teamColors(teamId)` in
+`teams/index.ts` (exported from `@rotho/shared` via `export * from "./teams"`) looks colors up from
+a `Map` built once over `LEAGUES`. All 140 NFL/NBA/WNBA/MLB/NHL teams have colors, with each
+file's header noting the source. Approximate colors (teams without published hex values) are
+marked inline: NBA Utah Jazz (2025 rebrand), WNBA Valkyries, Houston Comets (no brand yet; red/navy
+placeholder), Portland Fire, Toronto Tempo, NHL Utah Mammoth. Revisit these if official values
+appear. Long team entries use Prettier's multi-line object form. `colors.test.ts` holds the
+`FULL_COVERAGE` list that Phases 4 and 5 extend; it also checks that same-abbreviation teams in
+different leagues stay apart (`nfl:PHI` vs `nba:PHI`). Verification: `pnpm test` (shared 328,
+plugin 91, extension 53), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` all pass.
 
 ## Phase 2: Split-layout keys
 Status: Not started
