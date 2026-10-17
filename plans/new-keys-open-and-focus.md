@@ -219,27 +219,27 @@ The key faces haven't been seen on a real Stream Deck yet; that happens in Phase
   `<sdpi-select setting="target" default="window">`.
 
 ## Phase 4: Focus Heard Game key
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/render.ts`: add a `FocusKeyView` (`connected`, `mismatch`,
+- [x] `packages/plugin/src/render.ts`: add a `FocusKeyView` (`connected`, `mismatch`,
       `featureMissing`, `title?` of the heard game, `updateAvailable`) and `focusKeySvg`. Faces:
       - "No Chrome": dimmed.
       - Mismatch, or a missing feature: warning with "Update extension".
       - Nothing heard: dim "Nothing heard".
       - Heard: a focus/target glyph above the wrapped matchup, with
         `formatMatchup(title) || "YouTube TV"`.
-- [ ] New `packages/plugin/src/actions/focus.ts`: `FocusAction` (UUID `ACTION_UUIDS.focus`), no
+- [x] New `packages/plugin/src/actions/focus.ts`: `FocusAction` (UUID `ACTION_UUIDS.focus`), no
       settings. It re-renders on store changes. On key down it alerts when disconnected, on a
       mismatch, when the feature is missing, when no game is heard, or when `server.send` fails;
       otherwise it sends `{ type: "focus", slot }` for the heard game.
-- [ ] Register `FocusAction` in `packages/plugin/src/plugin.ts`.
-- [ ] Manifest: add a "Focus Heard Game" action (UUID `com.rotho.yttv-multiview.focus`, Icon
+- [x] Register `FocusAction` in `packages/plugin/src/plugin.ts`.
+- [x] Manifest: add a "Focus Heard Game" action (UUID `com.rotho.yttv-multiview.focus`, Icon
       `imgs/actions/focus/icon`, Tooltip, Keypad, state image `imgs/actions/focus/key`,
       `ShowTitle: false`). No property inspector.
-- [ ] Add `imgs/actions/focus/icon.svg` and `imgs/actions/focus/key.svg`.
-- [ ] `packages/plugin/test/render.test.ts`: tests and snapshots for each focus-key face,
+- [x] Add `imgs/actions/focus/icon.svg` and `imgs/actions/focus/key.svg`.
+- [x] `packages/plugin/test/render.test.ts`: tests and snapshots for each focus-key face,
       including a long non-matchup title that wraps.
-- [ ] `packages/plugin/test/manifest.test.ts`: the expected UUID list includes
+- [x] `packages/plugin/test/manifest.test.ts`: the expected UUID list includes
       `ACTION_UUIDS.focus`, in manifest order (slot, muteAll, open, focus).
 
 ### Verification Plan
@@ -248,10 +248,21 @@ Status: Not started
 - `pnpm build`, `pnpm typecheck` and `pnpm lint`: no errors.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-17. Verification passed:
+- `pnpm --filter @rotho/plugin test`: 90 tests. 5 snapshots were written, and the snapshot diff
+  is 10 lines added and none changed.
+- `validate`: "Validation successful".
+- `pnpm build`, `pnpm typecheck`, `pnpm lint` and `pnpm format:check`: all clean.
 
-## Phase 5: Docs, version 0.3.0 and manual check
-Status: Not started
+The key faces haven't been seen on a real Stream Deck yet; that happens in Phase 5.
+
+- `render.ts` adds `FocusKeyView`, `focusKeySvg` and a `target()` crosshair glyph helper. Faces
+  are checked in this order: No Chrome → Update (`mismatch`, or `featureMissing` → "extension")
+  → "Nothing heard" (no `title`) → heard. The heard face is a green crosshair at the top with the
+  wrapped `formatMatchup(title) || "YouTube TV"` underneath (max font 30, centred at y 92).
+- `FocusAction` (`src/actions/focus.ts`) finds the heard game with `games.find((g) => g.heard)`
+  and sends `{ type: "focus", slot }`. It has no settings and no property inspector.
+- Manifest action order: slot, muteall, open, focus. `manifest.test.ts` asserts that order.
 
 - [ ] `README.md` Usage:
       - Steps: mention the optional Open YouTube TV and Focus Heard Game keys.

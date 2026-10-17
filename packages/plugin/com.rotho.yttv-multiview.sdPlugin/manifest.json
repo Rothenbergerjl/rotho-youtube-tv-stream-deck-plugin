@@ -46,6 +46,20 @@
           "ShowTitle": false
         }
       ]
+    },
+    {
+      "Name": "Focus Heard Game",
+      "UUID": "com.rotho.yttv-multiview.focus",
+      "Icon": "imgs/actions/focus/icon",
+      "Tooltip": "Shows the game you're hearing; press to bring its Chrome window and tab to the front.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/focus/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
     }
   ],
   "Category": "Rotho YTTV Multiview",

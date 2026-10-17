@@ -13,6 +13,7 @@ describe("plugin manifest", () => {
       ACTION_UUIDS.slot,
       ACTION_UUIDS.muteAll,
       ACTION_UUIDS.open,
+      ACTION_UUIDS.focus,
     ]);
   });
 

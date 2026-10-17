@@ -49,6 +49,16 @@ export interface OpenKeyView {
   updateAvailable?: boolean;
 }
 
+export interface FocusKeyView {
+  connected: boolean;
+  mismatch?: UpdateTarget;
+  /** The connected extension doesn't list the `focus` feature: it needs updating. */
+  featureMissing?: boolean;
+  /** Raw title of the heard game; undefined when nothing is heard. */
+  title?: string;
+  updateAvailable?: boolean;
+}
+
 export function toDataUrl(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
@@ -63,6 +73,10 @@ export function muteAllKeySvg(view: MuteAllKeyView): string {
 
 export function openKeySvg(view: OpenKeyView): string {
   return withUpdateBadge(openKeyBody(view), view.updateAvailable);
+}
+
+export function focusKeySvg(view: FocusKeyView): string {
+  return withUpdateBadge(focusKeyBody(view), view.updateAvailable);
 }
 
 function slotKeyBody(view: SlotKeyView): string {
@@ -161,6 +175,37 @@ function openKeyBody(view: OpenKeyView): string {
   );
 }
 
+function focusKeyBody(view: FocusKeyView): string {
+  if (!view.connected) {
+    return svg(
+      colors.dimBackground,
+      target(SIZE / 2, 50, colors.dim, 1.6),
+      lines(["No Chrome"], colors.dim, 22, 112),
+    );
+  }
+  const update = view.mismatch ?? (view.featureMissing ? "extension" : undefined);
+  if (update) {
+    return svg(
+      colors.dimBackground,
+      warning(SIZE / 2, 48),
+      lines(["Update", update], colors.text, 24, 100),
+    );
+  }
+  if (view.title === undefined) {
+    return svg(
+      colors.dimBackground,
+      target(SIZE / 2, 42, colors.dim, 1.3),
+      lines(["Nothing", "heard"], colors.dim, 22, 102),
+    );
+  }
+  const label = formatMatchup(view.title) || "YouTube TV";
+  return svg(
+    colors.background,
+    target(SIZE / 2, 32, colors.heard),
+    lines(wrap(label), colors.text, 30, 92),
+  );
+}
+
 /** Splits a label into at most two lines of about 9 characters, breaking on spaces. */
 export function wrap(label: string, maxChars = 9): string[] {
   if (label.length <= maxChars) return [label];
@@ -243,6 +288,17 @@ function play(cx: number, cy: number, color: string, plus = false): string {
     `<rect x="-34" y="-24" width="68" height="48" rx="14" fill="${color}"/>` +
     `<path d="M-9 -13 L15 0 L-9 13 Z" fill="${color === colors.dim ? colors.dimBackground : colors.text}"/>` +
     badge +
+    `</g>`
+  );
+}
+
+/** Crosshair ("bring to front") glyph centred at (cx, cy). */
+function target(cx: number, cy: number, color: string, scale = 1): string {
+  return (
+    `<g transform="translate(${cx} ${cy}) scale(${scale})">` +
+    `<circle r="13" fill="none" stroke="${color}" stroke-width="3"/>` +
+    `<circle r="4" fill="${color}"/>` +
+    `<path d="M0 -20 V-15 M0 15 V20 M-20 0 H-15 M15 0 H20" stroke="${color}" stroke-width="3" stroke-linecap="round"/>` +
     `</g>`
   );
 }

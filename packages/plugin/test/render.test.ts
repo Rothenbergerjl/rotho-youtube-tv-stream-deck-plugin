@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { muteAllKeySvg, openKeySvg, slotKeySvg, toDataUrl, wrap } from "../src/render";
+import { focusKeySvg, muteAllKeySvg, openKeySvg, slotKeySvg, toDataUrl, wrap } from "../src/render";
 
 const decode = (url: string) =>
   Buffer.from(url.replace("data:image/svg+xml;base64,", ""), "base64").toString();
@@ -148,6 +148,64 @@ describe("openKeySvg", () => {
   });
 });
 
+describe("focusKeySvg", () => {
+  it("shows the heard matchup under a green crosshair", () => {
+    const svg = focusKeySvg({
+      connected: true,
+      title: "San Francisco 49ers at Seattle Seahawks",
+    });
+    expect(svg).toContain(">SF @ SEA</text>");
+    expect(svg).toContain('stroke="#22c55e"'); // green crosshair
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("wraps a long non-matchup title", () => {
+    const svg = focusKeySvg({ connected: true, title: "NFL GameDay Live" });
+    expect(svg).toContain(">NFL</text>");
+    expect(svg).toContain(">GameDay…</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("falls back to 'YouTube TV' when the title is not known yet", () => {
+    const svg = focusKeySvg({ connected: true, title: "" });
+    expect(svg).toContain(">YouTube</text>");
+    expect(svg).toContain(">TV</text>");
+  });
+
+  it("dims to 'Nothing heard' when no game is heard", () => {
+    const svg = focusKeySvg({ connected: true });
+    expect(svg).toContain(">Nothing</text>");
+    expect(svg).toContain(">heard</text>");
+    expect(svg).not.toContain('stroke="#22c55e"');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows 'No Chrome' when disconnected", () => {
+    const svg = focusKeySvg({ connected: false, featureMissing: true, title: "ignored" });
+    expect(svg).toContain(">No Chrome</text>");
+    expect(svg).not.toContain("ignored");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("asks to update the extension when it lacks the feature", () => {
+    const svg = focusKeySvg({ connected: true, featureMissing: true, title: "ignored" });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(">extension</text>");
+    expect(svg).not.toContain("ignored");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows a protocol mismatch over a missing feature", () => {
+    const svg = focusKeySvg({ connected: true, mismatch: "plugin", featureMissing: true });
+    expect(svg).toContain(">plugin</text>");
+    expect(svg).not.toContain(">extension</text>");
+  });
+
+  it("escapes XML in titles", () => {
+    expect(focusKeySvg({ connected: true, title: "A&B <x>" })).toContain("A&amp;B &lt;x&gt;");
+  });
+});
+
 describe("update badge", () => {
   const BADGE = 'fill="#3b82f6"';
 
@@ -172,6 +230,12 @@ describe("update badge", () => {
   it("is added to the Open YouTube TV key", () => {
     expect(openKeySvg({ connected: true })).not.toContain(BADGE);
     expect(openKeySvg({ connected: true, updateAvailable: true })).toContain(BADGE);
+  });
+
+  it("is added to the Focus Heard Game key", () => {
+    const view = { connected: true, title: "SF at SEA" };
+    expect(focusKeySvg(view)).not.toContain(BADGE);
+    expect(focusKeySvg({ ...view, updateAvailable: true })).toContain(BADGE);
   });
 
   it("draws in the bottom-right corner", () => {

@@ -6,6 +6,7 @@ import {
   PROTOCOL_VERSION,
   WS_PORT,
 } from "@rotho/shared";
+import { FocusAction } from "./actions/focus";
 import { MuteAllAction } from "./actions/mute-all";
 import { OpenAction } from "./actions/open";
 import { SlotAction } from "./actions/slot";
@@ -54,6 +55,7 @@ const server = new ExtensionServer({
 streamDeck.actions.registerAction(new SlotAction(store, server));
 streamDeck.actions.registerAction(new MuteAllAction(store, server));
 streamDeck.actions.registerAction(new OpenAction(store, server));
+streamDeck.actions.registerAction(new FocusAction(store, server));
 
 await streamDeck.connect();
 await server.start();
