@@ -357,6 +357,19 @@ describe("team colors", () => {
     });
   });
 
+  it("splits a college matchup", () => {
+    const svg = slotKeySvg({
+      slot: 3,
+      connected: true,
+      title: "College Football: Michigan Wolverines at Ohio State Buckeyes",
+      heard: false,
+    });
+    expect(svg).toContain('height="72" fill="#00274C"'); // Michigan blue on top
+    expect(svg).toContain('<rect width="144" height="144" fill="#BB0000"/>'); // Ohio State scarlet
+    expect(svg).toContain(">MICH</text>");
+    expect(svg).toContain(">OSU</text>");
+  });
+
   it("splits the heard game on the Focus key, crosshair in the corner", () => {
     const svg = focusKeySvg({ connected: true, title: "San Francisco 49ers at Seattle Seahawks" });
     expect(svg).toContain(`height="72" fill="${SF}"`);

@@ -3,13 +3,14 @@ import { parseTitle } from "../title";
 import { LEAGUES, teamColors } from "./index";
 import type { LeagueId } from "./types";
 
-/** Leagues where every team must have colors. Later phases add the rest. */
+/** Leagues where every team must have colors. */
 const FULL_COVERAGE: readonly LeagueId[] = [
   "nfl",
   "nba",
   "wnba",
   "mlb",
   "nhl",
+  "ncaa",
   "epl",
   "efl-championship",
   "laliga",
@@ -31,6 +32,10 @@ describe("team colors", () => {
   it.each(withColors)("%s has two uppercase #RRGGBB colors", (_id, colors) => {
     expect(colors).toHaveLength(2);
     for (const color of colors) expect(color).toMatch(HEX);
+  });
+
+  it("covers every league", () => {
+    expect([...FULL_COVERAGE].sort()).toEqual(LEAGUES.map((l) => l.id).sort());
   });
 
   it.each(FULL_COVERAGE)("every %s team has colors", (id) => {

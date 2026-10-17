@@ -230,18 +230,25 @@ the text layout. Verification: `pnpm test` (shared 578, plugin 118, extension 53
 `pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass.
 
 ## Phase 5: NCAA
-Status: Not started
+Status: Complete
 
-- [ ] Fill `colors` for all 68 teams in `ncaa.ts`, citing school athletics brand pages in the header
-- [ ] Add `ncaa` to `FULL_COVERAGE`
-- [ ] Add a render test for a table NCAA matchup
+- [x] Fill `colors` for all 68 teams in `ncaa.ts`, citing school athletics brand pages in the header
+- [x] Add `ncaa` to `FULL_COVERAGE`
+- [x] Add a render test for a table NCAA matchup
 
 ### Verification Plan
 - `pnpm test` passes; every league is in `FULL_COVERAGE`
 - `pnpm typecheck`, `pnpm lint` pass
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. All 68 NCAA schools have their athletics brand colors (primary, then secondary).
+`ncaa.ts` uses Prettier's multi-line form for any entry that would pass 100 characters with
+`colors` added, so most entries are multi-line. `colors.test.ts` gains a "covers every league"
+test (`FULL_COVERAGE` sorted equals every `LEAGUES` id), so a new league table can't silently skip
+colors. New render test: "College Football: Michigan Wolverines at Ohio State Buckeyes" splits
+Michigan blue over Ohio State scarlet. Schools outside the tables (Gonzaga, Saint Mary's) still
+fall back to text or to a neutral half, as tested in Phase 2. Verification: `pnpm test` (shared
+648, plugin 119, extension 53), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass.
 
 ## Phase 6: Docs, version bump and follow-up
 Status: Not started
