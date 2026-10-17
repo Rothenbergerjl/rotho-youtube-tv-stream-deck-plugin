@@ -104,30 +104,30 @@ different leagues stay apart (`nfl:PHI` vs `nba:PHI`). Verification: `pnpm test`
 plugin 91, extension 53), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` all pass.
 
 ## Phase 2: Split-layout keys
-Status: Not started
+Status: Complete
 
-- [ ] In `packages/plugin/src/render.ts`, add helpers: `luminance(hex)`, `inkFor(fill)`,
+- [x] In `packages/plugin/src/render.ts`, add helpers: `luminance(hex)`, `inkFor(fill)`,
       `tooClose(a, b)` and `pickColors(first, second)` (applies the similar-colors rule)
-- [ ] Add `teamColors?: boolean` to `SlotKeyView` and `FocusKeyView` (default treated as `true`)
-- [ ] Add a `matchupSplit(...)` drawing helper: two fills, both abbreviations with `inkFor`, the
+- [x] Add `teamColors?: boolean` to `SlotKeyView` and `FocusKeyView` (default treated as `true`)
+- [x] Add a `matchupSplit(...)` drawing helper: two fills, both abbreviations with `inkFor`, the
       separator disc, used by both keys
-- [ ] `slotKeyBody`: when `teamColors !== false`, `parseTitle(title).matchup` exists and at least one
+- [x] `slotKeyBody`: when `teamColors !== false`, `parseTitle(title).matchup` exists and at least one
       side has colors, draw the split layout with the badge and the speaker-on-disc; otherwise keep
       today's text layout exactly
-- [ ] `focusKeyBody`: same rule, with the green crosshair (on a dark disc) in the top-left corner
-- [ ] A side without colors uses `colors.background` (`#111418`)
-- [ ] Update badge (`withUpdateBadge`) still draws last, so it stays on top
-- [ ] Tests in `packages/plugin/test/render.test.ts`:
-  - [ ] SF @ SEA heard: both team fills present, green border, both abbreviations as separate
+- [x] `focusKeyBody`: same rule, with the green crosshair (on a dark disc) in the top-left corner
+- [x] A side without colors uses `colors.background` (`#111418`)
+- [x] Update badge (`withUpdateBadge`) still draws last, so it stays on top
+- [x] Tests in `packages/plugin/test/render.test.ts`:
+  - [x] SF @ SEA heard: both team fills present, green border, both abbreviations as separate
         `<text>` elements, snapshot
-  - [ ] BUF @ LAR: second team falls back to its secondary color (similar primaries)
-  - [ ] a light primary (e.g. PIT gold) gets dark text
-  - [ ] half-known matchup (table team vs generic NCAA side) shows one team color plus `#111418`
-  - [ ] `teamColors: false` gives the current text output (existing assertions still hold)
-  - [ ] non-matchup title, empty slot, No Chrome and mismatch keys are unchanged (existing
+  - [x] BUF @ LAR: second team falls back to its secondary color (similar primaries)
+  - [x] a light primary (e.g. PIT gold) gets dark text
+  - [x] half-known matchup (table team vs generic NCAA side) shows one team color plus `#111418`
+  - [x] `teamColors: false` gives the current text output (existing assertions still hold)
+  - [x] non-matchup title, empty slot, No Chrome and mismatch keys are unchanged (existing
         snapshots unchanged for those cases)
-  - [ ] Focus key split layout, snapshot
-- [ ] Update existing tests whose matchup expectations change because colors are now on by default
+  - [x] Focus key split layout, snapshot
+- [x] Update existing tests whose matchup expectations change because colors are now on by default
       (e.g. `>SF @ SEA</text>` becomes separate `>SF</text>` / `>SEA</text>`); review every
       snapshot diff with `vitest -u` only after checking it is intended
 
@@ -139,7 +139,30 @@ Status: Not started
   to compare against the approved mockup
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. `render.ts` exports `teamSplit(title)` (matchup → `{ abbrs, separator, fills }`,
+or undefined when not a matchup or neither side has colors), `pickFills`, `tooClose`, `luminance`
+and `inkFor`; `matchupSplit` and `onDisc` draw it. `slotKeyBody` and `focusKeyBody` use the split
+unless `teamColors === false`. The "No Chrome", "Update" and empty-slot branches run first, so
+they are unaffected.
+
+Small departures from the design notes, all within the approved behavior:
+- The helper is `pickFills`, not `pickColors`. Besides the second team switching to its
+  secondary on a clash, a team whose primary clashes with the dark key background on a
+  half-known matchup (e.g. Seahawks navy next to an unknown team) switches to its own secondary.
+- `inkFor` picks whichever of light/dark text has the higher WCAG contrast instead of a fixed
+  0.35 luminance cutoff. The effective crossover is about 0.2, so mid oranges (Bengals, Broncos)
+  get dark text.
+- Existing text-layout tests now pass `teamColors: false` instead of being rewritten, so no
+  existing snapshot changed; the toggle-off path is covered by them. Only 2 new snapshots
+  (split Game Slot key and Focus key) were written; `vitest -u` was not needed.
+- Half-known test uses "Football: Kansas City Chiefs at Gonzaga" (generic matcher), not an NCAA
+  table team, so it stays stable when Phase 5 adds NCAA colors.
+- A long non-matchup fallback like "GONZ @ SAIN" wraps to two lines (`GONZ @` / `SAIN`), as before.
+
+Verification: plugin tests 109 pass; `pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass.
+The real SVGs from the snapshots (SF @ SEA Game Slot and Focus) were viewed at 144 and 72 px and
+match the approved mockup. PIT @ GB and BUF @ LAR are covered by assertions rather than viewed.
+The Phase 4 "MCI v ARS" test still passes `teamColors: false`, so adding EPL colors won't change it.
 
 ## Phase 3: Team-colors toggle
 Status: Not started

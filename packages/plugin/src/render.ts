@@ -1,5 +1,5 @@
 // Builds key images as SVG (144×144, the @2x key size) and returns them as data URLs.
-import { formatMatchup } from "@rotho/shared";
+import { formatMatchup, parseTitle, teamColors } from "@rotho/shared";
 import type { UpdateTarget } from "./store";
 
 const SIZE = 144;
@@ -29,6 +29,8 @@ export interface SlotKeyView {
   mismatch?: UpdateTarget;
   /** A newer plugin release exists: adds a small badge in the corner. */
   updateAvailable?: boolean;
+  /** Draw a known matchup in team colors; only `false` turns it off. */
+  teamColors?: boolean;
 }
 
 export interface MuteAllKeyView {
@@ -57,6 +59,8 @@ export interface FocusKeyView {
   /** Raw title of the heard game; undefined when nothing is heard. */
   title?: string;
   updateAvailable?: boolean;
+  /** Draw a known matchup in team colors; only `false` turns it off. */
+  teamColors?: boolean;
 }
 
 export function toDataUrl(svg: string): string {
@@ -106,6 +110,17 @@ function slotKeyBody(view: SlotKeyView): string {
   }
 
   const heard = view.heard === true;
+  const split = view.teamColors === false ? undefined : teamSplit(view.title);
+  if (split) {
+    const tone = heard ? colors.heard : colors.text;
+    return svg(
+      split.fills[1],
+      matchupSplit(split),
+      heard ? border(colors.heard) : "",
+      badge(view.slot, heard ? colors.heard : colors.badge),
+      onDisc(SIZE - 28, 26, speaker(SIZE - 28, 26, heard ? "on" : "off", tone)),
+    );
+  }
   const label = formatMatchup(view.title) || "YouTube TV";
   return svg(
     heard ? colors.backgroundHeard : colors.background,
@@ -198,6 +213,14 @@ function focusKeyBody(view: FocusKeyView): string {
       lines(["Nothing", "heard"], colors.dim, 22, 102),
     );
   }
+  const split = view.teamColors === false ? undefined : teamSplit(view.title);
+  if (split) {
+    return svg(
+      split.fills[1],
+      matchupSplit(split),
+      onDisc(26, 26, target(26, 26, colors.heard, 0.9)),
+    );
+  }
   const label = formatMatchup(view.title) || "YouTube TV";
   return svg(
     colors.background,
@@ -231,6 +254,94 @@ export function wrap(label: string, maxChars = 9): string[] {
       .slice(0, maxChars - 1)
       .trimEnd()}…`,
   ];
+}
+
+/** A matchup ready to draw in team colors: [first, second] for both arrays. */
+export interface TeamSplit {
+  abbrs: readonly [string, string];
+  separator: "@" | "v";
+  fills: readonly [string, string];
+}
+
+/**
+ * The team-color view of a title, or undefined when it isn't a matchup or neither team has
+ * colors. A side without colors gets the normal key background.
+ */
+export function teamSplit(title: string): TeamSplit | undefined {
+  const matchup = parseTitle(title).matchup;
+  if (!matchup) return undefined;
+  const [first, second] = matchup.teams.map((side) =>
+    side.teamId ? teamColors(side.teamId) : undefined,
+  );
+  if (!first && !second) return undefined;
+  return {
+    abbrs: [matchup.teams[0].abbr, matchup.teams[1].abbr],
+    separator: matchup.separator,
+    fills: pickFills(first, second),
+  };
+}
+
+/**
+ * Primaries for both halves. When the halves clash, the second team switches to its secondary,
+ * or, if it has no colors, the first team does (a navy team next to the dark key background).
+ */
+export function pickFills(
+  first: readonly [string, string] | undefined,
+  second: readonly [string, string] | undefined,
+): [string, string] {
+  const top = first?.[0] ?? colors.background;
+  const bottom = second?.[0] ?? colors.background;
+  if (!tooClose(top, bottom)) return [top, bottom];
+  if (second) return [top, second[1]];
+  return [first![1], bottom];
+}
+
+const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+/** Colors closer than this (straight-line RGB distance) read as the same team on a key. */
+const CLASH_DISTANCE = 90;
+
+export function tooClose(a: string, b: string): boolean {
+  const [r1, g1, b1] = rgb(a);
+  const [r2, g2, b2] = rgb(b);
+  return Math.hypot(r1! - r2!, g1! - g2!, b1! - b2!) < CLASH_DISTANCE;
+}
+
+/** WCAG relative luminance of "#RRGGBB": 0 for black, 1 for white. */
+export function luminance(hex: string): number {
+  const [r, g, b] = rgb(hex).map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+/** Light or dark text, whichever has more contrast on `fill`. */
+export function inkFor(fill: string): string {
+  const l = luminance(fill);
+  const contrast = (ink: string) => {
+    const li = luminance(ink);
+    return (Math.max(l, li) + 0.05) / (Math.min(l, li) + 0.05);
+  };
+  return contrast(colors.text) >= contrast(colors.background) ? colors.text : colors.background;
+}
+
+/** Two team-colored halves with an abbreviation in each and the separator on the seam. */
+function matchupSplit({ abbrs, separator, fills }: TeamSplit): string {
+  const half = SIZE / 2;
+  const font = Math.min(30, Math.floor(112 / (Math.max(...abbrs.map((a) => a.length)) * 0.62)));
+  return (
+    `<rect width="${SIZE}" height="${half}" fill="${fills[0]}"/>` +
+    text(half + 8, 60, abbrs[0], inkFor(fills[0]), font) +
+    text(half, 122, abbrs[1], inkFor(fills[1]), font) +
+    `<circle cx="${half}" cy="${half}" r="11" fill="${colors.background}"/>` +
+    text(half, half + 5, separator, colors.text, 14)
+  );
+}
+
+/** Puts a glyph centred at (cx, cy) on a dark disc so it reads on any team color. */
+function onDisc(cx: number, cy: number, glyph: string): string {
+  return `<circle cx="${cx}" cy="${cy}" r="19" fill="${colors.background}" fill-opacity="0.85"/>${glyph}`;
 }
 
 function svg(background: string, ...children: string[]): string {
