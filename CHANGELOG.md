@@ -3,6 +3,25 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-17
+
+Two new keys. Update both the plugin and the extension to use them; with an older extension
+they show "Update extension" while the other keys keep working.
+
+### Added
+
+- **Open YouTube TV** key: opens YouTube TV in a new Chrome window, or a new tab if you pick
+  **New tab** in the key's settings. The new game starts muted and takes the next free slot. The
+  key shows "Full" when all 15 slots are taken.
+- **Focus Heard Game** key: shows the game you're hearing; press it to bring that game's Chrome
+  window and tab to the front.
+
+### Changed
+
+- The extension now tells the plugin which optional features it supports. An older extension no
+  longer blocks every key when only a new feature is missing; only the keys that need it ask for
+  an update.
+
 ## [0.2.0] - 2026-10-16
 
 Easier install and upgrades. If you installed the extension with **Load unpacked**, remove it in
