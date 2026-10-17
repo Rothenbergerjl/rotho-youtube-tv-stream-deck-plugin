@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { focusTab, openYouTubeTv, type WindowsApi, YOUTUBE_TV_URL } from "../src/windows";
+import { SERVICES } from "@rotho/shared";
+import { focusTab, openPage, type WindowsApi } from "../src/windows";
+
+const HOME = SERVICES.youtubeTv.homeUrl;
 
 let windowStates: Map<number, string>;
 let tabWindows: Map<number, number>;
@@ -41,41 +44,51 @@ beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
-describe("openYouTubeTv", () => {
+describe("openPage", () => {
   it("opens a focused window", async () => {
-    await openYouTubeTv(api, "window");
-    expect(api.windows.create).toHaveBeenCalledWith({ url: YOUTUBE_TV_URL, focused: true });
+    await openPage(api, HOME, "window");
+    expect(api.windows.create).toHaveBeenCalledWith({ url: HOME, focused: true });
     expect(api.tabs.create).not.toHaveBeenCalled();
   });
 
   it("opens a tab in the last-focused normal window and focuses it", async () => {
-    await openYouTubeTv(api, "tab");
+    await openPage(api, HOME, "tab");
     expect(api.windows.getLastFocused).toHaveBeenCalledWith({ windowTypes: ["normal"] });
-    expect(api.tabs.create).toHaveBeenCalledWith({
-      windowId: 1,
-      url: YOUTUBE_TV_URL,
-      active: true,
-    });
+    expect(api.tabs.create).toHaveBeenCalledWith({ windowId: 1, url: HOME, active: true });
     expect(api.windows.update).toHaveBeenCalledWith(1, { focused: true });
     expect(api.windows.create).not.toHaveBeenCalled();
   });
 
+  it("opens the URL it is given", async () => {
+    await openPage(api, SERVICES.peacock.homeUrl, "tab");
+    expect(api.tabs.create).toHaveBeenCalledWith({
+      windowId: 1,
+      url: "https://www.peacocktv.com",
+      active: true,
+    });
+    await openPage(api, SERVICES.paramountPlus.homeUrl, "window");
+    expect(api.windows.create).toHaveBeenCalledWith({
+      url: "https://www.paramountplus.com",
+      focused: true,
+    });
+  });
+
   it("restores a minimized last-focused window when opening a tab", async () => {
     lastFocused = 3;
-    await openYouTubeTv(api, "tab");
+    await openPage(api, HOME, "tab");
     expect(api.windows.update).toHaveBeenCalledWith(3, { focused: true, state: "normal" });
   });
 
   it("falls back to a new window when no normal window is open", async () => {
     lastFocused = undefined;
-    await openYouTubeTv(api, "tab");
+    await openPage(api, HOME, "tab");
     expect(api.tabs.create).not.toHaveBeenCalled();
-    expect(api.windows.create).toHaveBeenCalledWith({ url: YOUTUBE_TV_URL, focused: true });
+    expect(api.windows.create).toHaveBeenCalledWith({ url: HOME, focused: true });
   });
 
   it("logs instead of throwing when Chrome refuses", async () => {
     vi.mocked(api.windows.create).mockRejectedValueOnce(new Error("nope"));
-    await expect(openYouTubeTv(api, "window")).resolves.toBeUndefined();
+    await expect(openPage(api, HOME, "window")).resolves.toBeUndefined();
     expect(console.warn).toHaveBeenCalled();
   });
 });

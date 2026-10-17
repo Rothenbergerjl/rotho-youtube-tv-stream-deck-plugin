@@ -131,30 +131,66 @@ Prettier on `packages/shared/src` pass; plugin (119) and extension (53) tests st
   a minimal `URL` constructor locally instead of adding DOM or Node types to the package.
 
 ## Phase 2: Extension tracks Peacock and Paramount+ tabs
-Status: Not started
+Status: Complete
 
-- [ ] `engine.ts`: replace `isYouTubeTvUrl` with `serviceForUrl` limited to enabled services;
+- [x] `engine.ts`: replace `isYouTubeTvUrl` with `serviceForUrl` limited to enabled services;
       `TrackedTab.service`; `EngineState.enabledServices` (default `["youtubeTv", "peacock"]`;
       saved state without it gets the default); `toStateMessage` sends `service` per game and
       `services`.
-- [ ] `engine.ts`: new event `servicesChanged { enabled }` that untracks tabs of disabled
+- [x] `engine.ts`: new event `servicesChanged { enabled, tabs }` that untracks tabs of disabled
       services with unmute effects and tracks open tabs of newly enabled services (muted).
       A tab whose URL moves to another service's player keeps its slot and updates `service`.
-- [ ] `background.ts`: also dispatch on `changeInfo.title` for tabs whose `titleSource` is `tab`,
+- [x] `background.ts`: also dispatch on `changeInfo.title` for tabs whose `titleSource` is `tab`,
       passing `cleanTabTitle(...)`; keep ignoring tab titles for YouTube TV and Paramount+ live.
-- [ ] `background.ts`: load enabled services from `chrome.storage.local` (key `services`) at
+- [x] `background.ts`: load enabled services from `chrome.storage.local` (key `services`) at
       startup before the sync; dispatch `servicesChanged` on `chrome.storage.onChanged`.
-- [ ] `background.ts`: handle `openService` (open the service's home URL via `windows.ts`,
+- [x] `background.ts`: handle `openService` (open the service's home URL via `windows.ts`,
       generalized from `openYouTubeTv` to take a URL) and `openOptions`
       (`chrome.runtime.openOptionsPage()`); add `FEATURES.openService` to `hello`.
-- [ ] Tests in `engine.test.ts` and `windows.test.ts` for the above.
+- [x] Tests in `engine.test.ts` and `windows.test.ts` for the above.
 
 ### Verification Plan
 - `pnpm --filter @rotho/extension test` passes.
 - `pnpm typecheck` and `pnpm lint` pass.
 
+Result (2026-10-17): extension tests pass (6 files, 69 tests); `pnpm test` (shared 688, plugin
+119, extension 69), `pnpm typecheck`, `pnpm lint`, Prettier on the extension, and
+`pnpm --filter @rotho/extension build` pass. Not checked live in Chrome yet (Phase 5).
+
 ### Phase Summary
-_(write when phase completes)_
+- **Engine (`engine.ts`):**
+  - `TrackedTab.service` is set when a tab is tracked.
+  - `EngineState.enabledServices` is always normalized by `enabledServicesFrom(stored)`: it
+    always has `youtubeTv`, drops unknown ids, sorts in `SERVICE_IDS` order, and falls back to
+    `DEFAULT_SERVICES` (`youtubeTv`, `peacock`) when the stored value is missing or not an array.
+  - Matching goes through the private `trackedService(state, url)` (`serviceForUrl` limited to
+    enabled services). `isYouTubeTvUrl` is gone.
+  - `restoreState(saved)` upgrades `chrome.storage.session` saves from 0.4.0: tabs without
+    `service` become `youtubeTv`, and a missing `enabledServices` gets the defaults.
+- **`servicesChanged` carries `tabs`** (every open tab, as for `sync`), because the engine is pure
+  and can't see untracked tabs. It sets `enabledServices`, then runs the same reconcile as `sync`.
+  That reconcile frees and unmutes tabs of disabled services, tracks newly enabled ones in tab-id
+  order, and re-applies the "only the heard tab is unmuted" rule. A heard tab whose service is
+  turned off leaves everything muted.
+- **Service changes on a tracked tab** (`refresh`) keep the slot, the heard state and the old
+  title until a new one arrives. Moving to a disabled service's player frees the slot and
+  unmutes, as leaving YouTube TV always did. `sync` also updates a tab's service if it moved
+  while the worker slept.
+- **Tab titles:** `tabTitleFor(url, title)` (pure, in `engine.ts`) returns the cleaned title only
+  where the title source is `tab`. It skips empty titles and titles contained in the URL (Chrome
+  shows the URL while loading). `background.ts` `toTabInfo` uses it, so `onCreated`, `onUpdated`,
+  `sync` and `servicesChanged` all get Peacock and Paramount+ on-demand titles. `onUpdated` now
+  also fires on title-only changes, but only dispatches when `tabTitleFor` gives a title.
+- **`background.ts` startup:** reads `chrome.storage.session` `engine` and
+  `chrome.storage.local` `services` in one queued task, then syncs. `storage.onChanged` (area
+  `local`, key `services`) queries all tabs and dispatches `servicesChanged`. Phase 3's options
+  page only needs to write `services` as an array of service ids.
+- **Open messages:** `windows.ts` `openYouTubeTv` became `openPage(api, url, target)`, and
+  `YOUTUBE_TV_URL` was removed (`SERVICES.youtubeTv.homeUrl` is the same URL). `openYouTubeTv`
+  and `openService` both keep the `MAX_SLOTS` check. `openOptions` calls
+  `chrome.runtime.openOptionsPage()`; until Phase 3 adds the page this rejects, and the queue
+  logs the error. `hello` now lists `openService`.
+- The `onInstalled` content-script injection is still YouTube TV only; Phase 3 adds Paramount+.
 
 ## Phase 3: Options page and Paramount+ content script
 Status: Not started

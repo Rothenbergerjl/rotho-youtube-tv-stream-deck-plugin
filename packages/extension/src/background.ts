@@ -1,29 +1,51 @@
 // Service worker: feeds Chrome tab events into the engine, applies mute changes, persists state,
 // and keeps the Stream Deck plugin updated over the WebSocket connection.
-import { FEATURES, MAX_SLOTS, PROTOCOL_VERSION, type PluginMessage, WS_PORT } from "@rotho/shared";
+import {
+  FEATURES,
+  MAX_SLOTS,
+  PROTOCOL_VERSION,
+  type PluginMessage,
+  SERVICES,
+  WS_PORT,
+} from "@rotho/shared";
 import { PluginConnection } from "./connection";
 import {
+  enabledServicesFrom,
   type EngineEvent,
   type EngineState,
   initialState,
   reduce,
+  restoreState,
   type TabInfo,
+  tabTitleFor,
   toStateMessage,
 } from "./engine";
 import { isPageTitleMessage } from "./page-title";
-import { focusTab, openYouTubeTv } from "./windows";
+import { focusTab, openPage } from "./windows";
 
 const STORAGE_KEY = "engine";
+/** `chrome.storage.local` key the options page writes the enabled service ids to. */
+const SERVICES_KEY = "services";
 const KEEPALIVE_ALARM = "keepalive";
 
 let state: EngineState = initialState;
 
-// Titles come only from the content script: document.title is "Home - YouTube TV" on every
-// watch page, so the tab's own title is ignored.
-const toTabInfo = (tab: chrome.tabs.Tab): TabInfo | null =>
-  tab.id === undefined || tab.id === chrome.tabs.TAB_ID_NONE
-    ? null
-    : { tabId: tab.id, url: tab.url ?? tab.pendingUrl };
+// The tab's own title is used only where it names the program (Peacock, Paramount+ on demand).
+// On YouTube TV document.title is "Home - YouTube TV" on every watch page, so titles there come
+// only from the content script.
+function toTabInfo(tab: chrome.tabs.Tab): TabInfo | null {
+  if (tab.id === undefined || tab.id === chrome.tabs.TAB_ID_NONE) return null;
+  const url = tab.url ?? tab.pendingUrl;
+  const info: TabInfo = { tabId: tab.id, url };
+  const title = tabTitleFor(url, tab.title);
+  if (title !== undefined) info.title = title;
+  return info;
+}
+
+async function openTabs(): Promise<TabInfo[]> {
+  const tabs = await chrome.tabs.query({});
+  return tabs.map(toTabInfo).filter((t): t is TabInfo => t !== null);
+}
 
 const connection = new PluginConnection({
   url: `ws://127.0.0.1:${WS_PORT}`,
@@ -32,7 +54,7 @@ const connection = new PluginConnection({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
       extensionVersion: chrome.runtime.getManifest().version,
-      features: [FEATURES.openYouTubeTv, FEATURES.focus],
+      features: [FEATURES.openYouTubeTv, FEATURES.focus, FEATURES.openService],
     });
     enqueue(async () => {
       connection.send(toStateMessage(state));
@@ -52,8 +74,20 @@ const connection = new PluginConnection({
       case "openYouTubeTv":
         enqueue(async () => {
           // A new tab with no free slot would play with sound; the plugin checks this too.
-          if (state.tabs.length < MAX_SLOTS) await openYouTubeTv(chrome, message.target);
+          if (state.tabs.length < MAX_SLOTS) {
+            await openPage(chrome, SERVICES.youtubeTv.homeUrl, message.target);
+          }
         });
+        break;
+      case "openService":
+        enqueue(async () => {
+          if (state.tabs.length < MAX_SLOTS) {
+            await openPage(chrome, SERVICES[message.service].homeUrl, message.target);
+          }
+        });
+        break;
+      case "openOptions":
+        enqueue(() => chrome.runtime.openOptionsPage());
         break;
       case "focus":
         enqueue(async () => {
@@ -94,9 +128,12 @@ chrome.tabs.onCreated.addListener((tab) => {
 });
 
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
-  if (changeInfo.url === undefined) return;
+  if (changeInfo.url === undefined && changeInfo.title === undefined) return;
   const info = toTabInfo(tab);
-  if (info) dispatch({ type: "tabUpdated", tab: info });
+  if (!info) return;
+  // A title change matters only where the tab title is the program title.
+  if (changeInfo.url === undefined && info.title === undefined) return;
+  dispatch({ type: "tabUpdated", tab: info });
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => dispatch({ type: "tabRemoved", tabId }));
@@ -106,6 +143,19 @@ chrome.runtime.onMessage.addListener((message: unknown, sender) => {
   if (sender.id !== chrome.runtime.id || !sender.tab || !isPageTitleMessage(message)) return;
   const info = toTabInfo(sender.tab);
   if (info) dispatch({ type: "tabUpdated", tab: { ...info, title: message.title } });
+});
+
+// The options page turned services on or off.
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  const change = changes[SERVICES_KEY];
+  if (areaName !== "local" || !change) return;
+  enqueue(async () => {
+    dispatch({
+      type: "servicesChanged",
+      enabled: enabledServicesFrom(change.newValue),
+      tabs: await openTabs(),
+    });
+  });
 });
 
 // Content scripts are not injected into tabs that were already open when the extension was
@@ -127,16 +177,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KEEPALIVE_ALARM) connection.ensureConnected();
 });
 
-// Startup: restore saved state, reconcile it with the tabs that are open now, then connect.
+// Startup: restore saved state and the enabled services, reconcile them with the tabs that are
+// open now, then connect.
 enqueue(async () => {
   const saved = await chrome.storage.session.get(STORAGE_KEY);
-  if (saved[STORAGE_KEY]) state = saved[STORAGE_KEY] as EngineState;
+  const stored = await chrome.storage.local.get(SERVICES_KEY);
+  state = {
+    ...restoreState(saved[STORAGE_KEY]),
+    enabledServices: enabledServicesFrom(stored[SERVICES_KEY]),
+  };
 });
 enqueue(async () => {
-  const tabs = await chrome.tabs.query({});
-  dispatch(
-    { type: "sync", tabs: tabs.map(toTabInfo).filter((t): t is TabInfo => t !== null) },
-    true,
-  );
+  dispatch({ type: "sync", tabs: await openTabs() }, true);
 });
 connection.start();
