@@ -286,7 +286,7 @@ Status: Complete
 - **Guard refined from the plan:** the plan's "or one side is a known team" would have made "Rams at
   Billsville" a matchup (RAMS @ BILL), which contradicts the plan's own negative case. Now unknown
   sides need a hint or sport word; matchups without one happen only when both sides are table
-  names (step 2).
+  names (step 2). Deviation comment posted on #6 with the user's OK (2026-10-17).
 - `NOT_TEAM_WORDS` (Live, News, Show, Noon, Night, Final, Countdown, GameDay, Films, Presents,
   Midnight, Halftime…) rules out show titles like "College Football Live at Noon" and "NFL Films
   Presents at Midnight". That second one was a real false positive found by a test. The generic
