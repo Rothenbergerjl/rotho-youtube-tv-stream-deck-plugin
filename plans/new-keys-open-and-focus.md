@@ -165,31 +165,31 @@ and `pnpm format:check` all clean. The manifest and its permissions are unchange
   `state.tabs.length >= MAX_SLOTS`, and `focus` is skipped when the slot is empty.
 
 ## Phase 3: Open YouTube TV key
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/render.ts`: add an `OpenKeyView` (`connected`, `mismatch`,
+- [x] `packages/plugin/src/render.ts`: add an `OpenKeyView` (`connected`, `mismatch`,
       `featureMissing`, `full`, `updateAvailable`) and `openKeySvg`. Faces:
       - "No Chrome": dimmed.
       - Mismatch, or a missing feature: amber warning with "Update extension", reusing the
         mismatch layout.
       - Normal: a red play-button glyph with "YouTube TV" and a small plus.
       - All slots full: dimmed glyph with "Full".
-- [ ] New `packages/plugin/src/actions/open.ts`: `OpenAction` (UUID `ACTION_UUIDS.open`) with
+- [x] New `packages/plugin/src/actions/open.ts`: `OpenAction` (UUID `ACTION_UUIDS.open`) with
       settings `{ target?: "window" | "tab" }`, default `"window"`. It re-renders on store
       changes. On key down it alerts when disconnected, on a mismatch, when the feature is
       missing, when `games.length >= MAX_SLOTS`, or when `server.send` fails; otherwise it sends
       `openYouTubeTv`.
-- [ ] Register `OpenAction` in `packages/plugin/src/plugin.ts`.
-- [ ] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/manifest.json`: add an "Open YouTube TV"
+- [x] Register `OpenAction` in `packages/plugin/src/plugin.ts`.
+- [x] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/manifest.json`: add an "Open YouTube TV"
       action (UUID `com.rotho.yttv-multiview.open`, Icon `imgs/actions/open/icon`, Tooltip,
       `PropertyInspectorPath: "ui/open.html"`, Keypad, state image `imgs/actions/open/key`,
       `ShowTitle: false`).
-- [ ] Add `imgs/actions/open/icon.svg` (40×40, white glyph) and `imgs/actions/open/key.svg`
+- [x] Add `imgs/actions/open/icon.svg` (40×40, white glyph) and `imgs/actions/open/key.svg`
       (144×144), styled like the existing muteall SVGs.
-- [ ] New `ui/open.html`: an sdpi-select `target` (Window / Tab, default `window`) and a short
+- [x] New `ui/open.html`: an sdpi-select `target` (Window / Tab, default `window`) and a short
       note that new games start muted.
-- [ ] `packages/plugin/test/render.test.ts`: tests and snapshots for each open-key face.
-- [ ] `packages/plugin/test/manifest.test.ts`: the expected action UUID list includes
+- [x] `packages/plugin/test/render.test.ts`: tests and snapshots for each open-key face.
+- [x] `packages/plugin/test/manifest.test.ts`: the expected action UUID list includes
       `ACTION_UUIDS.open`.
 
 ### Verification Plan
@@ -199,7 +199,24 @@ Status: Not started
 - `pnpm build`, `pnpm typecheck` and `pnpm lint`: no errors.
 
 ### Phase Summary
-_(write when phase completes)_
+Done on 2026-10-17. Verification passed:
+- `pnpm --filter @rotho/plugin test`: 81 tests. 4 snapshots were written, and the snapshot diff
+  is 8 lines added and none changed.
+- `validate`: "Validation successful".
+- `pnpm build`, `pnpm typecheck`, `pnpm lint` and `pnpm format:check`: all clean.
+
+The key faces haven't been seen on a real Stream Deck yet; that happens in Phase 5.
+
+- `render.ts` adds `colors.play` (`#ef4444`), `OpenKeyView` and `openKeySvg`, plus a `play()`
+  helper (a rounded rect with a triangle and an optional white plus badge). Phase 4 can reuse
+  `play()` or follow the same pattern for its glyph.
+- Faces are checked in this order: No Chrome → Update (`mismatch`, or `featureMissing` →
+  "extension") → Full → normal.
+- `OpenAction` (`src/actions/open.ts`) reads `settings.target` and treats anything but `"tab"` as
+  `"window"`. It doesn't write default settings. It re-renders every key on each store change, the
+  same way `MuteAllAction` does.
+- Manifest action order: slot, muteall, open. `ui/open.html` uses
+  `<sdpi-select setting="target" default="window">`.
 
 ## Phase 4: Focus Heard Game key
 Status: Not started

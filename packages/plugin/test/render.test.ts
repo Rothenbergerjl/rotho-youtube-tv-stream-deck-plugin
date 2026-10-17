@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { muteAllKeySvg, slotKeySvg, toDataUrl, wrap } from "../src/render";
+import { muteAllKeySvg, openKeySvg, slotKeySvg, toDataUrl, wrap } from "../src/render";
 
 const decode = (url: string) =>
   Buffer.from(url.replace("data:image/svg+xml;base64,", ""), "base64").toString();
@@ -105,6 +105,49 @@ describe("muteAllKeySvg", () => {
   });
 });
 
+describe("openKeySvg", () => {
+  it("shows the play button with a plus and 'YouTube TV'", () => {
+    const svg = openKeySvg({ connected: true });
+    expect(svg).toContain(">YouTube TV</text>");
+    expect(svg).toContain('fill="#ef4444"'); // red play button
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("dims to 'Full' when every slot is taken", () => {
+    const svg = openKeySvg({ connected: true, full: true });
+    expect(svg).toContain(">Full</text>");
+    expect(svg).not.toContain('fill="#ef4444"');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows 'No Chrome' when disconnected, even if the feature is missing", () => {
+    const svg = openKeySvg({ connected: false, featureMissing: true, full: true });
+    expect(svg).toContain(">No Chrome</text>");
+    expect(svg).not.toContain(">Update</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("asks to update the extension when it lacks the feature", () => {
+    const svg = openKeySvg({ connected: true, featureMissing: true });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(">extension</text>");
+    expect(svg).toContain('fill="#f59e0b"'); // warning triangle
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows a protocol mismatch over a missing feature", () => {
+    const svg = openKeySvg({ connected: true, mismatch: "plugin", featureMissing: true });
+    expect(svg).toContain(">plugin</text>");
+    expect(svg).not.toContain(">extension</text>");
+  });
+
+  it("prefers the update warning over 'Full'", () => {
+    const svg = openKeySvg({ connected: true, featureMissing: true, full: true });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).not.toContain(">Full</text>");
+  });
+});
+
 describe("update badge", () => {
   const BADGE = 'fill="#3b82f6"';
 
@@ -124,6 +167,11 @@ describe("update badge", () => {
     const view = { connected: true, allMuted: false, canRestore: false };
     expect(muteAllKeySvg(view)).not.toContain(BADGE);
     expect(muteAllKeySvg({ ...view, updateAvailable: true })).toContain(BADGE);
+  });
+
+  it("is added to the Open YouTube TV key", () => {
+    expect(openKeySvg({ connected: true })).not.toContain(BADGE);
+    expect(openKeySvg({ connected: true, updateAvailable: true })).toContain(BADGE);
   });
 
   it("draws in the bottom-right corner", () => {

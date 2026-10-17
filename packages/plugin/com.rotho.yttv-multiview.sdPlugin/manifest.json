@@ -31,6 +31,21 @@
           "ShowTitle": false
         }
       ]
+    },
+    {
+      "Name": "Open YouTube TV",
+      "UUID": "com.rotho.yttv-multiview.open",
+      "Icon": "imgs/actions/open/icon",
+      "Tooltip": "Opens YouTube TV in a new Chrome window or tab; the new game starts muted.",
+      "PropertyInspectorPath": "ui/open.html",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/open/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
     }
   ],
   "Category": "Rotho YTTV Multiview",

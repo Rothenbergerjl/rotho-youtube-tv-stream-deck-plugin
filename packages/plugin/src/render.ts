@@ -16,6 +16,7 @@ const colors = {
   muted: "#ef4444",
   warning: "#f59e0b",
   update: "#3b82f6",
+  play: "#ef4444",
 };
 
 export interface SlotKeyView {
@@ -38,6 +39,16 @@ export interface MuteAllKeyView {
   updateAvailable?: boolean;
 }
 
+export interface OpenKeyView {
+  connected: boolean;
+  mismatch?: UpdateTarget;
+  /** The connected extension doesn't list the `openYouTubeTv` feature: it needs updating. */
+  featureMissing?: boolean;
+  /** Every slot is taken, so a new game would go untracked. */
+  full?: boolean;
+  updateAvailable?: boolean;
+}
+
 export function toDataUrl(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
@@ -48,6 +59,10 @@ export function slotKeySvg(view: SlotKeyView): string {
 
 export function muteAllKeySvg(view: MuteAllKeyView): string {
   return withUpdateBadge(muteAllKeyBody(view), view.updateAvailable);
+}
+
+export function openKeySvg(view: OpenKeyView): string {
+  return withUpdateBadge(openKeyBody(view), view.updateAvailable);
 }
 
 function slotKeyBody(view: SlotKeyView): string {
@@ -113,6 +128,36 @@ function muteAllKeyBody(view: MuteAllKeyView): string {
     colors.background,
     speaker(SIZE / 2, 50, "on", colors.heard, 1.6),
     lines(["Mute all"], colors.text, 22, 112),
+  );
+}
+
+function openKeyBody(view: OpenKeyView): string {
+  if (!view.connected) {
+    return svg(
+      colors.dimBackground,
+      play(SIZE / 2, 50, colors.dim),
+      lines(["No Chrome"], colors.dim, 22, 112),
+    );
+  }
+  const update = view.mismatch ?? (view.featureMissing ? "extension" : undefined);
+  if (update) {
+    return svg(
+      colors.dimBackground,
+      warning(SIZE / 2, 48),
+      lines(["Update", update], colors.text, 24, 100),
+    );
+  }
+  if (view.full) {
+    return svg(
+      colors.dimBackground,
+      play(SIZE / 2, 50, colors.dim),
+      lines(["Full"], colors.dim, 22, 112),
+    );
+  }
+  return svg(
+    colors.background,
+    play(SIZE / 2, 50, colors.play, true),
+    lines(["YouTube TV"], colors.text, 22, 112),
   );
 }
 
@@ -185,6 +230,21 @@ function speaker(cx: number, cy: number, mode: "on" | "off", color: string, scal
       ? `<path d="M9 -7 Q14 0 9 7 M13 -12 Q21 0 13 12" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M9 -6 L19 6 M19 -6 L9 6" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`;
   return `<g transform="translate(${cx} ${cy}) scale(${scale})">${body}${extra}</g>`;
+}
+
+/** Rounded play button centred at (cx, cy), with a small plus badge when `plus` is set. */
+function play(cx: number, cy: number, color: string, plus = false): string {
+  const badge = plus
+    ? `<circle cx="34" cy="-22" r="13" fill="${colors.text}"/>` +
+      `<path d="M34 -29 V-15 M27 -22 H41" stroke="${colors.background}" stroke-width="4" stroke-linecap="round"/>`
+    : "";
+  return (
+    `<g transform="translate(${cx} ${cy})">` +
+    `<rect x="-34" y="-24" width="68" height="48" rx="14" fill="${color}"/>` +
+    `<path d="M-9 -13 L15 0 L-9 13 Z" fill="${color === colors.dim ? colors.dimBackground : colors.text}"/>` +
+    badge +
+    `</g>`
+  );
 }
 
 /** Adds a blue up-arrow dot in the bottom-right corner when an update is available. */
