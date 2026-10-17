@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION } from "@rotho/shared";
+import { FEATURES, PROTOCOL_VERSION } from "@rotho/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { type PluginState, Store } from "../src/store";
 import { sampleState } from "./fake-extension";
@@ -45,6 +45,38 @@ describe("Store.setProtocol", () => {
     store.setProtocol(PROTOCOL_VERSION - 1);
     store.setConnected(false);
     expect(store.current).not.toHaveProperty("mismatch");
+  });
+});
+
+describe("Store.setFeatures", () => {
+  it("starts with no features", () => {
+    expect(store.current.features).toEqual([]);
+    expect(store.has(FEATURES.focus)).toBe(false);
+  });
+
+  it("records the features from hello and keeps them across state updates", () => {
+    store.setFeatures([FEATURES.openYouTubeTv, FEATURES.focus]);
+    store.applyState({ ...sampleState, games: [...sampleState.games] });
+    expect(store.has(FEATURES.openYouTubeTv)).toBe(true);
+    expect(store.has(FEATURES.focus)).toBe(true);
+  });
+
+  it("treats a hello without features as none", () => {
+    store.setFeatures([FEATURES.focus]);
+    store.setFeatures(undefined);
+    expect(store.current.features).toEqual([]);
+  });
+
+  it("only notifies when the features change", () => {
+    store.setFeatures([FEATURES.focus, FEATURES.openYouTubeTv]);
+    store.setFeatures([FEATURES.openYouTubeTv, FEATURES.focus]);
+    expect(updates).toHaveLength(2); // setConnected + first setFeatures
+  });
+
+  it("clears the features on disconnect", () => {
+    store.setFeatures([FEATURES.focus]);
+    store.setConnected(false);
+    expect(store.current.features).toEqual([]);
   });
 });
 

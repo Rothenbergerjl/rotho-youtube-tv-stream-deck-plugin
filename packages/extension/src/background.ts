@@ -1,6 +1,6 @@
 // Service worker: feeds Chrome tab events into the engine, applies mute changes, persists state,
 // and keeps the Stream Deck plugin updated over the WebSocket connection.
-import { PROTOCOL_VERSION, type PluginMessage, WS_PORT } from "@rotho/shared";
+import { FEATURES, PROTOCOL_VERSION, type PluginMessage, WS_PORT } from "@rotho/shared";
 import { PluginConnection } from "./connection";
 import {
   type EngineEvent,
@@ -31,18 +31,27 @@ const connection = new PluginConnection({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
       extensionVersion: chrome.runtime.getManifest().version,
+      features: [FEATURES.openYouTubeTv, FEATURES.focus],
     });
     enqueue(async () => {
       connection.send(toStateMessage(state));
     });
   },
   onMessage: (message: PluginMessage) => {
-    if (message.type === "requestState") {
-      enqueue(async () => {
-        connection.send(toStateMessage(state));
-      });
-    } else {
-      dispatch(message);
+    switch (message.type) {
+      case "requestState":
+        enqueue(async () => {
+          connection.send(toStateMessage(state));
+        });
+        break;
+      case "solo":
+      case "toggleMuteAll":
+        dispatch(message);
+        break;
+      case "openYouTubeTv":
+      case "focus":
+        // Handled in a later phase; no key sends these yet.
+        break;
     }
   },
 });

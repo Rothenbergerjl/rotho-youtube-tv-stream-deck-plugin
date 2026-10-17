@@ -5,6 +5,8 @@ describe("shared constants", () => {
   it("derives action UUIDs from the plugin UUID", () => {
     expect(ACTION_UUIDS.slot).toBe(`${PLUGIN_UUID}.slot`);
     expect(ACTION_UUIDS.muteAll).toBe(`${PLUGIN_UUID}.muteall`);
+    expect(ACTION_UUIDS.open).toBe(`${PLUGIN_UUID}.open`);
+    expect(ACTION_UUIDS.focus).toBe(`${PLUGIN_UUID}.focus`);
   });
 
   it("uses a well-formed Chrome extension ID", () => {

@@ -1,6 +1,6 @@
 // Messages exchanged over the WebSocket between the Chrome extension and the Stream Deck plugin.
 // Every message is a JSON object with a string `type`.
-import { MAX_SLOTS } from "./constants";
+import { FEATURES, type Feature, MAX_SLOTS } from "./constants";
 
 /** One tracked YouTube TV tab, as shown on a Game Slot key. */
 export interface Game {
@@ -20,6 +20,8 @@ export interface HelloMessage {
   type: "hello";
   protocolVersion: number;
   extensionVersion: string;
+  /** Optional messages the extension handles; missing from extensions older than 0.3.0. */
+  features?: Feature[];
 }
 
 /** Full snapshot, sent on connect, on request, and after every change. */
@@ -58,7 +60,23 @@ export interface RequestStateMessage {
   type: "requestState";
 }
 
-export type PluginMessage = SoloMessage | ToggleMuteAllMessage | RequestStateMessage;
+/** Where Open YouTube TV opens the page. */
+export type OpenTarget = "window" | "tab";
+
+/** Open tv.youtube.com in a new window, or a tab in the last-focused one. Feature `openYouTubeTv`. */
+export interface OpenYouTubeTvMessage {
+  type: "openYouTubeTv";
+  target: OpenTarget;
+}
+
+/** Bring the game in `slot` to the front: activate its tab and focus its window. Feature `focus`. */
+export interface FocusMessage {
+  type: "focus";
+  slot: number;
+}
+
+export type PluginMessage =
+  SoloMessage | ToggleMuteAllMessage | RequestStateMessage | OpenYouTubeTvMessage | FocusMessage;
 
 // ---- Validation ----
 
@@ -67,6 +85,10 @@ type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
 const isInt = (v: unknown): v is number => Number.isInteger(v);
 const isSlot = (v: unknown): v is number => isInt(v) && v >= 1 && v <= MAX_SLOTS;
+const isOpenTarget = (v: unknown): v is OpenTarget => v === "window" || v === "tab";
+
+const knownFeatures: readonly string[] = Object.values(FEATURES);
+const isFeature = (v: string): v is Feature => knownFeatures.includes(v);
 
 function isGame(v: unknown): v is Game {
   return (
@@ -91,14 +113,22 @@ function parseObject(raw: string): Obj | null {
 export function parseExtensionMessage(raw: string): ExtensionMessage | null {
   const m = parseObject(raw);
   switch (m?.type) {
-    case "hello":
-      return isInt(m.protocolVersion) && typeof m.extensionVersion === "string"
-        ? {
-            type: "hello",
-            protocolVersion: m.protocolVersion,
-            extensionVersion: m.extensionVersion,
-          }
-        : null;
+    case "hello": {
+      if (!isInt(m.protocolVersion) || typeof m.extensionVersion !== "string") return null;
+      const hello: HelloMessage = {
+        type: "hello",
+        protocolVersion: m.protocolVersion,
+        extensionVersion: m.extensionVersion,
+      };
+      if (m.features !== undefined) {
+        if (!Array.isArray(m.features) || !m.features.every((f) => typeof f === "string")) {
+          return null;
+        }
+        // Names this plugin doesn't know come from a newer extension; ignore them.
+        hello.features = m.features.filter(isFeature);
+      }
+      return hello;
+    }
     case "state": {
       if (!Array.isArray(m.games) || !m.games.every(isGame) || typeof m.allMuted !== "boolean") {
         return null;
@@ -129,6 +159,10 @@ export function parsePluginMessage(raw: string): PluginMessage | null {
       return { type: "toggleMuteAll" };
     case "requestState":
       return { type: "requestState" };
+    case "openYouTubeTv":
+      return isOpenTarget(m.target) ? { type: "openYouTubeTv", target: m.target } : null;
+    case "focus":
+      return isSlot(m.slot) ? { type: "focus", slot: m.slot } : null;
     default:
       return null;
   }
