@@ -1,6 +1,6 @@
 // Team tables used by parseTitle to shorten matchups.
 
-export type LeagueId = "nfl";
+export type LeagueId = "nfl" | "nba" | "wnba" | "mlb" | "nhl";
 
 export type Sport = "football" | "basketball" | "baseball" | "hockey" | "soccer";
 

@@ -30,8 +30,12 @@ interface Entry {
   team: Team;
 }
 
-/** Lower-cases and strips accents so "Atlético" matches "atletico". Used for matching only. */
-const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+/**
+ * Lower-cases, strips accents and straightens apostrophes so "Atlético" matches "atletico" and
+ * "A’s" matches "a's". Used for matching only.
+ */
+const fold = (s: string) =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").replace(/’/g, "'").toLowerCase();
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

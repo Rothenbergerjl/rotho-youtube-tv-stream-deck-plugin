@@ -136,14 +136,14 @@ are clean.
   it covers every future league automatically.
 
 ## Phase 2: NBA, WNBA, MLB, NHL
-Status: Not started
+Status: Complete
 
-- [ ] Add `teams/nba.ts`, `teams/wnba.ts`, `teams/mlb.ts`, `teams/nhl.ts` (full name, nickname, and
+- [x] Add `teams/nba.ts`, `teams/wnba.ts`, `teams/mlb.ts`, `teams/nhl.ts` (full name, nickname, and
       city-less names such as "Athletics"), each with season and source header comments.
-- [ ] Add hints for each league (e.g. "NBA", "NBA Basketball", "WNBA", "MLB", "MLB Baseball",
+- [x] Add hints for each league (e.g. "NBA", "NBA Basketball", "WNBA", "MLB", "MLB Baseball",
       "Baseball Night in America", "NHL", "NHL Hockey", "Hockey Night").
-- [ ] Register them in `teams/index.ts`.
-- [ ] Add tests: at least two matchups per league (full and nickname forms, `@` and `v`), plus
+- [x] Register them in `teams/index.ts`.
+- [x] Add tests: at least two matchups per league (full and nickname forms, `@` and `v`), plus
       collisions: "Rangers at Kings" (both NHL → NYR @ LAK), "Texas Rangers at New York Yankees"
       (full name), "MLB: Giants at Cardinals" (hint → SF @ STL), "Giants at Cardinals" with no hint
       (NFL and MLB both fit → generic), "Panthers at Jets" (NFL and NHL both fit → generic),
@@ -155,8 +155,30 @@ Status: Not started
   league.
 - `pnpm typecheck` and `pnpm lint` exit 0.
 
+**Result (2026-10-17):** 83/83 shared and 90/90 plugin tests pass. `pnpm typecheck`, `pnpm lint` and
+`prettier --check packages/shared plans` are clean.
+
 ### Phase Summary
-_(write when phase completes)_
+- Added `teams/nba.ts` (30), `wnba.ts` (16), `mlb.ts` (30) and `nhl.ts` (32), registered in
+  `LEAGUES` in the order NFL, NBA, WNBA, MLB, NHL. `LeagueId` now covers all five.
+- WNBA: the 2026 season's 15 teams, plus "Houston Comets" (HOU). The Connecticut Sun relocate to
+  Houston for 2027, and listing both now avoids an edit next season. Once the move is done, the
+  Connecticut Sun entry can be dropped. Codes follow common 3-letter forms (NYL, LVA, LAS, GSV, CON).
+- Codes: NBA uses GSW, NOP, SAS, NYK, BKN; MLB uses ATH, CWS, WSH; NHL uses LAK, NJD, SJS, TBL, VGK.
+  A few common aliases are in (Cavs, Mavs, Sixers, Blazers, Wolves, A's, D-backs, Avs, Habs, Leafs,
+  Caps). "Wolves" will also be a Wolverhampton alias in Phase 3; collision resolution handles that.
+- `fold()` now also turns curly apostrophes (’) into straight ones, so "A’s" matches.
+- Found and avoided a bug: two names of one team that fold to the same key (e.g. "Montréal" and
+  "Montreal Canadiens") would create two index entries and make the match look ambiguous. Only the
+  accented form is listed, and the uniqueness test now compares folded names, so it would catch it.
+- Collision tests cover Rangers/Kings, Giants/Cardinals and Panthers/Jets, with and without hints and
+  with full names, plus the check that "NBA" inside "WNBA" isn't treated as a hint. Ambiguous cases
+  assert `matchup?.league` is undefined (not the display), so Phase 4's generic matchups won't break
+  them.
+- Team lists come from my own knowledge plus a 2026-10-17 web check of the WNBA list (sources:
+  [Yahoo Sports on the Sun's sale](https://sports.yahoo.com/wnba/breaking-news/article/wnba-approves-sale-of-connecticut-sun-team-will-relocate-to-houston-in-2027-223603722.html),
+  [Wikipedia: 2026 Connecticut Sun season](https://en.wikipedia.org/wiki/2026_Connecticut_Sun_season)).
+  The headers name the official sites, but I didn't fetch those pages.
 
 ## Phase 3: Soccer
 Status: Not started
