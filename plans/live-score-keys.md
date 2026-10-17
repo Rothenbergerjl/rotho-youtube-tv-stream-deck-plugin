@@ -243,22 +243,22 @@ entries (22 lines added) and no existing snapshot changed.
 
 ## Phase 4: Slot key integration
 
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/settings.ts`: `showScoreSetting`, `scoreAlertsSetting` (missing means
+- [x] `packages/plugin/src/settings.ts`: `showScoreSetting`, `scoreAlertsSetting` (missing means
       on) and `scoreDelaySetting` (one of 0, 15, 30, 45, 60, 90; anything else means 30), with
       tests in `packages/plugin/test/settings.test.ts`.
-- [ ] `packages/plugin/src/actions/slot.ts`: read the three settings per key; render with
+- [x] `packages/plugin/src/actions/slot.ts`: read the three settings per key; render with
       `tracker.scoreFor(slot, delay)` when Show score is on; re-render on tracker changes and on a
       1 s tick while any visible key shows a score (skip `setImage` when the SVG is unchanged).
-- [ ] Alert sequence per key: compare the delayed snapshot with the last one shown for the same
+- [x] Alert sequence per key: compare the delayed snapshot with the last one shown for the same
       event; on an increase, run the 6 row frames at 350 ms, then 10 s of band callout, then the
       normal key. Restart on a new score; clear timers in `onWillDisappear` and when the slot's
       game changes.
-- [ ] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html`: "Show score" and "Score
+- [x] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html`: "Show score" and "Score
       alerts" checkboxes, "Score delay" select (0, 15, 30, 45, 60, 90 s, default 30), and a line in
       the help text about ESPN scores and the delay.
-- [ ] `packages/plugin/test/fake-extension.ts`: a `--title "<title>"` flag that puts that title in
+- [x] `packages/plugin/test/fake-extension.ts`: a `--title "<title>"` flag that puts that title in
       slot 1, so a game on today's ESPN slate can be checked on real keys.
 
 ### Verification Plan
@@ -270,7 +270,32 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Done 2026-10-17. All checks pass: `pnpm test` (plugin 220, including 31 new settings and alert
+tests), `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`, and
+`streamdeck validate`. A Node `fetch` of the college football feed with the plugin's headers
+returned 200 with 13 live games. ESPN refuses some clients (WebFetch got 403), so the hardware
+check should confirm the plugin's own requests in its log.
+
+- **Settings:** `showScoreSetting` and `scoreAlertsSetting` (missing or anything but
+  `false`/"false" means on) and `scoreDelaySetting` (seconds, one of `SCORE_DELAYS`, else 30).
+  The panel has two checkboxes, a "Score delay" select ("None" to "90 seconds") and a help
+  paragraph.
+- **Alert logic:** `packages/plugin/src/score-alerts.ts`, free of the SDK and unit-tested.
+  `nextScoreState(prev, snapshot, now, alertsOn)` returns the key's state: an alert starts on any
+  increase for the same event, and the bigger gain picks the team. It's kept while running,
+  restarted on a new score, and dropped when done or when alerts are turned off. No snapshot
+  clears the state, so a score returning after a stale feed or Show score off doesn't alert.
+  `alertFrame(state, now)` turns elapsed time into a frame: 6 row frames of 350 ms (white on even
+  frames), then 10 s of band callout.
+- **SlotAction:** one options map per key (team colors, show score, alerts, delay in ms), a
+  score state per key (two keys on one slot can have different delays), and the last image per
+  key so an unchanged image isn't sent again. A single timer re-renders all keys every 350 ms
+  while an alert runs, every 1 s while any key shows a score, and stops otherwise. Disconnects,
+  protocol mismatches and Show score off draw today's key.
+- **fake-extension:** `--title "<title>"` (and the exported `stateWithTitle`) puts the title in
+  slot 1 as the heard game.
+- **Not covered by tests:** `SlotAction` itself, as before; it needs the Stream Deck SDK. The
+  Phase 5 hardware check covers it.
 
 ## Phase 5: Docs and hardware check
 

@@ -29,12 +29,34 @@
     <sdpi-item label="Team colors">
       <sdpi-checkbox setting="teamColors" default="true"></sdpi-checkbox>
     </sdpi-item>
+    <sdpi-item label="Show score">
+      <sdpi-checkbox setting="showScore" default="true"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Score alerts">
+      <sdpi-checkbox setting="scoreAlerts" default="true"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Score delay">
+      <sdpi-select setting="scoreDelay" value-type="number" default="30">
+        <option value="0">None</option>
+        <option value="15">15 seconds</option>
+        <option value="30">30 seconds</option>
+        <option value="45">45 seconds</option>
+        <option value="60">60 seconds</option>
+        <option value="90">90 seconds</option>
+      </sdpi-select>
+    </sdpi-item>
     <sdpi-item>
       <p>
         Slots are given to YouTube TV, Peacock and Paramount+ player tabs in the order they open.
         Slot 1 is the first game you opened. The badge in the bottom-left corner shows the service.
         With Team colors on, a game between known teams shows each team's colors; turn it off for
         plain text.
+      </p>
+      <p>
+        With Show score on, a game between two known teams shows the live score from ESPN. The
+        stream runs behind the live game, so Score delay holds each new score back to avoid
+        spoilers; raise it if scores still change before you see the play. Score alerts flash the
+        scoring team's row, then show the points in the middle of the key.
       </p>
     </sdpi-item>
     <sdpi-item id="update" label="Update" hidden>

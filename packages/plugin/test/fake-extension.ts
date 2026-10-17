@@ -80,16 +80,26 @@ export function connectFakeExtension(
   });
 }
 
+/** The sample state with `title` as the heard game in slot 1, e.g. a game live on ESPN now. */
+export function stateWithTitle(title: string) {
+  const [first, ...rest] = sampleState.games;
+  return { ...sampleState, games: [{ ...first, title }, ...rest] };
+}
+
 // Script mode: connect to the running plugin and log commands until Ctrl+C.
 // `--protocol <n>` sends a different protocol version to show the mismatch keys.
 // `--no-features` leaves features out of hello, like an extension older than 0.3.0.
+// `--title "<title>"` puts that title in slot 1, to check scores on a game live on ESPN.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const flag = process.argv.indexOf("--protocol");
   const protocolVersion = flag === -1 ? PROTOCOL_VERSION : Number(process.argv[flag + 1]);
   const noFeatures = process.argv.includes("--no-features");
+  const titleFlag = process.argv.indexOf("--title");
+  const title = titleFlag === -1 ? undefined : process.argv[titleFlag + 1];
   const fake = await connectFakeExtension({
     protocolVersion,
     ...(noFeatures && { features: undefined }),
+    ...(title && { state: stateWithTitle(title) }),
   });
   console.log(
     `Connected to ws://127.0.0.1:${WS_PORT}; sent hello (protocol ${protocolVersion}${noFeatures ? ", no features" : ""}) + state. Press keys on the Stream Deck.`,
