@@ -251,19 +251,19 @@ fall back to text or to a neutral half, as tested in Phase 2. Verification: `pnp
 648, plugin 119, extension 53), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass.
 
 ## Phase 6: Docs, version bump and follow-up
-Status: Not started
+Status: Complete
 
-- [ ] Add a `## [0.4.0] - <date>` section to `CHANGELOG.md` (Added: team colors on Game Slot and
+- [x] Add a `## [0.4.0] - <date>` section to `CHANGELOG.md` (Added: team colors on Game Slot and
       Focus keys; the Team colors setting; Focus key settings page. Note that the extension has no
       code changes and only its version moved)
-- [ ] README: describe team colors and the toggle where the Game Slot and Focus keys are described
-- [ ] Bump the version to `0.4.0` with the editor in root `package.json`, the three
+- [x] README: describe team colors and the toggle where the Game Slot and Focus keys are described
+- [x] Bump the version to `0.4.0` with the editor in root `package.json`, the three
       `packages/*/package.json`, `packages/extension/manifest.json` (`0.4.0`) and the plugin
       `manifest.json` (`0.4.0.0`)
-- [ ] Draft the program-art issue in chat (mediaSession artwork: what's unknown, the console
+- [x] Draft the program-art issue in chat (mediaSession artwork: what's unknown, the console
       snippet to check it, the plugin-side download approach, PRIVACY.md impact) following
       `.github/ISSUE_TEMPLATE/feature.yml`; create it only after the user approves
-- [ ] Give the user a short hardware checklist: split keys readable at real size, gold/white
+- [x] Give the user a short hardware checklist: split keys readable at real size, gold/white
       teams legible, speaker and badge visible, heard border visible, toggle works
 
 ### Verification Plan
@@ -272,10 +272,49 @@ Status: Not started
 - `pnpm build` succeeds
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. `CHANGELOG.md` has a `[0.4.0] - 2026-10-17` section: Added team colors, the
+clash and text-color rules, and the Team colors checkbox; Changed notes that unknown teams and
+shows look as before. Its intro says only the plugin changed and the extension's version moved
+to stay in step. README Usage gains a step about team colors and the checkbox; the key table
+describes the colored and text Game Slot states and the colored Focus key; the repo layout row
+for `packages/shared` mentions team tables and colors. The version moved to 0.4.0 in all six
+files with the editor (not `pnpm version:sync`, per the repo's no-shell-edits rule). The
+program-art follow-up was drafted in chat from `feature.yml`. It is created only with the user's
+approval, and isn't created by this phase. The hardware checklist was given in chat.
+Verification: `sync-version --check` prints "All versions are 0.4.0"; `pnpm test` (shared 648,
+plugin 119, extension 53), `pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass;
+`pnpm build` succeeds.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Issue #7 asked for logos or art on Game Slot keys. After research, it shipped as team colors.
+League logos were ruled out over trademark licensing, and program art moves to a follow-up issue.
+
+- **Data (`packages/shared`):** every one of the 449 teams in the 15 league tables has
+  `colors: [primary, secondary]`, and `teamColors(teamId)` looks them up. A test enforces full
+  coverage, including any league added later. Pro and NCAA colors follow published team palettes.
+  Soccer, national-team and a few new pro teams' colors are approximate and marked as such.
+- **Drawing (`packages/plugin/src/render.ts`):** `teamSplit` turns a title into a two-color split
+  (first/away team on top). `pickFills` handles clashes between the two teams and with the dark
+  background. `inkFor` picks the higher-contrast text. Game Slot keys keep the slot badge, a
+  speaker on a dark disc and the green heard border; the Focus key puts its crosshair top-left.
+  Non-matchups, unknown teams and every error state are unchanged.
+- **Setting:** a per-key "Team colors" checkbox (on by default, missing = on) in `ui/slot.html`
+  and a new `ui/focus.html`, read through `teamColorsSetting`.
+- **Release:** 0.4.0 with CHANGELOG and README updates. The protocol and extension code are
+  unchanged.
+- **Deviation** (posted on #7): contrast-based text color and the background-clash fallback.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Check the hardware checklist on a real Stream Deck with a dev build
+   (`pnpm --filter @rotho/plugin sd:link`, restart the plugin). Fix anything found before
+   merging.
+2. Delete `plans/team-color-keys.md` in the final commit, push the branch, and run `/open-pr`.
+   The PR body carries `Fixes #7`.
+3. Squash-merge the PR into `main` (the user does this; merging closes #7).
+4. Follow README → Release: in GitHub, **Actions → Release → Run workflow** on `main` with
+   version `0.4.0`. The workflow tags `v0.4.0` and publishes both files. Installed plugins show
+   the update badge within 12 hours.
+5. Extension: its code is unchanged, so uploading `yttv-multiview-extension-0.4.0.zip` to the
+   Chrome Web Store is optional. Upload it to keep the store version in step with the plugin;
+   there's no protocol change, so 0.3.0 extensions keep working with the 0.4.0 plugin.
+6. Program-art follow-up: created as #14 (2026-10-17).

@@ -3,6 +3,27 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-10-17
+
+Game keys show the two teams' colors. Only the plugin changed; the extension's version moves to
+0.4.0 to stay in step, with no code changes, so there's no need to wait for Chrome to update it.
+
+### Added
+
+- **Team colors** on Game Slot and Focus Heard Game keys: a known matchup splits the key into the
+  away team's color on top and the home team's on the bottom, each with its abbreviation. The
+  slot number, speaker and green "heard" border stay on top. Covers every team the plugin knows:
+  NFL, NBA, WNBA, MLB, NHL, the major college conferences, the soccer leagues and national teams.
+- When both teams' colors are too alike (Bills and Rams, both royal blue), the home team uses its
+  second color. Text turns dark on light colors such as gold or white.
+- A **Team colors** checkbox in the Game Slot settings and in new Focus Heard Game settings. It's
+  on by default; turn it off for the plain text look.
+
+### Changed
+
+- Games between teams the plugin doesn't know, and shows that aren't games, look the same as
+  before. If only one team is known, the other half uses the normal dark key background.
+
 ## [0.3.0] - 2026-10-17
 
 Two new keys. Update both the plugin and the extension to use them; with an older extension
