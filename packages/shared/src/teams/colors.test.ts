@@ -4,7 +4,22 @@ import { LEAGUES, teamColors } from "./index";
 import type { LeagueId } from "./types";
 
 /** Leagues where every team must have colors. Later phases add the rest. */
-const FULL_COVERAGE: readonly LeagueId[] = ["nfl", "nba", "wnba", "mlb", "nhl"];
+const FULL_COVERAGE: readonly LeagueId[] = [
+  "nfl",
+  "nba",
+  "wnba",
+  "mlb",
+  "nhl",
+  "epl",
+  "efl-championship",
+  "laliga",
+  "bundesliga",
+  "seriea",
+  "ligue1",
+  "ucl-extras",
+  "ligamx",
+  "intl",
+];
 
 const HEX = /^#[0-9A-F]{6}$/;
 

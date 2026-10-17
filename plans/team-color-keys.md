@@ -204,20 +204,30 @@ Not yet done: the manual check on hardware (toggling both keys, and a pre-update
 colors). It is in the Phase 6 hardware checklist.
 
 ## Phase 4: Soccer and national teams
-Status: Not started
+Status: Complete
 
-- [ ] Fill `colors` in `epl.ts`, `efl-championship.ts`, `laliga.ts`, `bundesliga.ts`, `seriea.ts`,
+- [x] Fill `colors` in `epl.ts`, `efl-championship.ts`, `laliga.ts`, `bundesliga.ts`, `seriea.ts`,
       `ligue1.ts`, `ucl-extras.ts` and `ligamx.ts`, citing sources in each header comment
-- [ ] Fill `colors` in `national.ts` using home-kit colors (e.g. USA navy/red, Netherlands orange)
-- [ ] Add these league ids to `FULL_COVERAGE` in `colors.test.ts`
-- [ ] Add a render test for a "v" matchup (MCI v ARS) showing the "v" separator
+- [x] Fill `colors` in `national.ts` using home-kit colors (e.g. USA navy/red, Netherlands orange)
+- [x] Add these league ids to `FULL_COVERAGE` in `colors.test.ts`
+- [x] Add a render test for a "v" matchup (MCI v ARS) showing the "v" separator
 
 ### Verification Plan
 - `pnpm test` passes with the extended coverage list
 - `pnpm typecheck`, `pnpm lint` pass
 
 ### Phase Summary
-_(write when phase completes)_
+Done 2026-10-17. Colors filled for all 241 soccer teams: 174 clubs across the eight club tables
+and 67 national teams. Clubs and federations rarely publish hex values, so every file's header
+says the colors are crest and home-kit colors and approximate. For clubs whose home kit is
+white (Real Madrid, Fulham, Germany, England and others) the primary is `#FFFFFF`, so they draw
+white with dark text and fall back to their trim color when they meet another white team. The
+clash rule (`tooClose`, distance 90) also catches dark-on-dark pairs such as USA navy vs Mexico
+green; Mexico then shows its red. `FULL_COVERAGE` now lists every league except `ncaa`. New
+render tests: "MCI v ARS" (sky blue over red, "v" separator) and USA v MEX via `teamSplit`. The
+older "fits a soccer 'v' matchup on one line" test keeps `teamColors: false`, so it still checks
+the text layout. Verification: `pnpm test` (shared 578, plugin 118, extension 53),
+`pnpm typecheck`, `pnpm lint`, `pnpm format:check` pass.
 
 ## Phase 5: NCAA
 Status: Not started

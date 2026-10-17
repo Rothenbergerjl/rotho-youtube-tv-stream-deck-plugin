@@ -334,6 +334,29 @@ describe("team colors", () => {
     expect(svg.lastIndexOf('fill="#3b82f6"')).toBeGreaterThan(svg.lastIndexOf(SF));
   });
 
+  it("shows a 'v' separator for a soccer matchup", () => {
+    const svg = slotKeySvg({
+      slot: 5,
+      connected: true,
+      title: "Premier League: Manchester City vs. Arsenal",
+      heard: false,
+    });
+    expect(svg).toContain('height="72" fill="#6CABDD"'); // Man City sky blue on top
+    expect(svg).toContain('<rect width="144" height="144" fill="#EF0107"/>'); // Arsenal red
+    expect(svg).toContain(">MCI</text>");
+    expect(svg).toContain(">v</text>");
+    expect(svg).toContain(">ARS</text>");
+  });
+
+  it("splits a national-team matchup", () => {
+    // USA navy and Mexico's dark green are too close, so Mexico switches to its red.
+    expect(teamSplit("World Cup Qualifier: USA vs Mexico")).toEqual({
+      abbrs: ["USA", "MEX"],
+      separator: "v",
+      fills: ["#0A3161", "#CE1126"],
+    });
+  });
+
   it("splits the heard game on the Focus key, crosshair in the corner", () => {
     const svg = focusKeySvg({ connected: true, title: "San Francisco 49ers at Seattle Seahawks" });
     expect(svg).toContain(`height="72" fill="${SF}"`);
