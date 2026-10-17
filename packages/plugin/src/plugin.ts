@@ -10,6 +10,7 @@ import { FocusAction } from "./actions/focus";
 import { MuteAllAction } from "./actions/mute-all";
 import { OpenAction } from "./actions/open";
 import { SlotAction } from "./actions/slot";
+import { ScoreTracker } from "./scores/tracker";
 import { ExtensionServer } from "./server";
 import { Store } from "./store";
 import { UpdateChecker } from "./updates";
@@ -52,7 +53,11 @@ const server = new ExtensionServer({
   },
 });
 
-streamDeck.actions.registerAction(new SlotAction(store, server));
+// Polls ESPN only while a slot holds a game between two known teams.
+const scores = new ScoreTracker({ logger });
+store.subscribe((state) => scores.setGames(state.games));
+
+streamDeck.actions.registerAction(new SlotAction(store, server, scores));
 streamDeck.actions.registerAction(new MuteAllAction(store, server));
 streamDeck.actions.registerAction(new OpenAction(store, server));
 streamDeck.actions.registerAction(new FocusAction(store, server));

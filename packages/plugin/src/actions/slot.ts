@@ -9,6 +9,7 @@ import streamDeck, {
 } from "@elgato/streamdeck";
 import { MAX_SLOTS } from "@rotho/shared";
 import { slotKeySvg, toDataUrl } from "../render";
+import type { ScoreTracker } from "../scores/tracker";
 import type { ExtensionServer } from "../server";
 import { teamColorsSetting } from "../settings";
 import type { Store } from "../store";
@@ -35,12 +36,14 @@ export class SlotAction extends SingletonAction<SlotSettings> {
   constructor(
     private readonly store: Store,
     private readonly server: ExtensionServer,
+    private readonly scores: ScoreTracker,
   ) {
     super();
     store.subscribe((state) => {
       void this.renderAll();
       if (state.update !== this.sentUpdate) void this.sendUpdate();
     });
+    this.scores.subscribe(() => void this.renderAll());
   }
 
   override async onSendToPlugin(

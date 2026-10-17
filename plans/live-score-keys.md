@@ -137,21 +137,21 @@ tests, extension 78), `pnpm typecheck`, `pnpm lint`, `pnpm format:check`.
 
 ## Phase 2: Score tracker
 
-Status: Not started
+Status: Complete
 
-- [ ] Add `packages/plugin/src/scores/tracker.ts`: `ScoreTracker` with injected `fetch`, clock
+- [x] Add `packages/plugin/src/scores/tracker.ts`: `ScoreTracker` with injected `fetch`, clock
       and logger. `setGames(games)` (called from the store subscription) parses each title, keeps
       matchups where both sides have a `teamId`, and works out the feeds to poll.
-- [ ] Polling schedule as decided: 15 s while any matched event in a feed is live or past its start
+- [x] Polling schedule as decided: 15 s while any matched event in a feed is live or past its start
       time, 5 min otherwise, stopped when nothing is matched. Timers `unref`'d.
-- [ ] History per event: append a snapshot (`at`, state, status, scores, possession) only when it
+- [x] History per event: append a snapshot (`at`, state, status, scores, possession) only when it
       changes; prune entries older than 2 min beyond the longest delay, keeping the newest one.
-- [ ] `scoreFor(slot, delayMs)`: the newest snapshot at least `delayMs` old, else the oldest; none
+- [x] `scoreFor(slot, delayMs)`: the newest snapshot at least `delayMs` old, else the oldest; none
       when the feed's last success is over 2 min old or the slot has no match.
-- [ ] Notify subscribers after each poll that changed something, so keys can re-render.
-- [ ] Wire it into `packages/plugin/src/plugin.ts`: create the tracker, feed it
+- [x] Notify subscribers after each poll that changed something, so keys can re-render.
+- [x] Wire it into `packages/plugin/src/plugin.ts`: create the tracker, feed it
       `store.current.games` on every store change, pass it to `SlotAction`.
-- [ ] Tests with a fake `fetch` and `vi.useFakeTimers()`: schedule switches between 15 s and 5 min,
+- [x] Tests with a fake `fetch` and `vi.useFakeTimers()`: schedule switches between 15 s and 5 min,
       stops with no matched games, only needed feeds are fetched, delay picks the right snapshot,
       first sight shows the oldest, stale feed drops scores, fetch errors are logged and don't
       throw.
@@ -164,7 +164,29 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Done 2026-10-17. All checks pass: `pnpm test` (plugin 174 including 8 new tracker tests),
+`pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`.
+
+- **Files:** `packages/plugin/src/scores/tracker.ts`, `packages/plugin/test/tracker.test.ts`;
+  `plugin.ts` creates the tracker and feeds it the store's games; `SlotAction` takes it as a third
+  constructor argument and re-renders on its changes (it doesn't read scores yet; Phase 4).
+- **API:** `setGames(games)`, `scoreFor(slot, delayMs)` returning a `ScoreSnapshot`
+  (`eventId`, `state`, `status`, `scores` in title order, optional `possession` index),
+  `subscribe(listener)`, `stop()`. Constants `LIVE_INTERVAL_MS`, `IDLE_INTERVAL_MS`, `STALE_MS`,
+  `MAX_DELAY_MS` are exported.
+- **Scheduling:** one timer for the soonest due feed. Each feed has its own next time, 15 s when
+  a slot matched in it is live or past its kickoff time, else 5 min. A slot's candidate feeds are
+  all polled until one matches, then only that one. A newly added game is looked up right away,
+  even in a feed already on a timer. A failed fetch retries on the same schedule.
+- **History:** snapshots are compared as JSON and appended only when they change; the status text
+  is part of the snapshot, so the clock ticking adds entries every live poll. A new event id in a
+  slot clears its history. Pruning keeps the newest entry at least 90 s old and everything after.
+- **Changes from the plan text:** a slot with two known teams but no match yet still has its
+  candidate feeds polled every 5 min, so a game is found when ESPN lists it. Polling stops only
+  when no slot holds two known teams. Stale means more than 2 min since the feed's last success,
+  so a key with an alert still running could lose its score mid-sequence; Phase 4 should handle
+  that.
+- **Next (Phase 3):** rendering takes a `ScoreSnapshot`-shaped `score` on `SlotKeyView`.
 
 ## Phase 3: Layout A rendering
 
