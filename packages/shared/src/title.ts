@@ -1,81 +1,135 @@
 // Shortens a YouTube TV program title so it fits on a 72×72 Stream Deck key.
-
-/** [abbreviation, full name, nickname] for every NFL team. Nicknames are unique. */
-const NFL_TEAMS: readonly (readonly [string, string, string])[] = [
-  ["ARI", "Arizona Cardinals", "Cardinals"],
-  ["ATL", "Atlanta Falcons", "Falcons"],
-  ["BAL", "Baltimore Ravens", "Ravens"],
-  ["BUF", "Buffalo Bills", "Bills"],
-  ["CAR", "Carolina Panthers", "Panthers"],
-  ["CHI", "Chicago Bears", "Bears"],
-  ["CIN", "Cincinnati Bengals", "Bengals"],
-  ["CLE", "Cleveland Browns", "Browns"],
-  ["DAL", "Dallas Cowboys", "Cowboys"],
-  ["DEN", "Denver Broncos", "Broncos"],
-  ["DET", "Detroit Lions", "Lions"],
-  ["GB", "Green Bay Packers", "Packers"],
-  ["HOU", "Houston Texans", "Texans"],
-  ["IND", "Indianapolis Colts", "Colts"],
-  ["JAX", "Jacksonville Jaguars", "Jaguars"],
-  ["KC", "Kansas City Chiefs", "Chiefs"],
-  ["LV", "Las Vegas Raiders", "Raiders"],
-  ["LAC", "Los Angeles Chargers", "Chargers"],
-  ["LAR", "Los Angeles Rams", "Rams"],
-  ["MIA", "Miami Dolphins", "Dolphins"],
-  ["MIN", "Minnesota Vikings", "Vikings"],
-  ["NE", "New England Patriots", "Patriots"],
-  ["NO", "New Orleans Saints", "Saints"],
-  ["NYG", "New York Giants", "Giants"],
-  ["NYJ", "New York Jets", "Jets"],
-  ["PHI", "Philadelphia Eagles", "Eagles"],
-  ["PIT", "Pittsburgh Steelers", "Steelers"],
-  ["SF", "San Francisco 49ers", "49ers"],
-  ["SEA", "Seattle Seahawks", "Seahawks"],
-  ["TB", "Tampa Bay Buccaneers", "Buccaneers"],
-  ["TEN", "Tennessee Titans", "Titans"],
-  ["WAS", "Washington Commanders", "Commanders"],
-];
+import { LEAGUES, type League, type LeagueId, type Team } from "./teams";
 
 /** Longest text kept for non-matchup titles (about two 8-character lines on a key). */
 export const MAX_TITLE_LENGTH = 16;
 
-const abbreviationByName = new Map<string, string>();
-for (const [abbr, full, nickname] of NFL_TEAMS) {
-  abbreviationByName.set(full.toLowerCase(), abbr);
-  abbreviationByName.set(nickname.toLowerCase(), abbr);
+/** One side of a matchup. */
+export interface Side {
+  /** Short code shown on the key, e.g. "BUF". */
+  abbr: string;
+  /** "<league>:<abbr>", e.g. "nfl:BUF", when the team came from a table. */
+  teamId?: string;
 }
 
+export interface Matchup {
+  league?: LeagueId;
+  /** "@" for "at" titles (away team first); "v" for "vs" titles, in the order the title gives. */
+  separator: "@" | "v";
+  teams: readonly [Side, Side];
+}
+
+export interface ParsedTitle {
+  /** Text for the key, e.g. "BUF @ LAR" or a shortened program title. */
+  display: string;
+  matchup?: Matchup;
+}
+
+interface Entry {
+  league: League;
+  team: Team;
+}
+
+/** Lower-cases and strips accents so "Atlético" matches "atletico". Used for matching only. */
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-// Longest names first so "Los Angeles Rams" wins over "Rams".
-const teamPattern = [...abbreviationByName.keys()]
-  .sort((a, b) => b.length - a.length)
-  .map(escape)
-  .join("|");
+
+/** Alternation of `names`, longest first so "los angeles rams" wins over "rams". */
+const alternation = (names: Iterable<string>) =>
+  [...names]
+    .sort((a, b) => b.length - a.length)
+    .map(escape)
+    .join("|");
+
+// Whole words only: no letter or digit directly before or after.
+const BEFORE = "(?<![\\p{L}\\p{N}])";
+const AFTER = "(?![\\p{L}\\p{N}])";
+
+/** Folded team name → every team that uses it. More than one entry means a collision. */
+const entriesByName = new Map<string, Entry[]>();
+/** Folded hint phrase → the leagues it points to. */
+const leaguesByHint = new Map<string, LeagueId[]>();
+for (const league of LEAGUES) {
+  for (const team of league.teams) {
+    for (const name of team.names) {
+      const key = fold(name);
+      entriesByName.set(key, [...(entriesByName.get(key) ?? []), { league, team }]);
+    }
+  }
+  for (const hint of league.hints) {
+    const key = fold(hint);
+    leaguesByHint.set(key, [...(leaguesByHint.get(key) ?? []), league.id]);
+  }
+}
+
+const teamPattern = alternation(entriesByName.keys());
 const matchupPattern = new RegExp(
-  `(?:^|\\W)(${teamPattern})\\s+(at|@|vs\\.?|v\\.?)\\s+(${teamPattern})(?=$|\\W)`,
-  "i",
+  `${BEFORE}(${teamPattern})\\s+(at|@|vs\\.?|v\\.?)\\s+(${teamPattern})${AFTER}`,
+  "u",
 );
+const hintPattern = new RegExp(`${BEFORE}(${alternation(leaguesByHint.keys())})${AFTER}`, "gu");
 
 /**
- * Turns an NFL matchup anywhere in the title into "AWAY @ HOME" (or "A vs B"), e.g.
- * "Monday Night Football: Buffalo Bills at Los Angeles Rams" → "BUF @ LAR". Anything else is
- * whitespace-normalised, has a trailing " - YouTube TV" removed, and is cut to MAX_TITLE_LENGTH.
+ * Parses a program title. A matchup anywhere in the title becomes "AWAY @ HOME" or "A v B", e.g.
+ * "Monday Night Football: Buffalo Bills at Los Angeles Rams" → "BUF @ LAR", with the league and
+ * team ids in `matchup`. Anything else is whitespace-normalised, has a trailing " - YouTube TV"
+ * removed, and is cut to MAX_TITLE_LENGTH.
  */
-export function formatMatchup(raw: string): string {
+export function parseTitle(raw: string): ParsedTitle {
   const text = raw
     .replace(/\s+/g, " ")
     .trim()
     .replace(/ - YouTube TV$/i, "");
 
-  const match = matchupPattern.exec(text);
-  if (match) {
-    const away = abbreviationByName.get(match[1]!.toLowerCase())!;
-    const home = abbreviationByName.get(match[3]!.toLowerCase())!;
-    const separator = /^v/i.test(match[2]!) ? "vs" : "@";
-    return `${away} ${separator} ${home}`;
+  const matchup = findMatchup(fold(text));
+  if (matchup) {
+    const [first, second] = matchup.teams;
+    return { display: `${first.abbr} ${matchup.separator} ${second.abbr}`, matchup };
   }
 
-  return text.length > MAX_TITLE_LENGTH
-    ? `${text.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…`
-    : text;
+  return {
+    display:
+      text.length > MAX_TITLE_LENGTH ? `${text.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…` : text,
+  };
+}
+
+/** The key text for a title; see parseTitle. */
+export function formatMatchup(raw: string): string {
+  return parseTitle(raw).display;
+}
+
+/**
+ * Resolves the first "X at Y" / "X vs Y" in a folded title. A league hint in the title limits the
+ * candidates to that league; otherwise exactly one league must have both teams. Ambiguous or
+ * unknown matchups return undefined rather than guessing.
+ */
+function findMatchup(folded: string): Matchup | undefined {
+  const match = matchupPattern.exec(folded);
+  if (!match) return undefined;
+
+  const hinted = new Set(
+    [...folded.matchAll(hintPattern)].flatMap((m) => leaguesByHint.get(m[1]!)!),
+  );
+  const candidates = (name: string) => {
+    const entries = entriesByName.get(name)!;
+    return hinted.size > 0 ? entries.filter((e) => hinted.has(e.league.id)) : entries;
+  };
+  const firsts = candidates(match[1]!);
+  const seconds = candidates(match[3]!);
+  const pairs = firsts.flatMap((a) =>
+    seconds.filter((b) => b.league === a.league).map((b) => [a, b] as const),
+  );
+  if (pairs.length !== 1) return undefined;
+
+  const [first, second] = pairs[0]!;
+  const side = ({ league, team }: Entry): Side => ({
+    abbr: team.abbr,
+    teamId: `${league.id}:${team.abbr}`,
+  });
+  return {
+    league: first.league.id,
+    separator: match[2]!.startsWith("v") ? "v" : "@",
+    teams: [side(first), side(second)],
+  };
 }

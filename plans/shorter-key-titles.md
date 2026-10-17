@@ -82,26 +82,26 @@ are in `.github/gh-recipes.md` (project id `PVT_kwHOBLWqFc4BmmYP`, Status field
   promoted/relegated soccer clubs).
 
 ## Phase 1: Parser refactor and structured output (NFL only)
-Status: Not started
+Status: Complete
 
-- [ ] Create `packages/shared/src/teams/types.ts` with `LeagueId`, `Team` (`{ abbr, names: string[] }`,
+- [x] Create `packages/shared/src/teams/types.ts` with `LeagueId`, `Team` (`{ abbr, names: string[] }`,
       where `names` holds full names, nicknames and aliases) and `League`
       (`{ id, sport, hints: string[], teams }`).
-- [ ] Move the NFL table from `title.ts` into `packages/shared/src/teams/nfl.ts`, and add
+- [x] Move the NFL table from `title.ts` into `packages/shared/src/teams/nfl.ts`, and add
       `packages/shared/src/teams/index.ts` exporting `LEAGUES`.
-- [ ] Add `normalize()` in `title.ts` (whitespace, " - YouTube TV" suffix, accent folding for
+- [x] Add `normalize()` in `title.ts` (whitespace, " - YouTube TV" suffix, accent folding for
       matching only, so the display keeps the original text).
-- [ ] Build one name index: normalised name → list of `{ league, team }` (a list, so collisions are
+- [x] Build one name index: normalised name → list of `{ league, team }` (a list, so collisions are
       kept), and one regex of every name, longest first, with whole-word boundaries.
-- [ ] Add league-hint detection (case-insensitive phrases from each league's `hints`, searched
+- [x] Add league-hint detection (case-insensitive phrases from each league's `hints`, searched
       anywhere in the title).
-- [ ] Implement `parseTitle()` with steps 1–4 of the collision resolution; the generic step only
+- [x] Implement `parseTitle()` with steps 1–4 of the collision resolution; the generic step only
       returns the existing truncation for now (Phase 4 replaces it).
-- [ ] Map "vs"/"vs."/"v"/"v." to the `v` separator, and update the existing NFL expectations
+- [x] Map "vs"/"vs."/"v"/"v." to the `v` separator, and update the existing NFL expectations
       (`"KC v BUF"`, `"GB v CHI"`).
-- [ ] Export `parseTitle`, `ParsedTitle`, `Side` and `LEAGUES` from `packages/shared/src/index.ts`,
+- [x] Export `parseTitle`, `ParsedTitle`, `Side` and `LEAGUES` from `packages/shared/src/index.ts`,
       and keep `formatMatchup` as a wrapper.
-- [ ] Add tests in `title.test.ts` for `parseTitle` structure (teamId, league, separator) and
+- [x] Add tests in `title.test.ts` for `parseTitle` structure (teamId, league, separator) and
       accent-insensitive matching.
 
 ### Verification Plan
@@ -111,8 +111,29 @@ Status: Not started
   `pnpm --filter @rotho/plugin exec vitest run -u` and check that the diff only changes "vs" → "v".
 - `pnpm typecheck` and `pnpm lint` exit 0.
 
+**Result (2026-10-17):** shared 53/53 and plugin 90/90 tests pass. No plugin snapshot held a "vs"
+label, so none changed. `pnpm typecheck`, `pnpm lint` and `prettier --check packages/shared plans`
+are clean.
+
 ### Phase Summary
-_(write when phase completes)_
+- New `packages/shared/src/teams/` holds `types.ts` (`LeagueId`, `Sport`, `Team`, `League`),
+  `nfl.ts` (the 32 teams, plus hints "NFL", "NFL Football" and "Monday/Sunday/Thursday Night
+  Football"), and `index.ts` (`LEAGUES`). `index.ts` at the package root re-exports it. To add a
+  league, add its id to the `LeagueId` union, create the file, and append it to `LEAGUES`.
+- `title.ts` now has `parseTitle()` → `{ display, matchup? }`, with `Side` and `Matchup` types.
+  `formatMatchup` is a one-line wrapper, so plugin callers are unchanged.
+- Matching runs on a folded copy of the title: NFD, combining marks removed, lower-cased. Word
+  boundaries are Unicode lookarounds (`(?<![\p{L}\p{N}])` … `(?![\p{L}\p{N}])`) rather than `\W`.
+  The display text keeps the original spelling.
+- Collision resolution lives in `findMatchup()`. `entriesByName` maps a folded name to every team
+  that uses it. Hints found anywhere in the title filter the candidates. The match resolves only if
+  exactly one `(first, second)` pair shares a league; anything else returns `undefined`, and Phase
+  4 replaces that with the generic short form. Only the first regex match in a title is tried.
+- With only the NFL loaded, collisions and hint narrowing aren't exercised yet; Phase 2's tests
+  cover them. The plan's `normalize()` became inline code at the top of `parseTitle` plus the
+  `fold()` helper, not a separate exported function.
+- Added a `LEAGUES` test checking that abbreviations and names are unique within each league;
+  it covers every future league automatically.
 
 ## Phase 2: NBA, WNBA, MLB, NHL
 Status: Not started
