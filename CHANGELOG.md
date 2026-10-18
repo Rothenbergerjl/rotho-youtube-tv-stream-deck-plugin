@@ -16,6 +16,8 @@ All notable changes to this project are documented here. Versions follow
 
 - **Live scores** update about twice as often: the plugin checks ESPN every 7 seconds during a
   game instead of every 15.
+- **Score alerts** flash for about 10 seconds instead of 2, so they're harder to miss. The points
+  then stay in the band for 10 seconds, as before.
 
 ## [0.7.0] - 2026-10-18
 

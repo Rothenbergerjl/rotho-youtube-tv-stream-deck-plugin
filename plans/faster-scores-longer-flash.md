@@ -78,20 +78,20 @@ Verification: plugin tests 236/236 pass; typecheck, lint and format check pass. 
 left in the plugin is `server.ts:154`, an unrelated idle-timeout cap.
 
 ## Phase 2: Flash score alerts for about 10 s
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/score-alerts.ts`: `ROW_FRAMES = 68` (10.2 s); keep `FRAME_MS = 150` and
+- [x] `packages/plugin/src/score-alerts.ts`: `ROW_FRAMES = 68` (10.2 s); keep `FRAME_MS = 150` and
   `CALLOUT_MS = 10_000`; keep the "Even, so the flash ends unlit" note
-- [ ] `packages/plugin/test/score-alerts.test.ts`: rename "blinks fast for about two seconds" to
+- [x] `packages/plugin/test/score-alerts.test.ts`: rename "blinks fast for about two seconds" to
   "about 10 seconds" and expect `ROW_FRAMES` 68 and `ROW_FRAMES * FRAME_MS` 10_200; in "blinks
   the row, then holds the band callout", use `ROW_FRAMES` instead of the literal `14` and derive
   the `2099` / `2100` times from `ROW_FRAMES * FRAME_MS`
-- [ ] `README.md` (Game Slot score section, "flash yellow for about two seconds"): change to about
+- [x] `README.md` (Game Slot score section, "flash yellow for about two seconds"): change to about
   10 seconds
-- [ ] `CHANGELOG.md` `[Unreleased]` `### Changed`: add "**Score alerts** flash for about 10
+- [x] `CHANGELOG.md` `[Unreleased]` `### Changed`: add "**Score alerts** flash for about 10
   seconds instead of 2, so they're harder to miss. The points then stay in the band for 10
   seconds, as before."
-- [ ] `slot.html` help text: no duration is mentioned, so no change; confirm
+- [x] `slot.html` help text: no duration is mentioned, so no change; confirm
 
 ### Verification Plan
 - `pnpm --filter @rotho/plugin test` passes, including `alertFrame` and `nextScoreState` tests and
@@ -102,10 +102,30 @@ Status: Not started
 - `pnpm build` succeeds
 
 ### Phase Summary
-_(write when phase completes)_
+`ROW_FRAMES` is now 68 (10.2 s at 150 ms a frame); `FRAME_MS` and `CALLOUT_MS` are unchanged.
+The constants test now pins 68 frames and 10 200 ms; the frame-by-frame test derives its frame
+count and the row/band boundary from `ROW_FRAMES * FRAME_MS` instead of literals. `slot.ts`
+already ticks at `FRAME_MS` while any alert is running, so no change was needed there; it now
+does so for about 20 s per alert. README Game Slot section and a second CHANGELOG `[Unreleased]`
+`### Changed` entry updated; `slot.html` doesn't mention the duration.
+Verification: plugin tests 236/236 pass; typecheck, lint, format check and `pnpm build` pass.
+"two seconds" remains only in the released 0.7.0 CHANGELOG entry; no `2099`/`2100` remain.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Issue #29, plugin only, in two commits. Live games are checked every 7 s instead of 15 s, chosen
+because ESPN's scoreboard cache refreshes about every 10 s (pre-kickoff and unmatched games stay
+at 5 min). The score-alert row flash runs 68 frames (about 10 s) instead of 14 (about 2 s), at
+the same blink speed and still ending unlit, followed by the unchanged 10 s band callout. Tests,
+README and CHANGELOG `[Unreleased]` are updated. Not checked: ESPN's `max-age` during a live game
+(only sampled with no games live); a 7 s check is fine either way.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Open the PR with `/open-pr`; its body carries `Fixes #29`. Squash-merge it.
+2. In the final commit, delete this plan file.
+3. Optional manual check before release: load the built plugin, watch a live game on a Game Slot
+   key with Show score on, and confirm scores update within a few seconds of ESPN and the flash
+   lasts about 10 s.
+4. Release as usual: bump the version in `package.json`, run `pnpm version:sync`, move the
+   CHANGELOG `[Unreleased]` entries into a new version section, merge, then run the Release
+   workflow from the Actions tab on `main` with that version. Only the plugin changed, so users
+   need to install the new `.streamDeckPlugin`; the extension needs no update.

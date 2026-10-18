@@ -79,10 +79,10 @@ describe("alertFrame", () => {
     alert: { team: 1, points: 3, startedAt: 10_000 },
   };
 
-  it("blinks fast for about two seconds", () => {
+  it("blinks fast for about 10 seconds", () => {
     expect(FRAME_MS).toBe(150);
-    expect(ROW_FRAMES).toBe(14);
-    expect(ROW_FRAMES * FRAME_MS).toBe(2100);
+    expect(ROW_FRAMES).toBe(68);
+    expect(ROW_FRAMES * FRAME_MS).toBe(10_200);
   });
 
   it("blinks the row, then holds the band callout, then ends", () => {
@@ -90,12 +90,12 @@ describe("alertFrame", () => {
       alertFrame(state, 10_000 + i * FRAME_MS),
     );
     expect(frames.map((f) => [f?.mode, f?.on])).toEqual(
-      Array.from({ length: 14 }, (_, i) => ["row", i % 2 === 0]),
+      Array.from({ length: ROW_FRAMES }, (_, i) => ["row", i % 2 === 0]),
     );
     // Mid-frame times land on the same frame.
     expect(alertFrame(state, 10_000 + FRAME_MS - 1)?.on).toBe(true);
-    expect(alertFrame(state, 10_000 + 2099)).toMatchObject({ mode: "row", on: false });
-    const bandStart = 10_000 + 2100;
+    const bandStart = 10_000 + ROW_FRAMES * FRAME_MS;
+    expect(alertFrame(state, bandStart - 1)).toMatchObject({ mode: "row", on: false });
     expect(alertFrame(state, bandStart)).toEqual({ team: 1, points: 3, mode: "band", on: true });
     expect(alertFrame(state, bandStart + CALLOUT_MS - 1)?.mode).toBe("band");
     expect(alertFrame(state, bandStart + CALLOUT_MS)).toBeUndefined();
