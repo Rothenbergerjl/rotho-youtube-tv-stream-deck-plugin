@@ -19,6 +19,8 @@ const colors = {
   play: "#ef4444",
   /** Text and glyphs on the green band of a heard scoreboard key. */
   heardInk: "#06210f",
+  /** A score alert's flash; see flashFill for teams too close to it. */
+  scoreFlash: "#ffe600",
 };
 
 /** A live score drawn in the scoreboard layout; see ScoreSnapshot in scores/tracker.ts. */
@@ -34,8 +36,9 @@ export interface ScoreView {
 }
 
 /**
- * One frame of a score alert for `team`: "row" frames blink that team's row white (`on`), and
- * "band" shows "+N ABBR" in the info band in that team's color.
+ * One frame of a score alert for `team`. Both modes show "+N ABBR" in the info band; "row" frames
+ * blink that team's row and the band in the flash color (`on`), and "band" holds the band in that
+ * team's color.
  */
 export interface ScoreAlert {
   team: 0 | 1;
@@ -210,7 +213,7 @@ function scoreboardKey(view: SlotKeyView): string | undefined {
 
   const rows = ROWS.map(({ top, mid }, i) => {
     const flash = alert?.mode === "row" && alert.on && alert.team === i;
-    const fill = flash ? colors.text : fills[i]!;
+    const fill = flash ? flashFill(fills[i]!) : fills[i]!;
     const ink = inkFor(fill);
     const abbr = abbrs[i]!;
     let row =
@@ -245,9 +248,17 @@ function infoBand(
   fills: readonly [string, string],
   abbrs: readonly [string, string],
 ): string {
-  const callout = score.alert?.mode === "band" && score.alert.on ? score.alert : undefined;
+  const callout = score.alert;
   const heard = view.heard === true && !callout;
-  const fill = callout ? fills[callout.team] : heard ? colors.heard : colors.dimBackground;
+  // The callout blinks with the row, then holds in the team's color.
+  const lit = callout?.mode === "row" && callout.on;
+  const fill = callout
+    ? lit
+      ? flashFill(fills[callout.team])
+      : fills[callout.team]
+    : heard
+      ? colors.heard
+      : colors.dimBackground;
   const ink = callout ? inkFor(fill) : heard ? colors.heardInk : colors.text;
   const glyph = callout ? ink : heard ? colors.heardInk : colors.dim;
   const { top, height, mid } = BAND;
@@ -465,6 +476,11 @@ export function tooClose(a: string, b: string): boolean {
   const [r1, g1, b1] = rgb(a);
   const [r2, g2, b2] = rgb(b);
   return Math.hypot(r1! - r2!, g1! - g2!, b1! - b2!) < CLASH_DISTANCE;
+}
+
+/** The alert flash over a team's `fill`: the flash color, or white when the team is too close to it. */
+export function flashFill(fill: string): string {
+  return tooClose(colors.scoreFlash, fill) ? colors.text : colors.scoreFlash;
 }
 
 /** WCAG relative luminance of "#RRGGBB": 0 for black, 1 for white. */

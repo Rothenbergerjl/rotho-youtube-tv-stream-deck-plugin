@@ -1,11 +1,12 @@
 // Score alerts on a Game Slot key: when a score shown on the key goes up, the scoring team's row
-// blinks white, then the band shows "+N ABBR". Kept free of the Stream Deck SDK so it can be tested.
+// and the band's "+N ABBR" blink in the flash color, then the band holds "+N ABBR". Kept free of
+// the Stream Deck SDK so it can be tested.
 import type { ScoreAlert } from "./render";
 import type { ScoreSnapshot } from "./scores/tracker";
 
-/** Row-flash frames (white on even frames), one every FRAME_MS. */
-export const ROW_FRAMES = 6;
-export const FRAME_MS = 350;
+/** Flash frames (lit on even frames), one every FRAME_MS. Even, so the flash ends unlit. */
+export const ROW_FRAMES = 14;
+export const FRAME_MS = 150;
 /** How long the band callout stays after the row flash. */
 export const CALLOUT_MS = 10_000;
 const ALERT_MS = ROW_FRAMES * FRAME_MS + CALLOUT_MS;

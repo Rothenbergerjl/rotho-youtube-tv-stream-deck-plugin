@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Score alerts** are easier to spot: the scoring team's row and the points in the band
+  ("+3 BUF") flash yellow instead of white, and faster, for about two seconds. Teams whose color
+  is yellow or gold flash white. The points then stay in the team's color for 10 seconds, as
+  before.
+
 ## [0.6.0] - 2026-10-17
 
 Game Slot keys show the live score, with an alert when a team scores. Only the plugin changed; the

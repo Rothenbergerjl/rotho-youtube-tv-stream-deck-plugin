@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  flashFill,
   focusKeySvg,
   inkFor,
   muteAllKeySvg,
@@ -700,14 +701,34 @@ describe("scoreboard layout", () => {
     expect(unknown).toMatchSnapshot();
   });
 
-  it("blinks the scoring team's row white on a row alert frame", () => {
-    const on = key({}, { alert: { team: 1, points: 3, mode: "row", on: true } });
-    expect(rowFill(on, 84)).toBe("#f5f5f5");
+  it("blinks the scoring team's row and the callout yellow on a row alert frame", () => {
+    const on = key({ heard: true }, { alert: { team: 1, points: 3, mode: "row", on: true } });
+    expect(rowFill(on, 84)).toBe("#ffe600");
     expect(rowFill(on, 0)).toBe("#E31837");
+    expect(bandFill(on)).toBe("#ffe600");
     expect(on).toContain('fill="#111418" font-family="Segoe UI, Arial, sans-serif" font-size="42"');
+    expect(on).toContain('fill="#111418" font-family="Segoe UI, Arial, sans-serif" font-size="14"');
+    expect(on).toContain(">+3 BUF</text>");
     expect(on).toMatchSnapshot();
-    // An "off" frame is the normal key.
-    expect(key({}, { alert: { team: 1, points: 3, mode: "row", on: false } })).toBe(key());
+
+    // An "off" frame shows the team's own color, with the callout already in the band.
+    const off = key({ heard: true }, { alert: { team: 1, points: 3, mode: "row", on: false } });
+    expect(rowFill(off, 84)).toBe("#00338D");
+    expect(bandFill(off)).toBe("#00338D");
+    expect(off).toContain(">+3 BUF</text>");
+    expect(off).not.toContain(">Q4 2:08</text>");
+  });
+
+  it("flashes white for a team too close to yellow, and yellow with Team colors off", () => {
+    expect(flashFill("#FFB612")).toBe("#f5f5f5"); // PIT gold
+    expect(flashFill("#00338D")).toBe("#ffe600");
+    const alert = { team: 1, points: 7, mode: "row", on: true } as const;
+    const gold = key({ title: "Kansas City Chiefs at Pittsburgh Steelers" }, { alert });
+    expect(rowFill(gold, 84)).toBe("#f5f5f5");
+    expect(bandFill(gold)).toBe("#f5f5f5");
+    const plain = key({ teamColors: false }, { alert });
+    expect(rowFill(plain, 84)).toBe("#ffe600");
+    expect(bandFill(plain)).toBe("#ffe600");
   });
 
   it("shows the callout in the scoring team's color on a band alert", () => {
