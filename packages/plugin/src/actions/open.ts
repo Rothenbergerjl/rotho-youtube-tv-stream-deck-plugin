@@ -1,4 +1,4 @@
-import {
+import streamDeck, {
   action,
   type DidReceiveSettingsEvent,
   type KeyDownEvent,
@@ -15,18 +15,21 @@ import {
 } from "@rotho/shared";
 import { type OpenKeyView, openKeySvg, toDataUrl } from "../render";
 import type { ExtensionServer } from "../server";
-import { serviceSetting } from "../settings";
+import { returnAfterOpenSetting, serviceSetting } from "../settings";
 import type { Store } from "../store";
 
 type OpenSettings = {
   target?: OpenTarget;
   service?: ServiceId;
+  returnAfterOpen?: boolean;
 };
 
 /**
  * Open Service: opens YouTube TV, Peacock or Paramount+ (the key's Service setting) in a new
  * Chrome window or tab (its Open in setting). A service that is off in the extension shows
- * "Turn on", and pressing opens the extension's options page.
+ * "Turn on", and pressing opens the extension's options page. With "Return to previous profile"
+ * on, a key that opened its service switches back to the previous profile, so the keys in the
+ * Services picker close it.
  */
 @action({ UUID: "com.rotho.yttv-multiview.open" })
 export class OpenAction extends SingletonAction<OpenSettings> {
@@ -60,7 +63,17 @@ export class OpenAction extends SingletonAction<OpenSettings> {
       serviceSetting(ev.payload.settings.service),
       ev.payload.settings.target === "tab" ? "tab" : "window",
     );
-    if (!message || !this.server.send(message)) await ev.action.showAlert();
+    if (!message || !this.server.send(message)) {
+      await ev.action.showAlert();
+      return;
+    }
+    // "Turn on" opens the extension's options, which isn't a pick: stay in the picker.
+    if (
+      message.type !== "openOptions" &&
+      returnAfterOpenSetting(ev.payload.settings.returnAfterOpen)
+    ) {
+      await streamDeck.profiles.switchToProfile(ev.action.device.id);
+    }
   }
 
   /** What a press sends, or undefined when it can't do anything (the key then shows why). */

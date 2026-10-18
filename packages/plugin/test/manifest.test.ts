@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { ACTION_UUIDS, PLUGIN_UUID } from "@rotho/shared";
+import { ACTION_UUIDS, PLUGIN_UUID, SERVICES_PROFILE } from "@rotho/shared";
 import { describe, expect, it } from "vitest";
 
 const manifest = JSON.parse(
@@ -14,6 +14,8 @@ describe("plugin manifest", () => {
       ACTION_UUIDS.muteAll,
       ACTION_UUIDS.open,
       ACTION_UUIDS.focus,
+      ACTION_UUIDS.back,
+      ACTION_UUIDS.picker,
     ]);
   });
 
@@ -27,6 +29,8 @@ describe("plugin manifest", () => {
     expect(paths[ACTION_UUIDS.slot]).toBe("ui/slot.html");
     expect(paths[ACTION_UUIDS.open]).toBe("ui/open.html");
     expect(paths[ACTION_UUIDS.focus]).toBe("ui/focus.html");
+    expect(paths[ACTION_UUIDS.back]).toBeUndefined();
+    expect(paths[ACTION_UUIDS.picker]).toBeUndefined();
     for (const path of Object.values(paths).filter(Boolean)) {
       expect(existsSync(new URL(`../${PLUGIN_UUID}.sdPlugin/${path}`, import.meta.url))).toBe(true);
     }
@@ -39,6 +43,28 @@ describe("plugin manifest", () => {
       expect(open.Tooltip).toContain(name);
       expect(manifest.Description).toContain(name);
     }
+  });
+
+  it("names the picker for every service and its one supported device", () => {
+    const picker = manifest.Actions.find((a: { UUID: string }) => a.UUID === ACTION_UUIDS.picker);
+    expect(picker.Name).toBe("Open Service Picker");
+    for (const name of ["YouTube TV", "Peacock", "Paramount+"]) {
+      expect(picker.Tooltip).toContain(name);
+    }
+    expect(picker.Tooltip).toContain("15-key Stream Deck only");
+  });
+
+  it("bundles the Services profile the picker opens, for the 15-key Stream Deck", () => {
+    expect(manifest.Profiles).toEqual([
+      {
+        Name: SERVICES_PROFILE,
+        DeviceType: 0,
+        Readonly: false,
+        DontAutoSwitchWhenInstalled: true,
+      },
+    ]);
+    const file = `../${PLUGIN_UUID}.sdPlugin/${SERVICES_PROFILE}.streamDeckProfile`;
+    expect(existsSync(new URL(file, import.meta.url))).toBe(true);
   });
 
   it("targets Node 24 and Stream Deck 7.1+", () => {

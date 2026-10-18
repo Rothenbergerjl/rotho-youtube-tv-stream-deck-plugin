@@ -5,6 +5,26 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-18
+
+One Open Service Picker key can now stand in for all three Open Service keys: it opens a small
+Services profile, and picking a service takes you back to where you were. Only the plugin changed.
+The extension's version moves to 0.9.0 to stay in step, with no code changes, so there's no need
+to wait for Chrome to update it.
+
+### Added
+
+- **Open Service Picker** key: shows the YouTube TV, Peacock and Paramount+ badges, and opens a
+  bundled **Services** profile with an Open Service key for each and a Back key. Picking a service
+  opens it and returns you to where you were. The Stream Deck app asks to install the profile the
+  first time the plugin loads. Like Open Service, it shows "No Chrome", "Update" or "Full" when
+  nothing could open. It works on the 15-key Stream Deck only and shows "Not supported" on other
+  models.
+- **Back** key: returns the deck to the previous profile, e.g. to leave the Services picker.
+- **Return to previous profile** setting on Open Service keys (off by default): after the service
+  opens, the deck goes back to where you were. If the key can't open anything, or shows "Turn on",
+  it stays put.
+
 ## [0.8.0] - 2026-10-18
 
 Hold a Game Slot key to bring its game to the front, live scores update about twice as often, and

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   longPressSetting,
+  returnAfterOpenSetting,
   scoreAlertsSetting,
   scoreDelaySetting,
   serviceSetting,
@@ -78,5 +79,19 @@ describe("longPressSetting", () => {
     [null, "focus"],
   ])("%j → %s", (value, expected) => {
     expect(longPressSetting(value)).toBe(expected);
+  });
+});
+
+describe("returnAfterOpenSetting", () => {
+  it.each([
+    [undefined, false],
+    [true, true],
+    ["true", true],
+    [false, false],
+    ["false", false],
+    [null, false],
+    ["yes", false],
+  ])("%j → %s", (value, expected) => {
+    expect(returnAfterOpenSetting(value)).toBe(expected);
   });
 });

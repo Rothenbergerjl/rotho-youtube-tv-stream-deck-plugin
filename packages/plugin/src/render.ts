@@ -1,5 +1,12 @@
 // Builds key images as SVG (144×144, the @2x key size) and returns them as data URLs.
-import { formatMatchup, parseTitle, SERVICES, type ServiceId, teamColors } from "@rotho/shared";
+import {
+  formatMatchup,
+  parseTitle,
+  SERVICE_IDS,
+  SERVICES,
+  type ServiceId,
+  teamColors,
+} from "@rotho/shared";
 import type { UpdateTarget } from "./store";
 
 const SIZE = 144;
@@ -90,6 +97,18 @@ export interface OpenKeyView {
   updateAvailable?: boolean;
 }
 
+export interface PickerKeyView {
+  connected: boolean;
+  mismatch?: UpdateTarget;
+  /** The connected extension can open no service at all: it needs updating. */
+  featureMissing?: boolean;
+  /** Every slot is taken, so nothing in the picker could open. */
+  full?: boolean;
+  /** The key is on a device the bundled Services profile isn't made for. */
+  unsupported?: boolean;
+  updateAvailable?: boolean;
+}
+
 export interface FocusKeyView {
   connected: boolean;
   mismatch?: UpdateTarget;
@@ -118,6 +137,10 @@ export function muteAllKeySvg(view: MuteAllKeyView): string {
 
 export function openKeySvg(view: OpenKeyView): string {
   return withUpdateBadge(openKeyBody(view), view.updateAvailable);
+}
+
+export function pickerKeySvg(view: PickerKeyView): string {
+  return withUpdateBadge(pickerKeyBody(view), view.updateAvailable);
 }
 
 export function focusKeySvg(view: FocusKeyView): string {
@@ -393,6 +416,37 @@ function openKeyBody(view: OpenKeyView): string {
     play(SIZE / 2, 50, fill, true),
     lines([SERVICES[service].name], colors.text, 22, 112),
   );
+}
+
+function pickerKeyBody(view: PickerKeyView): string {
+  if (view.unsupported) {
+    return svg(
+      colors.dimBackground,
+      serviceRow(true),
+      lines(["Not", "supported"], colors.dim, 22, 106),
+    );
+  }
+  if (!view.connected) {
+    return svg(colors.dimBackground, serviceRow(true), lines(["No Chrome"], colors.dim, 22, 112));
+  }
+  const update = view.mismatch ?? (view.featureMissing ? "extension" : undefined);
+  if (update) {
+    return svg(
+      colors.dimBackground,
+      warning(SIZE / 2, 48),
+      lines(["Update", update], colors.text, 24, 100),
+    );
+  }
+  if (view.full) {
+    return svg(colors.dimBackground, serviceRow(true), lines(["Full"], colors.dim, 22, 112));
+  }
+  return svg(colors.background, serviceRow(false), lines(["Open"], colors.text, 22, 112));
+}
+
+/** Every service's monogram in a row across the top of the key, in display order. */
+function serviceRow(dim: boolean): string {
+  const gap = SIZE / (SERVICE_IDS.length + 1);
+  return SERVICE_IDS.map((s, i) => monogram(Math.round(gap * (i + 1)), 50, 20, s, dim)).join("");
 }
 
 function focusKeyBody(view: FocusKeyView): string {

@@ -5,6 +5,7 @@ import {
   inkFor,
   muteAllKeySvg,
   openKeySvg,
+  pickerKeySvg,
   pickFills,
   type ScoreView,
   type SlotKeyView,
@@ -197,6 +198,53 @@ describe("openKeySvg", () => {
     });
     expect(svg).toContain(">extension</text>");
     expect(svg).not.toContain(">Turn on</text>");
+  });
+});
+
+describe("pickerKeySvg", () => {
+  it("shows every service's badge in color and 'Open'", () => {
+    const svg = pickerKeySvg({ connected: true });
+    expect(svg).toContain(">Open</text>");
+    for (const letters of ["TV", "P", "P+"]) expect(svg).toContain(`>${letters}</text>`);
+    for (const color of ["#ff0033", "#000000", "#0064ff"]) expect(svg).toContain(`fill="${color}"`);
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("dims to 'Full' when every slot is taken", () => {
+    const svg = pickerKeySvg({ connected: true, full: true });
+    expect(svg).toContain(">Full</text>");
+    expect(svg).not.toContain('fill="#0064ff"');
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows 'No Chrome' when disconnected, even if the feature is missing", () => {
+    const svg = pickerKeySvg({ connected: false, featureMissing: true, full: true });
+    expect(svg).toContain(">No Chrome</text>");
+    expect(svg).not.toContain(">Update</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("asks to update the extension when it can open nothing", () => {
+    const svg = pickerKeySvg({ connected: true, featureMissing: true, full: true });
+    expect(svg).toContain(">Update</text>");
+    expect(svg).toContain(">extension</text>");
+    expect(svg).not.toContain(">Full</text>");
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("shows a protocol mismatch over a missing feature", () => {
+    const svg = pickerKeySvg({ connected: true, mismatch: "plugin", featureMissing: true });
+    expect(svg).toContain(">plugin</text>");
+    expect(svg).not.toContain(">extension</text>");
+  });
+
+  it("shows 'Not supported' on other devices, over every other state", () => {
+    const svg = pickerKeySvg({ connected: false, unsupported: true, mismatch: "plugin" });
+    expect(svg).toContain(">Not</text>");
+    expect(svg).toContain(">supported</text>");
+    expect(svg).not.toContain(">No Chrome</text>");
+    expect(svg).not.toContain(">Update</text>");
+    expect(svg).toMatchSnapshot();
   });
 });
 
@@ -598,6 +646,8 @@ describe("update badge", () => {
   it("is added to the Open Service key", () => {
     expect(openKeySvg({ connected: true })).not.toContain(BADGE);
     expect(openKeySvg({ connected: true, updateAvailable: true })).toContain(BADGE);
+    expect(pickerKeySvg({ connected: true })).not.toContain(BADGE);
+    expect(pickerKeySvg({ connected: true, updateAvailable: true })).toContain(BADGE);
   });
 
   it("is added to the Focus Heard Game key", () => {

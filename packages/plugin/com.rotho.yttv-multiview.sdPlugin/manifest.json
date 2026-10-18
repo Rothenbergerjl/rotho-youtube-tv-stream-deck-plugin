@@ -1,6 +1,6 @@
 {
   "Name": "Rotho YTTV Multiview",
-  "Version": "0.8.0.0",
+  "Version": "0.9.0.0",
   "Author": "Rothenbergerjl",
   "Actions": [
     {
@@ -61,6 +61,34 @@
           "ShowTitle": false
         }
       ]
+    },
+    {
+      "Name": "Back",
+      "UUID": "com.rotho.yttv-multiview.back",
+      "Icon": "imgs/actions/back/icon",
+      "Tooltip": "Returns to the previous profile, e.g. from the Services picker.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/back/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "Open Service Picker",
+      "UUID": "com.rotho.yttv-multiview.picker",
+      "Icon": "imgs/actions/picker/icon",
+      "Tooltip": "Opens a picker of YouTube TV, Peacock and Paramount+ keys. 15-key Stream Deck only.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/picker/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
     }
   ],
   "Category": "Rotho YTTV Multiview",
@@ -68,6 +96,14 @@
   "CodePath": "bin/plugin.js",
   "Description": "Show your open YouTube TV, Peacock and Paramount+ games on Stream Deck keys and switch which one you hear.",
   "Icon": "imgs/plugin/marketplace",
+  "Profiles": [
+    {
+      "Name": "profiles/Services",
+      "DeviceType": 0,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true
+    }
+  ],
   "SDKVersion": 3,
   "Software": {
     "MinimumVersion": "7.1"

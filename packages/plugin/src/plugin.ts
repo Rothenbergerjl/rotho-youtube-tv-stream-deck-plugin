@@ -6,9 +6,11 @@ import {
   PROTOCOL_VERSION,
   WS_PORT,
 } from "@rotho/shared";
+import { BackAction } from "./actions/back";
 import { FocusAction } from "./actions/focus";
 import { MuteAllAction } from "./actions/mute-all";
 import { OpenAction } from "./actions/open";
+import { PickerAction } from "./actions/picker";
 import { SlotAction } from "./actions/slot";
 import { ScoreTracker } from "./scores/tracker";
 import { ExtensionServer } from "./server";
@@ -61,6 +63,8 @@ streamDeck.actions.registerAction(new SlotAction(store, server, scores));
 streamDeck.actions.registerAction(new MuteAllAction(store, server));
 streamDeck.actions.registerAction(new OpenAction(store, server));
 streamDeck.actions.registerAction(new FocusAction(store, server));
+streamDeck.actions.registerAction(new BackAction());
+streamDeck.actions.registerAction(new PickerAction(store));
 
 await streamDeck.connect();
 await server.start();
