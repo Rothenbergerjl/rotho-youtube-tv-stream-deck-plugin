@@ -52,31 +52,31 @@ recipes live in `.github/gh-recipes.md` (project id `PVT_kwHOBLWqFc4BmmYP`, Stat
 - Never run git commands that change anything; the user branches and commits.
 
 ## Phase 1: Yellow, faster flash on the row and band
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/score-alerts.ts`: set `ROW_FRAMES = 14` and `FRAME_MS = 150`; update the
+- [x] `packages/plugin/src/score-alerts.ts`: set `ROW_FRAMES = 14` and `FRAME_MS = 150`; update the
       file header comment ("blinks white") and the `ROW_FRAMES` doc comment ("white on even
       frames") to describe the accent flash on the row and band.
-- [ ] `packages/plugin/src/render.ts`: add `scoreFlash: "#ffe600"` to `colors`, with a short doc
+- [x] `packages/plugin/src/render.ts`: add `scoreFlash: "#ffe600"` to `colors`, with a short doc
       comment.
-- [ ] `render.ts`: add a helper (e.g. `flashFill(fill: string): string`) returning
+- [x] `render.ts`: add a helper (e.g. `flashFill(fill: string): string`) returning
       `colors.scoreFlash`, or `colors.text` when `tooClose(colors.scoreFlash, fill)`.
-- [ ] `render.ts` `scoreboardKey`: on a row "on" frame for the scoring team, use
+- [x] `render.ts` `scoreboardKey`: on a row "on" frame for the scoring team, use
       `flashFill(fills[i])` instead of `colors.text` (line ~213).
-- [ ] `render.ts` `infoBand`: show the callout for any alert (`mode` "row" or "band"), not only
+- [x] `render.ts` `infoBand`: show the callout for any alert (`mode` "row" or "band"), not only
       "band". Fill = `flashFill(fills[team])` on a row frame with `on`, else `fills[team]`. The ink
       and glyph still come from `inkFor(fill)`, and "heard" stays suppressed while the callout shows.
       Update the `ScoreAlert` doc comment in `render.ts` if it says the band only shows in band mode.
-- [ ] `packages/plugin/test/score-alerts.test.ts`: the blink test expects 14 frames alternating
+- [x] `packages/plugin/test/score-alerts.test.ts`: the blink test expects 14 frames alternating
       `on` true/false starting with true, at `FRAME_MS` 150, and the band starting at
       `10_000 + 2100`; add explicit assertions that `ROW_FRAMES * FRAME_MS === 2100` and the alert
       ends at `2100 + CALLOUT_MS`.
-- [ ] `packages/plugin/test/render.test.ts`: rewrite "blinks the scoring team's row white…":
+- [x] `packages/plugin/test/render.test.ts`: rewrite "blinks the scoring team's row white…":
       an "on" frame fills the row and band `#ffe600` with dark ink (`#111418`); an "off" frame keeps
       the team row fill and shows "+3 BUF" in the band on the team fill (no longer `=== key()`).
-- [ ] `render.test.ts`: add a gold-team case (e.g. a Steelers matchup, or call `flashFill` directly
+- [x] `render.test.ts`: add a gold-team case (e.g. a Steelers matchup, or call `flashFill` directly
       with `#FFB612`) that flashes white `#f5f5f5`, and a team-colors-off case that flashes yellow.
-- [ ] Update the render snapshots (`pnpm --filter ./packages/plugin exec vitest run -u`) and review
+- [x] Update the render snapshots (`pnpm --filter ./packages/plugin exec vitest run -u`) and review
       the snapshot diff: only the alert snapshots should change.
 
 ### Verification Plan
@@ -87,8 +87,23 @@ Status: Not started
 - Grep `packages/plugin/src` for `colors.text` inside the flash/callout logic: none left except the
   white fallback in `flashFill`.
 
+Result (2026-10-18): all passed. `pnpm test`: shared 688, plugin 222, extension 78. `pnpm typecheck`
+and `pnpm lint` are clean, and `prettier --check` on `packages/plugin/src` and `packages/plugin/test`
+is clean. The only snapshot change is the renamed row-alert snapshot (old one pruned with `-u`).
+`colors.text` remains only in `flashFill`'s fallback.
+
 ### Phase Summary
-_(write when phase completes)_
+- `score-alerts.ts`: `ROW_FRAMES = 14`, `FRAME_MS = 150` (2.1 s). The comments now describe the flash
+  on the row and band. `alertFrame` is unchanged, and `actions/slot.ts` needed no change (the tick
+  uses `FRAME_MS`).
+- `render.ts`: `colors.scoreFlash = "#ffe600"` and an exported `flashFill(fill)` that falls back to
+  `colors.text` (white) when `tooClose`. `scoreboardKey` uses it for the lit row. `infoBand` now
+  shows the callout for any alert, lit (`flashFill`) on "row" frames with `on` and in the team fill
+  otherwise. The `ScoreAlert` doc comment was updated. With Team colors off the band callout sits on
+  `colors.background`, as the band-mode callout did before.
+- Tests: the frame-sequence test is generated for 14 frames, with constant and mid-frame
+  assertions. The render tests cover the yellow row and band with dark ink, the "off" frame showing
+  the callout in the team color, the PIT gold → white fallback, and Team colors off → yellow.
 
 ## Phase 2: Docs and settings text
 Status: Not started
