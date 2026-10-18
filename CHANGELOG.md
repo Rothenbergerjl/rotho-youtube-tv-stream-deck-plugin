@@ -12,6 +12,11 @@ All notable changes to this project are documented here. Versions follow
   you hear. A new **Long press** setting (Focus or Off) turns it off per key. Focusing needs
   extension 0.3.0 or newer; with an older one the key shows an alert.
 
+### Changed
+
+- **Live scores** update about twice as often: the plugin checks ESPN every 7 seconds during a
+  game instead of every 15.
+
 ## [0.7.0] - 2026-10-18
 
 Game Slot and Focus Heard Game keys share the score layout, and score alerts are easier to spot.

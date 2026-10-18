@@ -48,17 +48,17 @@ in `.github/gh-recipes.md`: project id `PVT_kwHOBLWqFc4BmmYP`, Status field
 - Never run git commands that change anything; the user branches and commits.
 
 ## Phase 1: Poll live games every 7 s
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/scores/tracker.ts`: `LIVE_INTERVAL_MS = 7_000`, with a one-line comment
+- [x] `packages/plugin/src/scores/tracker.ts`: `LIVE_INTERVAL_MS = 7_000`, with a one-line comment
   that ESPN's scoreboard cache refreshes about every 10 s
-- [ ] `packages/plugin/test/tracker.test.ts`: rename the two tests that say "every 15 s" to "every
+- [x] `packages/plugin/test/tracker.test.ts`: rename the two tests that say "every 15 s" to "every
   7 s"; fix the timing comments in "shows the newest snapshot at least `delay` old" (`t0 + 15 s`
   → `t0 + 7 s`, `t0 + 45 s` → `t0 + 37 s`) and keep its assertions meaningful at 7 s (the
   `scoreFor(1, 15_000)` check still expects 14-14 because nothing is 15 s old yet; say so in a
   comment or change it to `7_000`)
-- [ ] `README.md` (developer notes, "polls every 15 s while it's live"): change to 7 s
-- [ ] `CHANGELOG.md` `[Unreleased]`: add a `### Changed` entry, e.g. "**Live scores** update
+- [x] `README.md` (developer notes, "polls every 15 s while it's live"): change to 7 s
+- [x] `CHANGELOG.md` `[Unreleased]`: add a `### Changed` entry, e.g. "**Live scores** update
   about twice as often: the plugin checks ESPN every 7 seconds during a game instead of every 15."
 
 ### Verification Plan
@@ -69,7 +69,13 @@ Status: Not started
   and stays)
 
 ### Phase Summary
-_(write when phase completes)_
+`LIVE_INTERVAL_MS` is now 7 s with a comment on ESPN's ~10 s cache. In the tracker tests, the two
+"every 15 s" names now say 7 s; in the delay test the `scoreFor(1, 15_000)` check became
+`scoreFor(1, 7_000)` (the t0 snapshot is exactly one interval old) and the comments read t0 + 7 s
+and t0 + 37 s. The other interval tests use the constant and needed no change. README developer
+note and a new CHANGELOG `[Unreleased]` `### Changed` entry updated.
+Verification: plugin tests 236/236 pass; typecheck, lint and format check pass. The only `15_000`
+left in the plugin is `server.ts:154`, an unrelated idle-timeout cap.
 
 ## Phase 2: Flash score alerts for about 10 s
 Status: Not started
