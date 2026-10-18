@@ -112,8 +112,9 @@ Live scores on Game Slot keys:
   shows the slot, the service and the game status: the clock and period, the inning, the soccer
   minute, the kickoff time before the game, or FINAL. A dot marks the team with the ball, or the
   team at bat. When the key's game is the one you're hearing, the band turns green.
-- When a team scores, its row flashes white, then the band shows the points ("+3 BUF") in that
-  team's color for 10 seconds.
+- When a team scores, its row and the points in the band ("+3 BUF") flash yellow for about two
+  seconds (white for a team whose color is yellow or gold), then the points stay in that team's
+  color for 10 seconds.
 - The stream runs behind the live game, so each key holds new scores back by its **Score delay**
   (default 30 seconds) to avoid spoilers. Raise it if the key still changes before you see the
   play.

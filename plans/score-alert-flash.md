@@ -106,18 +106,18 @@ is clean. The only snapshot change is the renamed row-alert snapshot (old one pr
   the callout in the team color, the PIT gold → white fallback, and Team colors off → yellow.
 
 ## Phase 2: Docs and settings text
-Status: Not started
+Status: Complete
 
-- [ ] `README.md` line ~115: "its row flashes white" → it and the band flash yellow (white if the
+- [x] `README.md` line ~115: "its row flashes white" → it and the band flash yellow (white if the
       team's color is yellow or gold), then the band shows the points in the team color for
       10 seconds. Check line ~82's table cell still reads right.
-- [ ] `CHANGELOG.md`: add `## [Unreleased]` above `## [0.6.0]` with `### Changed`: score alerts
+- [x] `CHANGELOG.md`: add `## [Unreleased]` above `## [0.6.0]` with `### Changed`: score alerts
       flash yellow, faster (about 2 seconds), on both the scoring team's row and the band, falling
       back to white for gold teams. Leave the 0.6.0 text as it is.
-- [ ] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html` lines ~58–59: update the
+- [x] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html` lines ~58–59: update the
       Score alerts hint to say the row and the points flash yellow, then the points stay in the
       middle of the key.
-- [ ] Grep the repo (excluding `node_modules` and CHANGELOG 0.6.0) for "flashes white" / "blinks
+- [x] Grep the repo (excluding `node_modules` and CHANGELOG 0.6.0) for "flashes white" / "blinks
       white": none left.
 
 ### Verification Plan
@@ -126,11 +126,32 @@ Status: Not started
 - `rg -n "Unreleased" CHANGELOG.md`: one match, above `[0.6.0]`.
 - `pnpm lint` and `pnpm test`: still pass.
 
+Result (2026-10-18): passed. The `rg` matches are only this plan (deleted in the final commit) and
+the intended render test name "flashes white for a team too close to yellow…". `Unreleased` is at
+line 6, above `[0.6.0]` at line 15. `pnpm lint` is clean, `pnpm test` passes (688/222/78), and
+`prettier --check` on the three edited files is clean.
+
 ### Phase Summary
-_(write when phase completes)_
+- README Game Slot bullet: the row and the "+3 BUF" points flash yellow for about two seconds (white
+  for yellow or gold teams), then the points stay in the team color for 10 s. The table cell at line
+  ~82 ("flashes on a score") still reads right and was left as it is.
+- CHANGELOG: a new `## [Unreleased]` → `### Changed` entry. The 0.6.0 entry is left as released.
+- `slot.html` hint: "flash the scoring team's row and the points yellow, then keep the points in the
+  middle of the key."
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Score alerts on Game Slot keys are easier to see. The scoring team's row and the band callout
+("+3 BUF") blink bright yellow `#ffe600` (white via `flashFill` when yellow is `tooClose` to the
+team's fill, e.g. gold teams) at 150 ms × 14 frames (2.1 s, down from 350 ms frames). The callout
+then holds in the team color for 10 s as before. The band now shows the callout from the first
+frame, so an unlit frame is no longer the plain key. Tests cover the timing, frame sequence, colors,
+fallback and Team colors off. The README, CHANGELOG (Unreleased) and settings hint are updated. As
+agreed, there was no hardware fps check.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Open the PR with `/open-pr` (body includes `Fixes #24`). CI must pass, then squash-merge.
+2. Ship in the next plugin release, following README → Release: bump the root `package.json`
+   version, run `pnpm version:sync`, rename `## [Unreleased]` in `CHANGELOG.md` to
+   `## [x.y.z] - YYYY-MM-DD`, then run **Actions → Release** on `main` with that version.
+3. Only the plugin changed, so the extension doesn't need a Chrome Web Store update for this.
+4. Optional: watch a live score alert on a real Stream Deck to confirm the ~7 fps blink looks smooth.
