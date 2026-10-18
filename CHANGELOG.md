@@ -5,6 +5,12 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-18
+
+Hold a Game Slot key to bring its game to the front, live scores update about twice as often, and
+score alerts flash for longer. Only the plugin changed; the extension's version moves to 0.8.0 to
+stay in step, with no code changes, so there's no need to wait for Chrome to update it.
+
 ### Added
 
 - **Long press** on Game Slot keys: hold a key for half a second to bring that game's tab and
