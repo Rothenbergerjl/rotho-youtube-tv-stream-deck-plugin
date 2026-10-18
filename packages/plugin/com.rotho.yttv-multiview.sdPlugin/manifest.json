@@ -75,6 +75,20 @@
           "ShowTitle": false
         }
       ]
+    },
+    {
+      "Name": "Open Service Picker",
+      "UUID": "com.rotho.yttv-multiview.picker",
+      "Icon": "imgs/actions/picker/icon",
+      "Tooltip": "Opens a picker of YouTube TV, Peacock and Paramount+ keys. 15-key Stream Deck only.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/picker/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
     }
   ],
   "Category": "Rotho YTTV Multiview",

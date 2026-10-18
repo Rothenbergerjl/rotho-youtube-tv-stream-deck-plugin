@@ -8,7 +8,14 @@ export const ACTION_UUIDS = {
   open: `${PLUGIN_UUID}.open`,
   focus: `${PLUGIN_UUID}.focus`,
   back: `${PLUGIN_UUID}.back`,
+  picker: `${PLUGIN_UUID}.picker`,
 } as const;
+
+/**
+ * The bundled profile the Open Service Picker key switches to: its `Name` in the plugin
+ * manifest's `Profiles`, a path inside the `.sdPlugin` folder without the extension.
+ */
+export const SERVICES_PROFILE = "profiles/Services";
 
 /**
  * Chrome extension ID, derived from the public `key` in the extension manifest.

@@ -7,6 +7,10 @@ All notable changes to this project are documented here. Versions follow
 
 ### Added
 
+- **Open Service Picker** key: shows the YouTube TV, Peacock and Paramount+ badges, and opens a
+  picker of Open Service keys for them. Like Open Service, it shows "No Chrome", "Update" or "Full"
+  when nothing could open. It works on the 15-key Stream Deck only and shows "Not supported" on
+  other models.
 - **Back** key: returns the deck to the previous profile, e.g. to leave the Services picker.
 - **Return to previous profile** setting on Open Service keys (off by default): after the service
   opens, the deck goes back to where you were. If the key can't open anything, or shows "Turn on",

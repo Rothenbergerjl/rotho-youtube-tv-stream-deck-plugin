@@ -123,39 +123,69 @@ and `streamdeck validate` reported "Validation successful".
 
 ## Phase 2: Open Service Picker action
 
-Status: Not started
+Status: Complete
 
-- [ ] Add `picker: \`${PLUGIN_UUID}.picker\`` to `ACTION_UUIDS`, and a `SERVICES_PROFILE` constant
+- [x] Add `picker: \`${PLUGIN_UUID}.picker\`` to `ACTION_UUIDS`, and a `SERVICES_PROFILE` constant
       naming the bundled profile path (without extension) as it will appear in the manifest
-- [ ] `packages/plugin/src/render.ts`: add a `PickerKeyView` (connected, mismatch,
+- [x] `packages/plugin/src/render.ts`: add a `PickerKeyView` (connected, mismatch,
       featureMissing, full, unsupported, updateAvailable) and a `pickerKeySvg` that wraps the body
       with `withUpdateBadge`. Order of states: unsupported → "Not supported"; not connected → "No
       Chrome"; mismatch/featureMissing → "Update …"; full → "Full"; otherwise the three
       `monogram` badges (TV, P, P+) with an "Open" label
-- [ ] Add `packages/plugin/src/actions/picker.ts`: a `PickerAction`, modeled on `OpenAction`.
+- [x] Add `packages/plugin/src/actions/picker.ts`: a `PickerAction`, modeled on `OpenAction`.
       - **Rendering:** it subscribes to the store and draws each key from its device type
         (`a.device.type !== DeviceType.StreamDeck` means unsupported).
       - **featureMissing:** set when the extension lacks both `openYouTubeTv` and `openService`.
       - **`onKeyDown`:** shows an alert in any blocked or unsupported state. Otherwise it calls
         `streamDeck.profiles.switchToProfile(ev.action.device.id, SERVICES_PROFILE)`.
-- [ ] Add the picker action to the plugin manifest (Name "Open Service Picker", Tooltip "Opens a
+- [x] Add the picker action to the plugin manifest (Name "Open Service Picker", Tooltip "Opens a
       picker of YouTube TV, Peacock and Paramount+ keys. 15-key Stream Deck only.", Keypad only),
       with `imgs/actions/picker/icon.svg` and `key.svg`
-- [ ] Register `PickerAction` in `plugin.ts`
-- [ ] Tests: `test/render.test.ts` snapshots for each picker state, and `test/manifest.test.ts` for
+- [x] Register `PickerAction` in `plugin.ts`
+- [x] Tests: `test/render.test.ts` snapshots for each picker state, and `test/manifest.test.ts` for
       the new action and tooltip
-- [ ] CHANGELOG `[Unreleased]`: the picker key
+- [x] CHANGELOG `[Unreleased]`: the picker key
 
 ### Verification Plan
 
-- `pnpm -r typecheck` and `pnpm -r test`: all pass. Review the new snapshots and confirm the
-  normal state shows three badges and "Open"
+- `pnpm typecheck` and `pnpm test`: all pass. Review the new snapshots and confirm the normal
+  state shows three badges and "Open"
 - `pnpm --filter @rotho/plugin build` and `validate`: clean
 - `pnpm lint` and `pnpm format:check`: clean
 
+Result (2026-10-18):
+- **Typecheck:** clean.
+- **Tests:** shared 688, extension 78 and plugin 250 all pass, with 5 new snapshots written. The
+  normal-state snapshot shows the TV, P and P+ discs in #ff0033, #000000 and #0064ff, with
+  "Open" underneath.
+- **Lint and format:** lint is clean. `format:check` passed after one long `svg(...)` call in
+  `render.ts` was wrapped.
+- **Build and validate:** the build succeeded and `streamdeck validate` reported "Validation
+  successful". `bin/plugin.js` contains `profiles/Services`.
+
 ### Phase Summary
 
-_(write when phase completes)_
+- **Constants:** `ACTION_UUIDS.picker` and `SERVICES_PROFILE = "profiles/Services"` are in
+  `packages/shared/src/constants.ts`. Phase 3's manifest `Profiles[0].Name` must equal
+  `SERVICES_PROFILE`.
+- **Rendering (`render.ts`):**
+  - `PickerKeyView` and `pickerKeySvg`, wrapped in `withUpdateBadge`.
+  - States are checked in this order: unsupported ("Not / supported"), then not connected
+    ("No Chrome"), then mismatch or featureMissing ("Update …"), then full ("Full").
+  - `serviceRow(dim)` draws every `SERVICE_IDS` monogram (r=20) evenly across y=50, so a fourth
+    service would fit automatically. Every blocked state except Update shows the row greyed out.
+- **Action (`src/actions/picker.ts`):** `PickerAction(store)`.
+  - `featureMissing` is set when the extension lists neither `openYouTubeTv` nor
+    `openService`.
+  - `unsupported` is `device.type !== DeviceType.StreamDeck`.
+  - A press in any blocked state shows an alert. Otherwise it calls
+    `switchToProfile(deviceId, SERVICES_PROFILE)`.
+  - `renderAll` draws at most two images: supported and unsupported.
+- **Manifest and icons:** the manifest action comes after Back and has no Property Inspector.
+  `imgs/actions/picker/key.svg` is a copy of the normal-state render, and `icon.svg` is a
+  three-tiles-plus-play glyph.
+- **Until Phase 3:** the manifest has no `Profiles` entry yet, so pressing the picker on a dev
+  build does nothing visible.
 
 ## Phase 3: Bundled Services profile, docs
 

@@ -15,6 +15,7 @@ describe("plugin manifest", () => {
       ACTION_UUIDS.open,
       ACTION_UUIDS.focus,
       ACTION_UUIDS.back,
+      ACTION_UUIDS.picker,
     ]);
   });
 
@@ -29,6 +30,7 @@ describe("plugin manifest", () => {
     expect(paths[ACTION_UUIDS.open]).toBe("ui/open.html");
     expect(paths[ACTION_UUIDS.focus]).toBe("ui/focus.html");
     expect(paths[ACTION_UUIDS.back]).toBeUndefined();
+    expect(paths[ACTION_UUIDS.picker]).toBeUndefined();
     for (const path of Object.values(paths).filter(Boolean)) {
       expect(existsSync(new URL(`../${PLUGIN_UUID}.sdPlugin/${path}`, import.meta.url))).toBe(true);
     }
@@ -41,6 +43,15 @@ describe("plugin manifest", () => {
       expect(open.Tooltip).toContain(name);
       expect(manifest.Description).toContain(name);
     }
+  });
+
+  it("names the picker for every service and its one supported device", () => {
+    const picker = manifest.Actions.find((a: { UUID: string }) => a.UUID === ACTION_UUIDS.picker);
+    expect(picker.Name).toBe("Open Service Picker");
+    for (const name of ["YouTube TV", "Peacock", "Paramount+"]) {
+      expect(picker.Tooltip).toContain(name);
+    }
+    expect(picker.Tooltip).toContain("15-key Stream Deck only");
   });
 
   it("targets Node 24 and Stream Deck 7.1+", () => {
