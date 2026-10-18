@@ -5,7 +5,7 @@ import type { ScoreAlert } from "./render";
 import type { ScoreSnapshot } from "./scores/tracker";
 
 /** Flash frames (lit on even frames), one every FRAME_MS. Even, so the flash ends unlit. */
-export const ROW_FRAMES = 14;
+export const ROW_FRAMES = 68;
 export const FRAME_MS = 150;
 /** How long the band callout stays after the row flash. */
 export const CALLOUT_MS = 10_000;

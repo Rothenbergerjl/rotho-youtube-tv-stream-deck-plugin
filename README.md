@@ -117,7 +117,7 @@ Live scores on Game Slot keys:
   shows the slot, the service and the game status: the clock and period, the inning, the soccer
   minute, the kickoff time before the game, or FINAL. A dot marks the team with the ball, or the
   team at bat. When the key's game is the one you're hearing, the band turns green.
-- When a team scores, its row and the points in the band ("+3 BUF") flash yellow for about two
+- When a team scores, its row and the points in the band ("+3 BUF") flash yellow for about 10
   seconds (white for a team whose color is yellow or gold), then the points stay in that team's
   color for 10 seconds.
 - The stream runs behind the live game, so each key holds new scores back by its **Score delay**
@@ -212,7 +212,7 @@ tray and reopen it; newly linked plugins load only when the app starts.
   and extensions ignore what they don't know.
 - Scores come from ESPN's public scoreboard JSON, fetched by the plugin, so the extension needs no
   new permission. `packages/plugin/src/scores/` maps each league to its ESPN feeds, matches a
-  slot's game by team names, polls every 15 s while it's live, and keeps a short history so each
+  slot's game by team names, polls every 7 s while it's live, and keeps a short history so each
   key can show the score as it was its Score delay ago.
 - Nothing leaves your computer except the plugin's update check against GitHub and its score
   requests to ESPN; see the [privacy policy](PRIVACY.md). To report a security problem, see

@@ -25,7 +25,8 @@ export interface ScoreTrackerOptions {
   timeZone?: string;
 }
 
-export const LIVE_INTERVAL_MS = 15_000;
+/** ESPN's scoreboard cache refreshes about every 10 s, so checking more often gains little. */
+export const LIVE_INTERVAL_MS = 7_000;
 export const IDLE_INTERVAL_MS = 5 * 60_000;
 /** A feed with no successful fetch for this long drops its scores. */
 export const STALE_MS = 2 * 60_000;

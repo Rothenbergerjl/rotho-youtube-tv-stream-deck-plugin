@@ -61,7 +61,7 @@ function start(responses: Record<string, Scoreboard | Error | number>, games: Ga
 }
 
 describe("ScoreTracker", () => {
-  it("searches every candidate feed, then polls only the matched one every 15 s while live", async () => {
+  it("searches every candidate feed, then polls only the matched one every 7 s while live", async () => {
     const { calls, tracker } = start({ [CFB]: fixture("college-football") }, [game(1, AUB_UGA)]);
     await vi.advanceTimersByTimeAsync(0);
     expect(calls.sort()).toEqual([MCBB, WCBB, CFB].sort());
@@ -83,7 +83,7 @@ describe("ScoreTracker", () => {
     expect(calls).toEqual([CFB]);
   });
 
-  it("polls every 5 minutes before kickoff, then every 15 s once kickoff time passes", async () => {
+  it("polls every 5 minutes before kickoff, then every 7 s once kickoff time passes", async () => {
     // Buffalo at Las Vegas kicks off at 20:25Z on the 18th.
     vi.setSystemTime(new Date("2026-10-18T20:20:00Z"));
     const { calls, tracker } = start({ [NFL]: fixture("nfl") }, [
@@ -135,13 +135,13 @@ describe("ScoreTracker", () => {
     await vi.advanceTimersByTimeAsync(0); // t0: 14-14
 
     setGeorgiaScore(board, 21);
-    await vi.advanceTimersByTimeAsync(LIVE_INTERVAL_MS); // t0 + 15 s: 14-21
+    await vi.advanceTimersByTimeAsync(LIVE_INTERVAL_MS); // t0 + 7 s: 14-21
     expect(tracker.scoreFor(1, 0)?.scores).toEqual([14, 21]);
-    expect(tracker.scoreFor(1, 15_000)?.scores).toEqual([14, 14]);
+    expect(tracker.scoreFor(1, 7_000)?.scores).toEqual([14, 14]);
     // Nothing is 30 s old yet, so the oldest snapshot shows.
     expect(tracker.scoreFor(1, 30_000)?.scores).toEqual([14, 14]);
 
-    await vi.advanceTimersByTimeAsync(30_000); // t0 + 45 s
+    await vi.advanceTimersByTimeAsync(30_000); // t0 + 37 s
     expect(tracker.scoreFor(1, 30_000)?.scores).toEqual([14, 21]);
     expect(tracker.scoreFor(1, 90_000)?.scores).toEqual([14, 14]);
   });

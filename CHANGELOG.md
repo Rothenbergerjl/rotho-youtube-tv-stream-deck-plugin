@@ -5,12 +5,25 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-18
+
+Hold a Game Slot key to bring its game to the front, live scores update about twice as often, and
+score alerts flash for longer. Only the plugin changed; the extension's version moves to 0.8.0 to
+stay in step, with no code changes, so there's no need to wait for Chrome to update it.
+
 ### Added
 
 - **Long press** on Game Slot keys: hold a key for half a second to bring that game's tab and
   window to the front, restoring the window if it's minimized. The press still makes it the game
   you hear. A new **Long press** setting (Focus or Off) turns it off per key. Focusing needs
   extension 0.3.0 or newer; with an older one the key shows an alert.
+
+### Changed
+
+- **Live scores** update about twice as often: the plugin checks ESPN every 7 seconds during a
+  game instead of every 15.
+- **Score alerts** flash for about 10 seconds instead of 2, so they're harder to miss. The points
+  then stay in the band for 10 seconds, as before.
 
 ## [0.7.0] - 2026-10-18
 
