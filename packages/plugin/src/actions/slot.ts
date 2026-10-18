@@ -1,18 +1,23 @@
 import streamDeck, {
   action,
   type DidReceiveSettingsEvent,
+  type KeyAction,
   type KeyDownEvent,
+  type KeyUpEvent,
   type SendToPluginEvent,
   SingletonAction,
   type WillAppearEvent,
   type WillDisappearEvent,
 } from "@elgato/streamdeck";
-import { MAX_SLOTS } from "@rotho/shared";
+import { FEATURES, MAX_SLOTS } from "@rotho/shared";
+import { HoldTimers } from "../long-press";
 import { slotKeySvg, toDataUrl } from "../render";
 import { alertFrame, FRAME_MS, type KeyScoreState, nextScoreState } from "../score-alerts";
 import type { ScoreTracker } from "../scores/tracker";
 import type { ExtensionServer } from "../server";
 import {
+  type LongPress,
+  longPressSetting,
   scoreAlertsSetting,
   scoreDelaySetting,
   showScoreSetting,
@@ -28,6 +33,8 @@ type SlotSettings = {
   scoreAlerts?: boolean;
   /** Seconds; see scoreDelaySetting. */
   scoreDelay?: number;
+  /** See longPressSetting. */
+  longPress?: string;
 };
 
 /** A visible key's settings, parsed. */
@@ -36,6 +43,7 @@ interface KeyOptions {
   showScore: boolean;
   scoreAlerts: boolean;
   scoreDelayMs: number;
+  longPress: LongPress;
 }
 
 // Messages with ui/slot.html. The property inspector asks for the update status when it loads
@@ -45,7 +53,10 @@ type FromPropertyInspector = { type: "getUpdate" } | { type: "openUpdate" };
 /** While a key shows a score, keys re-render this often so delayed scores appear on time. */
 const SCORE_TICK_MS = 1000;
 
-/** Game Slot: shows the game in its slot; pressing it plays only that game. */
+/**
+ * Game Slot: shows the game in its slot; pressing it plays only that game, and holding it also
+ * brings that game's tab and window to the front.
+ */
 @action({ UUID: "com.rotho.yttv-multiview.slot" })
 export class SlotAction extends SingletonAction<SlotSettings> {
   /** Slot number for each visible key, by action id. */
@@ -56,6 +67,8 @@ export class SlotAction extends SingletonAction<SlotSettings> {
   private readonly scoreStates = new Map<string, KeyScoreState>();
   /** The last image sent to each key, so an unchanged one isn't sent again. */
   private readonly images = new Map<string, string>();
+  /** Long-press timers for keys that are held down. */
+  private readonly holds = new HoldTimers();
   private tick: ReturnType<typeof setTimeout> | null = null;
   private sentUpdate: UpdateInfo | undefined;
 
@@ -100,6 +113,7 @@ export class SlotAction extends SingletonAction<SlotSettings> {
     this.options.delete(ev.action.id);
     this.scoreStates.delete(ev.action.id);
     this.images.delete(ev.action.id);
+    this.holds.cancel(ev.action.id);
     this.scheduleTick();
   }
 
@@ -118,7 +132,30 @@ export class SlotAction extends SingletonAction<SlotSettings> {
       !game ||
       !this.server.send({ type: "solo", slot: game.slot })
     ) {
+      // The alert covers a long press too, so no hold timer starts.
       await ev.action.showAlert();
+      return;
+    }
+    if (this.options.get(ev.action.id)?.longPress !== "off") {
+      const key = ev.action;
+      this.holds.start(key.id, () => void this.focusSlot(key, game.slot));
+    }
+  }
+
+  override onKeyUp(ev: KeyUpEvent<SlotSettings>): void {
+    this.holds.cancel(ev.action.id);
+  }
+
+  /** Long press: brings the slot's game forward, if it's still there, else shows the alert. */
+  private async focusSlot(key: KeyAction<SlotSettings>, slot: number): Promise<void> {
+    const game = this.store.gameInSlot(slot);
+    if (
+      this.store.current.mismatch ||
+      !this.store.has(FEATURES.focus) ||
+      !game ||
+      !this.server.send({ type: "focus", slot })
+    ) {
+      await key.showAlert();
     }
   }
 
@@ -198,6 +235,7 @@ function keyOptions(settings: SlotSettings): KeyOptions {
     showScore: showScoreSetting(settings.showScore),
     scoreAlerts: scoreAlertsSetting(settings.scoreAlerts),
     scoreDelayMs: scoreDelaySetting(settings.scoreDelay) * 1000,
+    longPress: longPressSetting(settings.longPress),
   };
 }
 

@@ -32,6 +32,17 @@ export function scoreDelaySetting(value: unknown): number {
   return SCORE_DELAYS.find((d) => d === n) ?? DEFAULT_SCORE_DELAY;
 }
 
+/** What holding a Game Slot key does. */
+export type LongPress = "focus" | "off";
+
+/**
+ * The "Long press" select (setting `longPress`). Anything but "off", including keys made before
+ * the setting existed, means focus.
+ */
+export function longPressSetting(value: unknown): LongPress {
+  return value === "off" ? "off" : "focus";
+}
+
 /**
  * The Open key's "Service" select (setting `service`). Keys made before the setting existed have
  * none, which means YouTube TV.

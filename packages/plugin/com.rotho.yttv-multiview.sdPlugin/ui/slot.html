@@ -26,6 +26,12 @@
         <option value="15">15</option>
       </sdpi-select>
     </sdpi-item>
+    <sdpi-item label="Long press">
+      <sdpi-select setting="longPress" default="focus">
+        <option value="focus">Focus</option>
+        <option value="off">Off</option>
+      </sdpi-select>
+    </sdpi-item>
     <sdpi-item label="Team colors">
       <sdpi-checkbox setting="teamColors" default="true"></sdpi-checkbox>
     </sdpi-item>
@@ -51,6 +57,10 @@
         Slot 1 is the first game you opened. The badge in the bottom-left corner shows the service.
         With Team colors on, a game between known teams shows each team's colors; turn it off for
         plain text.
+      </p>
+      <p>
+        With Long press on Focus, holding the key for half a second also brings the game's tab and
+        window to the front.
       </p>
       <p>
         With Show score on, a game between two known teams shows the live score from ESPN. The
