@@ -61,34 +61,35 @@ file describes.
 
 ## Phase 1: Shared rows and band, and score-less Game Slot keys
 
-Status: Not started
+Status: Complete
 
-- [ ] In `render.ts`, factor the row drawing out of `scoreboardKey` into a shared helper (e.g.
+- [x] In `render.ts`, factor the row drawing out of `scoreboardKey` into a shared helper (e.g.
       `teamRows(abbrs, fills, score?)`) that draws both 60px rows with abbreviations, and scores,
       possession dot and alert flash only when a score is given. With no score it uses the
       pre-game abbreviation sizing (`Math.min(30, …)`).
-- [ ] Factor the band's common parts (band rect, fill/ink choice, update dot position) into a
+- [x] Factor the band's common parts (band rect, fill/ink choice, update dot position) into a
       helper that the Game Slot band and, in Phase 2, the Focus band both use, so their geometry
       (`BAND`, x positions) comes from one place.
-- [ ] Make the Game Slot rows-and-band layout handle a missing score: rename
+- [x] Make the Game Slot rows-and-band layout handle a missing score: rename
       `scoreboardKey` to fit (e.g. `matchupKey`) and draw it for any connected, non-mismatched slot
       whose title parses as a matchup, score or not. The band's status text is empty without a
       score; heard turns the band green; the update badge stays in the band.
-- [ ] Remove the `split` branch from `slotKeyBody` (only the text layout for non-matchup titles
+- [x] Remove the `split` branch from `slotKeyBody` (only the text layout for non-matchup titles
       stays) and update `slotKeySvg` to match.
 - [ ] Delete `matchupSplit`. Drop `separator` from `TeamSplit`/`teamSplit`. Remove any helper left
       unused (check `onDisc` and `badge` callers before removing; `serviceBadge` still uses
-      `onDisc`).
-- [ ] Update `packages/plugin/test/render.test.ts`: replace the `matchupSplit`-based Game Slot
+      `onDisc`). **Moved to Phase 2** (approved, deviation comment posted on #25):
+      `focusKeyBody` still calls `matchupSplit` until Phase 2 replaces it.
+- [x] Update `packages/plugin/test/render.test.ts`: replace the `matchupSplit`-based Game Slot
       tests ("splits a known matchup…", "keeps the speaker off and drops the border…", "shows a 'v'
       separator…", "draws text when team colors are turned off", "keeps the update badge on top of
       team colors") with rows-and-band equivalents. Remove `separator` from `teamSplit` `toEqual`
-      expectations. Add tests: score-less matchup heard (green band, no border) and not heard;
-      Team colors off → dark rows; unknown teams → dark rows; update dot in the band, not the
-      corner; no score text drawn without a score.
-- [ ] Review snapshot changes (`pnpm --filter @rotho/plugin exec vitest run -u`) and confirm each
+      expectations (moved to Phase 2 with `separator`). Add tests: score-less matchup heard (green
+      band, no border) and not heard; Team colors off → dark rows; unknown teams → dark rows;
+      update dot in the band, not the corner; no score text drawn without a score.
+- [x] Review snapshot changes (`pnpm --filter @rotho/plugin exec vitest run -u`) and confirm each
       diff is an intended layout change before accepting it.
-- [ ] Write the new Game Slot SVGs (score-less heard, not heard, colors off, unknown teams,
+- [x] Write the new Game Slot SVGs (score-less heard, not heard, colors off, unknown teams,
       update) to the scratchpad and give the user the paths to look at.
 
 ### Verification Plan
@@ -100,9 +101,31 @@ Status: Not started
 - Scoreboard tests ("scoreboard layout" describe block) pass with unchanged snapshots, which shows
   the refactor didn't change keys that have a score.
 
+Result (2026-10-18): 222 plugin tests pass; typecheck, lint and format:check pass. No
+"scoreboard layout" snapshot changed. `matchupSplit`/`separator` remain, used only by the Focus key
+(deferred to Phase 2, see above).
+
 ### Phase Summary
 
-_(write when phase completes)_
+- `render.ts`: `scoreboardKey` became `matchupKey`, drawn for any connected, non-mismatched Game
+  Slot key whose title parses as a matchup, with or without a score. New helpers:
+  `matchupRows(title, teamColors)` (abbrs + fills; dark fills when Team colors is off or neither
+  team is known), `teamRows(rows, score?)` (no score draws like pre-game: 30px abbreviations
+  only), `bandRect(fill)`, and `BAND_X` (`lead` 14, `service` 35, `update` 106, `end` 127) for the
+  band glyph positions. `infoBand(view, rows)` reads the score from `view.score` and skips the
+  status text when there is none.
+- `slotKeyBody` lost its team-color split branch; it now only draws non-matchup titles (text
+  layout) plus the empty, No Chrome and Update keys.
+- Tests: the Game Slot text-layout tests use "NFL GameDay Live" instead of matchups;
+  `rowFill`/`bandFill` helpers moved to module scope; Game Slot team-color tests now assert row and
+  band fills. A new test shows a score-less key equals a pre-game key with an empty status.
+- Phase 2 builds the Focus band from `bandRect`, `BAND_X`, `teamRows` and `matchupRows`, then
+  deletes `matchupSplit` and `TeamSplit.separator` (and the `separator` in the two `teamSplit`
+  `toEqual` tests).
+- Previews: `preview.test.ts` in the session scratchpad renders keys through vitest, which
+  resolves the shared package's extensionless imports (plain `node` can't). Set
+  `$env:PREVIEW_OUT` and `$env:PREVIEW_RENDER`, then run
+  `pnpm --filter @rotho/plugin exec vitest run --root <scratchpad dir>`.
 
 ## Phase 2: Focus Heard Game on rows and band
 
@@ -112,6 +135,9 @@ Status: Not started
       the shared row helper (no score) and a Focus band: always green, crosshair (`target`, scaled
       to fit the 24px band, in `colors.heardInk`) at the slot-number position, service monogram at
       x=35, empty middle, update dot at the right end when `updateAvailable`.
+- [ ] Delete `matchupSplit` and any helper it leaves unused (check `onDisc` callers;
+      `serviceBadge` still uses it). Drop `separator` from `TeamSplit`/`teamSplit` and from the
+      two `teamSplit` `toEqual` tests (moved from Phase 1).
 - [ ] Make `focusKeySvg` skip `withUpdateBadge` for the rows-and-band layout (the band has its own
       dot), and keep it for the text, "Nothing heard", "No Chrome" and "Update" keys.
 - [ ] Keep the text layout (big crosshair + wrapped label + corner service badge) for non-matchup
