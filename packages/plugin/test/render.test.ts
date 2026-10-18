@@ -260,21 +260,12 @@ describe("service badge", () => {
 });
 
 describe("focusKeySvg", () => {
-  it("shows the heard matchup under a green crosshair", () => {
-    const svg = focusKeySvg({
-      connected: true,
-      title: "San Francisco 49ers at Seattle Seahawks",
-      teamColors: false,
-    });
-    expect(svg).toContain(">SF @ SEA</text>");
-    expect(svg).toContain('stroke="#22c55e"'); // green crosshair
-    expect(svg).toMatchSnapshot();
-  });
-
-  it("wraps a long non-matchup title", () => {
+  // Shows that aren't matchups use the text layout; "team colors" below covers matchups.
+  it("wraps a long non-matchup title under a green crosshair", () => {
     const svg = focusKeySvg({ connected: true, title: "NFL GameDay Live" });
     expect(svg).toContain(">NFL</text>");
     expect(svg).toContain(">GameDay…</text>");
+    expect(svg).toContain('stroke="#22c55e"'); // green crosshair
     expect(svg).toMatchSnapshot();
   });
 
@@ -391,7 +382,7 @@ describe("team colors", () => {
   it("gives an unknown side the normal key background", () => {
     // Gonzaga isn't in any table; the sport word lets the generic matcher pair it with the Chiefs.
     const split = teamSplit("Football: Kansas City Chiefs at Gonzaga");
-    expect(split).toEqual({ abbrs: ["KC", "GONZ"], separator: "@", fills: ["#E31837", "#111418"] });
+    expect(split).toEqual({ abbrs: ["KC", "GONZ"], fills: ["#E31837", "#111418"] });
   });
 
   it("draws dark rows when neither team has colors", () => {
@@ -463,7 +454,6 @@ describe("team colors", () => {
     // USA navy and Mexico's dark green are too close, so Mexico switches to its red.
     expect(teamSplit("World Cup Qualifier: USA vs Mexico")).toEqual({
       abbrs: ["USA", "MEX"],
-      separator: "v",
       fills: ["#0A3161", "#CE1126"],
     });
   });
@@ -481,21 +471,70 @@ describe("team colors", () => {
     expect(svg).toContain(">OSU</text>");
   });
 
-  it("splits the heard game on the Focus key, crosshair in the corner", () => {
+  it("draws the heard game on the Focus key as team rows and a green band", () => {
     const svg = focusKeySvg({ connected: true, title: "San Francisco 49ers at Seattle Seahawks" });
-    expect(svg).toContain(`height="72" fill="${SF}"`);
-    expect(svg).toContain(">SEA</text>");
-    expect(svg).toContain('<g transform="translate(26 26) scale(0.9)">'); // crosshair
+    expect(rowFill(svg, 0)).toBe(SF);
+    expect(rowFill(svg, 84)).toBe(SEA);
+    expect(svg).toContain('font-size="30" font-weight="700" text-anchor="start">SF</text>');
+    expect(svg).toContain('text-anchor="start">SEA</text>');
+    expect(bandFill(svg)).toBe("#22c55e");
+    expect(svg).toContain('<g transform="translate(14 72) scale(0.45)">'); // crosshair in the band
+    expect(svg).toContain('stroke="#06210f"'); // drawn in the band's dark ink
+    expect(svg).toContain(">TV</text>"); // service monogram in the band
+    expect(svg).not.toContain('cy="122" r="17"'); // not in the corner
     expect(svg).toMatchSnapshot();
   });
 
-  it("keeps the Focus key's text layout when team colors are turned off", () => {
-    const svg = focusKeySvg({
+  it("matches a Game Slot key's rows for the same game, without score, slot or speaker", () => {
+    const title = "San Francisco 49ers at Seattle Seahawks";
+    const focus = focusKeySvg({ connected: true, title });
+    const slot = slotKeySvg({ slot: 2, connected: true, title, heard: true });
+    const rows = (svg: string) => svg.slice(0, svg.indexOf('<rect y="60"'));
+    expect(rows(focus)).toBe(rows(slot));
+    expect(focus).not.toContain('text-anchor="end"'); // no score
+    expect(focus).not.toContain('r="4.5"'); // no possession dot
+    expect(focus).not.toContain("M-14 -6"); // no speaker
+    expect(focus).not.toContain(">2</text>"); // no slot number
+  });
+
+  it("draws dark rows on the Focus key with team colors off or unknown teams", () => {
+    const plain = focusKeySvg({
       connected: true,
       title: "San Francisco 49ers at Seattle Seahawks",
       teamColors: false,
     });
-    expect(svg).toContain(">SF @ SEA</text>");
+    expect(rowFill(plain, 0)).toBe("#111418");
+    expect(rowFill(plain, 84)).toBe("#111418");
+    expect(plain).toContain('text-anchor="start">SF</text>');
+    expect(plain).not.toContain(SF);
+    expect(bandFill(plain)).toBe("#22c55e");
+    expect(plain).toMatchSnapshot();
+
+    const unknown = focusKeySvg({
+      connected: true,
+      title: "College Basketball: Gonzaga at Saint Mary's",
+    });
+    expect(rowFill(unknown, 0)).toBe("#111418");
+    expect(unknown).toContain('text-anchor="start">GONZ</text>');
+    expect(unknown).toContain('text-anchor="start">SAIN</text>');
+  });
+
+  it("puts the Focus key's update badge at the end of the band", () => {
+    const view = { connected: true, title: "San Francisco 49ers at Seattle Seahawks" };
+    expect(focusKeySvg(view)).not.toContain('fill="#3b82f6"');
+    const svg = focusKeySvg({ ...view, updateAvailable: true });
+    expect(svg).toContain('cx="127" cy="72" r="8" fill="#3b82f6"');
+    expect(svg).not.toContain('r="12" fill="#3b82f6"'); // the corner badge
+    expect(svg).toMatchSnapshot();
+  });
+
+  it("keeps the Focus key's warnings over a heard matchup", () => {
+    const title = "San Francisco 49ers at Seattle Seahawks";
+    expect(focusKeySvg({ connected: false, title })).toContain(">No Chrome</text>");
+    expect(focusKeySvg({ connected: true, title, featureMissing: true })).toContain(
+      ">extension</text>",
+    );
+    expect(focusKeySvg({ connected: true, title, mismatch: "plugin" })).toContain(">plugin</text>");
   });
 });
 

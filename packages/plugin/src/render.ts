@@ -121,7 +121,7 @@ export function openKeySvg(view: OpenKeyView): string {
 }
 
 export function focusKeySvg(view: FocusKeyView): string {
-  return withUpdateBadge(focusKeyBody(view), view.updateAvailable);
+  return focusMatchupKey(view) ?? withUpdateBadge(focusKeyBody(view), view.updateAvailable);
 }
 
 function slotKeyBody(view: SlotKeyView): string {
@@ -166,14 +166,18 @@ function slotKeyBody(view: SlotKeyView): string {
 }
 
 // Matchup layout: a 60 px row per team (abbreviation left, score right) around a 24 px info band.
-// Game Slot keys put the slot, service, status and speaker in the band.
+// Game Slot keys put the slot, service, status and speaker in the band; the Focus key puts the
+// crosshair and service there.
 const ROW_HEIGHT = 60;
 const ROWS = [
   { top: 0, mid: 30 },
   { top: 84, mid: 114 },
 ] as const;
 const BAND = { top: 60, height: 24, mid: 72 } as const;
-/** Centres of the band's glyphs: slot number, service monogram, update badge, speaker. */
+/**
+ * Centres of the band's glyphs: slot number (Focus: crosshair), service monogram, update badge,
+ * speaker (Focus: update badge).
+ */
 const BAND_X = { lead: 14, service: 35, update: 106, end: 127 } as const;
 const ROW_LEFT = 12;
 const ROW_RIGHT = SIZE - 10;
@@ -252,6 +256,27 @@ function teamRows({ abbrs, fills }: MatchupRows, score?: ScoreView): string {
     }
     return row;
   }).join("");
+}
+
+/**
+ * The matchup layout for the Focus key, or undefined to draw the normal key: the team rows with
+ * no score, and a green band (the heard game) with the crosshair, service and any update badge.
+ */
+function focusMatchupKey(view: FocusKeyView): string | undefined {
+  if (!view.connected || view.mismatch || view.featureMissing || view.title === undefined) {
+    return undefined;
+  }
+  const rows = matchupRows(view.title, view.teamColors);
+  if (!rows) return undefined;
+  const { mid } = BAND;
+  return svg(
+    colors.background,
+    teamRows(rows),
+    bandRect(colors.heard),
+    target(BAND_X.lead, mid, colors.heardInk, 0.45),
+    monogram(BAND_X.service, mid, 8.5, view.service ?? "youtubeTv"),
+    view.updateAvailable ? bandUpdateBadge(BAND_X.end, mid) : "",
+  );
 }
 
 /** The band's background, between the two rows. */
@@ -393,16 +418,8 @@ function focusKeyBody(view: FocusKeyView): string {
       lines(["Nothing", "heard"], colors.dim, 22, 102),
     );
   }
+  // Matchups are drawn by focusMatchupKey; this is the text layout for everything else.
   const service = view.service ?? "youtubeTv";
-  const split = view.teamColors === false ? undefined : teamSplit(view.title);
-  if (split) {
-    return svg(
-      split.fills[1],
-      matchupSplit(split),
-      onDisc(26, 26, target(26, 26, colors.heard, 0.9)),
-      serviceBadge(service),
-    );
-  }
   const label = formatMatchup(view.title) || SERVICES[service].name;
   return svg(
     colors.background,
@@ -443,7 +460,6 @@ export function wrap(label: string, maxChars = 9): string[] {
 /** A matchup ready to draw in team colors: [first, second] for both arrays. */
 export interface TeamSplit {
   abbrs: readonly [string, string];
-  separator: "@" | "v";
   fills: readonly [string, string];
 }
 
@@ -460,7 +476,6 @@ export function teamSplit(title: string): TeamSplit | undefined {
   if (!first && !second) return undefined;
   return {
     abbrs: [matchup.teams[0].abbr, matchup.teams[1].abbr],
-    separator: matchup.separator,
     fills: pickFills(first, second),
   };
 }
@@ -513,22 +528,6 @@ export function inkFor(fill: string): string {
     return (Math.max(l, li) + 0.05) / (Math.min(l, li) + 0.05);
   };
   return contrast(colors.text) >= contrast(colors.background) ? colors.text : colors.background;
-}
-
-/**
- * Two team-colored halves with an abbreviation in each and the separator on the seam. Both
- * abbreviations sit right of centre, clear of the slot badge (top) and service badge (bottom).
- */
-function matchupSplit({ abbrs, separator, fills }: TeamSplit): string {
-  const half = SIZE / 2;
-  const font = Math.min(30, Math.floor(84 / (Math.max(...abbrs.map((a) => a.length)) * 0.62)));
-  return (
-    `<rect width="${SIZE}" height="${half}" fill="${fills[0]}"/>` +
-    text(half + 8, 60, abbrs[0], inkFor(fills[0]), font) +
-    text(half + 10, 122, abbrs[1], inkFor(fills[1]), font) +
-    `<circle cx="${half}" cy="${half}" r="11" fill="${colors.background}"/>` +
-    text(half, half + 5, separator, colors.text, 14)
-  );
 }
 
 /** Puts a glyph centred at (cx, cy) on a dark disc so it reads on any team color. */
