@@ -1,6 +1,6 @@
 {
   "name": "@rotho/shared",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Protocol types and constants shared by the Stream Deck plugin and Chrome extension.",
   "type": "module",
