@@ -47,7 +47,8 @@ Your Stream Deck keys keep working; reload any open YouTube TV tabs if a game do
    a key's slot, select it and pick a slot in its settings.
 2. Optionally add **Mute All**, **Open Service** and **Focus Heard Game** keys. Select an Open
    Service key to pick its **Service** (YouTube TV, Peacock or Paramount+) and whether it opens a
-   **New window** or **New tab**. Add one Open Service key per service you use.
+   **New window** or **New tab**. Add one Open Service key per service you use, or one **Open
+   Service Picker** key for all of them (see below).
 3. Game Slot and Focus Heard Game keys show a known matchup in the two teams' colors, away team on
    top. To get plain text instead, select the key and uncheck **Team colors** in its settings.
 4. Open each game in its own Chrome window or tab, or press an Open Service key.
@@ -75,21 +76,24 @@ red "TV" for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
 
 ### Keys
 
-| Key              | Shows                                                                     | Press                                                         |
-| ---------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Game Slot        | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game; hold to also bring it to the front       |
-| Game Slot        | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game; hold to also bring it to the front       |
-| Game Slot        | Live score rows and game status band (see below); flashes on a score      | Hear only this game; hold to also bring it to the front       |
-| Game Slot        | Just a dim number                                                         | Empty slot; nothing happens                                   |
-| Mute All         | "Mute all" / "Restore" / "All muted"                                      | Mute everything, or bring back the last game                  |
-| Open Service     | The service's name on a play button                                       | Open the service in a new window or tab (set in its settings) |
-| Open Service     | Dim service badge, "Turn on"                                              | The service is off; opens the extension's options             |
-| Open Service     | Dim "Full"                                                                | All 15 slots are taken; nothing happens                       |
-| Focus Heard Game | The matchup you're hearing (team colors), with a green crosshair          | Bring that game's window and tab to the front                 |
-| Focus Heard Game | Dim "Nothing heard"                                                       | Nothing is heard; nothing happens                             |
-| Any key          | "No Chrome"                                                               | The extension isn't connected                                 |
-| Any key          | Amber warning, "Update plugin" / "Update extension"                       | Nothing until you update that piece                           |
-| Any key          | Small blue arrow in the bottom-right corner                               | Works as usual; a plugin update is available                  |
+| Key                 | Shows                                                                     | Press                                                         |
+| ------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Game Slot           | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game; hold to also bring it to the front       |
+| Game Slot           | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game; hold to also bring it to the front       |
+| Game Slot           | Live score rows and game status band (see below); flashes on a score      | Hear only this game; hold to also bring it to the front       |
+| Game Slot           | Just a dim number                                                         | Empty slot; nothing happens                                   |
+| Mute All            | "Mute all" / "Restore" / "All muted"                                      | Mute everything, or bring back the last game                  |
+| Open Service        | The service's name on a play button                                       | Open the service in a new window or tab (set in its settings) |
+| Open Service        | Dim service badge, "Turn on"                                              | The service is off; opens the extension's options             |
+| Open Service        | Dim "Full"                                                                | All 15 slots are taken; nothing happens                       |
+| Open Service Picker | The YouTube TV, Peacock and Paramount+ badges, "Open"                     | Show the Services picker (see below)                          |
+| Open Service Picker | Dim badges, "Full" / "Not supported"                                      | Nothing opens; the key shows an alert                         |
+| Back                | A left arrow                                                              | Go back to the previous profile                               |
+| Focus Heard Game    | The matchup you're hearing (team colors), with a green crosshair          | Bring that game's window and tab to the front                 |
+| Focus Heard Game    | Dim "Nothing heard"                                                       | Nothing is heard; nothing happens                             |
+| Any key             | "No Chrome"                                                               | The extension isn't connected                                 |
+| Any key             | Amber warning, "Update plugin" / "Update extension"                       | Nothing until you update that piece                           |
+| Any key             | Small blue arrow in the bottom-right corner                               | Works as usual; a plugin update is available                  |
 
 If only Open Service and Focus Heard Game keys say "Update extension", your Chrome extension is
 older than the plugin. The other keys keep working until Chrome updates it.
@@ -98,6 +102,21 @@ Holding a Game Slot key for half a second hears that game and brings its window 
 front, restoring the window if it's minimized, so you don't need a Focus Heard Game key. To turn
 this off for a key, set **Long press** to **Off** in its settings; holding it then just hears the
 game. An extension older than 0.3.0 can't focus, so the key shows an alert.
+
+The Open Service Picker key saves keys: one key opens a small "Services" profile with an Open
+Service key for each service and a Back key in the top-left. Pick a service and it opens, then the
+deck goes back to where you were. If the pick can't open (the service is off, or every slot is
+full), you stay in the picker.
+
+- The first time the plugin loads, the Stream Deck app asks to install the Services profile.
+  Accept it, or the picker key has nothing to open.
+- The picker only works on the 15-key Stream Deck (original and MK.2). On other models the key
+  shows "Not supported".
+- You can edit the Services profile like any other, e.g. to set **New tab** on its keys. Open
+  Service keys go back to where you were only when **Return to previous profile** is checked in
+  their settings; the picker's keys have it on.
+- Updating the plugin doesn't replace a Services profile you already have. To get a newer layout,
+  delete the Services profile in the Stream Deck app and reinstall the plugin.
 
 How games get slots and sound:
 

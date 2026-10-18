@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { ACTION_UUIDS, PLUGIN_UUID } from "@rotho/shared";
+import { ACTION_UUIDS, PLUGIN_UUID, SERVICES_PROFILE } from "@rotho/shared";
 import { describe, expect, it } from "vitest";
 
 const manifest = JSON.parse(
@@ -52,6 +52,19 @@ describe("plugin manifest", () => {
       expect(picker.Tooltip).toContain(name);
     }
     expect(picker.Tooltip).toContain("15-key Stream Deck only");
+  });
+
+  it("bundles the Services profile the picker opens, for the 15-key Stream Deck", () => {
+    expect(manifest.Profiles).toEqual([
+      {
+        Name: SERVICES_PROFILE,
+        DeviceType: 0,
+        Readonly: false,
+        DontAutoSwitchWhenInstalled: true,
+      },
+    ]);
+    const file = `../${PLUGIN_UUID}.sdPlugin/${SERVICES_PROFILE}.streamDeckProfile`;
+    expect(existsSync(new URL(file, import.meta.url))).toBe(true);
   });
 
   it("targets Node 24 and Stream Deck 7.1+", () => {

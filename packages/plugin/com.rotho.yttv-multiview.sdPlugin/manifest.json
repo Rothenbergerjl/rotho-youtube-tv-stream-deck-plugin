@@ -96,6 +96,14 @@
   "CodePath": "bin/plugin.js",
   "Description": "Show your open YouTube TV, Peacock and Paramount+ games on Stream Deck keys and switch which one you hear.",
   "Icon": "imgs/plugin/marketplace",
+  "Profiles": [
+    {
+      "Name": "profiles/Services",
+      "DeviceType": 0,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true
+    }
+  ],
   "SDKVersion": 3,
   "Software": {
     "MinimumVersion": "7.1"

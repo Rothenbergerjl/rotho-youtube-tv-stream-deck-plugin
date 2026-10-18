@@ -8,7 +8,9 @@ All notable changes to this project are documented here. Versions follow
 ### Added
 
 - **Open Service Picker** key: shows the YouTube TV, Peacock and Paramount+ badges, and opens a
-  picker of Open Service keys for them. Like Open Service, it shows "No Chrome", "Update" or "Full"
+  bundled **Services** profile with an Open Service key for each and a Back key. Picking a service
+  opens it and returns you to where you were. The Stream Deck app asks to install the profile the
+  first time the plugin loads. Like Open Service, it shows "No Chrome", "Update" or "Full"
   when nothing could open. It works on the 15-key Stream Deck only and shows "Not supported" on
   other models.
 - **Back** key: returns the deck to the previous profile, e.g. to leave the Services picker.
