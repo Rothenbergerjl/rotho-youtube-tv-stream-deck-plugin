@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  longPressSetting,
   scoreAlertsSetting,
   scoreDelaySetting,
   serviceSetting,
@@ -64,5 +65,18 @@ describe("scoreDelaySetting", () => {
     [null, 30],
   ])("%j → %s", (value, expected) => {
     expect(scoreDelaySetting(value)).toBe(expected);
+  });
+});
+
+describe("longPressSetting", () => {
+  it.each([
+    [undefined, "focus"],
+    ["focus", "focus"],
+    ["off", "off"],
+    ["other", "focus"],
+    [false, "focus"],
+    [null, "focus"],
+  ])("%j → %s", (value, expected) => {
+    expect(longPressSetting(value)).toBe(expected);
   });
 });

@@ -58,20 +58,20 @@ error, look the ids up with `gh project list`, `gh project field-list` and `gh p
 - Never run git commands that change anything; the user branches and commits.
 
 ## Phase 1: Hold timer and setting
-Status: Not started
+Status: Complete
 
-- [ ] Add `packages/plugin/src/long-press.ts` (SDK-free, header comment like `score-alerts.ts`):
+- [x] Add `packages/plugin/src/long-press.ts` (SDK-free, header comment like `score-alerts.ts`):
   export `LONG_PRESS_MS = 500` and a `HoldTimers` class keyed by action id with
   `start(id, onHold)` (replaces any running timer for that id; the timer is `unref`'d like the
   score tick), `cancel(id)` (no-op for unknown ids) and `cancelAll()`.
-- [ ] Add `longPressSetting(value: unknown): LongPress` to `packages/plugin/src/settings.ts`, with
+- [x] Add `longPressSetting(value: unknown): LongPress` to `packages/plugin/src/settings.ts`, with
   `type LongPress = "focus" | "off"`: `"off"` → `"off"`, anything else (including `undefined`) →
   `"focus"`. Doc comment in the style of the existing setting parsers.
-- [ ] Add `packages/plugin/test/long-press.test.ts` (vitest fake timers): fires once after 500 ms;
+- [x] Add `packages/plugin/test/long-press.test.ts` (vitest fake timers): fires once after 500 ms;
   doesn't fire at 499 ms; `cancel` before 500 ms prevents it; `start` twice for one id fires only
   the second callback once; timers for two ids are independent; `cancel` of an unknown id doesn't
   throw; `cancelAll` stops every timer.
-- [ ] Add a `longPressSetting` `it.each` block to `packages/plugin/test/settings.test.ts`:
+- [x] Add a `longPressSetting` `it.each` block to `packages/plugin/test/settings.test.ts`:
   `undefined`, `"focus"`, `"off"`, `"other"`, `false`, `null`.
 
 ### Verification Plan
@@ -79,8 +79,23 @@ Status: Not started
 - `pnpm --filter @rotho/plugin typecheck`: no errors.
 - `pnpm lint` and `pnpm format:check`: clean.
 
+Result (2026-10-18): 10 test files, 236 tests passed; typecheck, lint and format check clean.
+
 ### Phase Summary
-_(write when phase completes)_
+Added `packages/plugin/src/long-press.ts`. It exports `LONG_PRESS_MS = 500` and `HoldTimers`, a
+map of action id → timer with `start(id, onHold)`, `cancel(id)` and `cancelAll()`.
+- `start` replaces a key's running timer and clears its own entry before calling `onHold`.
+- Timers are `unref`'d like the score tick.
+- The constructor takes an optional `ms` (defaults to `LONG_PRESS_MS`), so tests can rely on the
+  default.
+
+Added `LongPress` and `longPressSetting` to `settings.ts`: only `"off"` means off.
+
+Tests are in `test/long-press.test.ts` (6 cases, vitest fake timers) and a `longPressSetting`
+block in `test/settings.test.ts`.
+
+Nothing is wired into `SlotAction` yet; that's Phase 2. There's no user-visible change, so no
+CHANGELOG entry yet.
 
 ## Phase 2: Wire long press into Game Slot keys, settings UI and docs
 Status: Not started
