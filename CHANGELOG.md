@@ -5,6 +5,12 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-18
+
+Game Slot and Focus Heard Game keys share the score layout, and score alerts are easier to spot.
+Only the plugin changed; the extension's version moves to 0.7.0 to stay in step, with no code
+changes, so there's no need to wait for Chrome to update it.
+
 ### Changed
 
 - **Score alerts** are easier to spot: the scoring team's row and the points in the band
