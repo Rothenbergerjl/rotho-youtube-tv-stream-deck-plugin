@@ -98,27 +98,27 @@ Nothing is wired into `SlotAction` yet; that's Phase 2. There's no user-visible 
 CHANGELOG entry yet.
 
 ## Phase 2: Wire long press into Game Slot keys, settings UI and docs
-Status: Not started
+Status: Complete
 
-- [ ] `packages/plugin/src/actions/slot.ts`: add `longPress?: string` to `SlotSettings` and
+- [x] `packages/plugin/src/actions/slot.ts`: add `longPress?: string` to `SlotSettings` and
   `longPress: LongPress` to `KeyOptions` (filled in `keyOptions` via `longPressSetting`).
-- [ ] In `SlotAction`, hold a `HoldTimers` instance. In `onKeyDown`: on a failed solo, show the
+- [x] In `SlotAction`, hold a `HoldTimers` instance. In `onKeyDown`: on a failed solo, show the
   alert and return (no timer). On success, when the key's `longPress` is `"focus"`, start the hold
   timer for the slot captured at key-down.
-- [ ] Add `onKeyUp` (import `KeyUpEvent`), which cancels the key's hold timer. Cancel it in
+- [x] Add `onKeyUp` (import `KeyUpEvent`), which cancels the key's hold timer. Cancel it in
   `onWillDisappear` too.
-- [ ] Add a private `focusSlot(action, slot)` called when the timer fires. It looks up
+- [x] Add a private `focusSlot(action, slot)` called when the timer fires. It looks up
   `this.store.gameInSlot(slot)` again and shows the alert when there's a `mismatch`,
   `!this.store.has(FEATURES.focus)`, no game, or `!this.server.send({ type: "focus", slot })`.
   Import `FEATURES` from `@rotho/shared`.
-- [ ] Update the class doc comment ("pressing it plays only that game; holding it also brings its
+- [x] Update the class doc comment ("pressing it plays only that game; holding it also brings its
   tab forward").
-- [ ] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html`: add a "Long press" select
+- [x] `packages/plugin/com.rotho.yttv-multiview.sdPlugin/ui/slot.html`: add a "Long press" select
   (`setting="longPress"`, `default="focus"`, options Focus / Off) after Slot. Add a help sentence:
   holding the key for half a second also brings the game's tab and window to the front.
-- [ ] `README.md`: in the key table, note that holding a Game Slot key brings that game's window
+- [x] `README.md`: in the key table, note that holding a Game Slot key brings that game's window
   and tab to the front. Mention the Long press setting where Game Slot settings are described.
-- [ ] `CHANGELOG.md` `[Unreleased]` → `### Added`: a **Long press** entry. Holding a Game Slot key
+- [x] `CHANGELOG.md` `[Unreleased]` → `### Added`: a **Long press** entry. Holding a Game Slot key
   for half a second brings that game's tab and window to the front (restoring a minimized window)
   and still solos it. It can be turned off per key, and it needs extension 0.3.0 or newer (older
   ones show the alert).
@@ -133,11 +133,47 @@ Status: Not started
   1 s solos and then brings the tab forward, restoring a minimized window. Holding an empty slot
   alerts once. With Long press Off, holding only solos.
 
+Result (2026-10-18):
+- `pnpm test`: shared 688, extension 78 and plugin 236 tests passed. The plugin's manifest tests
+  are included.
+- Typecheck, lint and format check: clean.
+- `pnpm build`: succeeded.
+- `streamdeck validate`: successful.
+- Hand-check: not run yet; it needs the user's hardware.
+
 ### Phase Summary
-_(write when phase completes)_
+`SlotAction` (`packages/plugin/src/actions/slot.ts`) now owns a `HoldTimers`.
+- `onKeyDown` returns right after the alert when the solo fails, so no timer starts. Otherwise,
+  unless the key's `longPress` is `"off"`, it starts a hold timer for `game.slot`.
+- `onKeyUp` and `onWillDisappear` cancel the timer.
+- The timer calls the new private `focusSlot(key, slot)`. It re-reads `store.gameInSlot(slot)`
+  and alerts on a mismatch, a missing `FEATURES.focus`, no game, or a failed send.
+- `KeyOptions` gained `longPress`, parsed by `longPressSetting`.
+
+The property inspector (`ui/slot.html`) has a "Long press" select (Focus / Off, default Focus)
+after Slot, plus a help paragraph.
+
+Docs:
+- The README's three populated Game Slot rows say "hold to also bring it to the front".
+- A README paragraph after the key table covers long press, the setting, and extensions older
+  than 0.3.0.
+- CHANGELOG `[Unreleased]` has an Added entry.
 
 ## Final Recap
-_(write when all phases complete: summary of the entire piece of work)_
+Game Slot keys now support a long press. Holding a key for 500 ms solos the game (on key-down, as
+before) and then sends the existing `focus` message for that slot. The extension's `focusTab`
+activates the tab and focuses its window, restoring it if it's minimized.
+- This is plugin only, with no protocol or extension changes.
+- Older extensions without `FEATURES.focus` get the alert.
+- A per-key "Long press" setting (Focus / Off) turns it off.
+- The hold logic lives in the SDK-free `packages/plugin/src/long-press.ts` with unit tests.
+- README and CHANGELOG are updated.
 
 ## Deployment Plan
-_(write when all phases complete: step-by-step deployment instructions)_
+1. Run the hand-check from Phase 2's Verification Plan with `pnpm --filter @rotho/plugin watch`
+   (or `pnpm build` and restart the plugin) on a real Stream Deck.
+2. The user deletes this plan in the final commit, pushes `18-long-press-focus`, then runs
+   `/open-pr`. The PR body carries `Fixes #18`.
+3. After the squash-merge, release the plugin as usual: bump with `pnpm version:sync`, move the
+   CHANGELOG `[Unreleased]` entry under the new version, and run `pnpm package`. The extension
+   needs no update.

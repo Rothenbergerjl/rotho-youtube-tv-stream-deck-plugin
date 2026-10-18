@@ -5,6 +5,13 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+### Added
+
+- **Long press** on Game Slot keys: hold a key for half a second to bring that game's tab and
+  window to the front, restoring the window if it's minimized. The press still makes it the game
+  you hear. A new **Long press** setting (Focus or Off) turns it off per key. Focusing needs
+  extension 0.3.0 or newer; with an older one the key shows an alert.
+
 ## [0.7.0] - 2026-10-18
 
 Game Slot and Focus Heard Game keys share the score layout, and score alerts are easier to spot.

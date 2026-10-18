@@ -77,9 +77,9 @@ red "TV" for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
 
 | Key              | Shows                                                                     | Press                                                         |
 | ---------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Game Slot        | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game                                           |
-| Game Slot        | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game                                           |
-| Game Slot        | Live score rows and game status band (see below); flashes on a score      | Hear only this game                                           |
+| Game Slot        | Slot number, matchup in team colors, service badge; green border if heard | Hear only this game; hold to also bring it to the front       |
+| Game Slot        | Slot number, title as text (show, or unknown teams), service badge        | Hear only this game; hold to also bring it to the front       |
+| Game Slot        | Live score rows and game status band (see below); flashes on a score      | Hear only this game; hold to also bring it to the front       |
 | Game Slot        | Just a dim number                                                         | Empty slot; nothing happens                                   |
 | Mute All         | "Mute all" / "Restore" / "All muted"                                      | Mute everything, or bring back the last game                  |
 | Open Service     | The service's name on a play button                                       | Open the service in a new window or tab (set in its settings) |
@@ -93,6 +93,11 @@ red "TV" for YouTube TV, black "P" for Peacock, blue "P+" for Paramount+.
 
 If only Open Service and Focus Heard Game keys say "Update extension", your Chrome extension is
 older than the plugin. The other keys keep working until Chrome updates it.
+
+Holding a Game Slot key for half a second hears that game and brings its window and tab to the
+front, restoring the window if it's minimized, so you don't need a Focus Heard Game key. To turn
+this off for a key, set **Long press** to **Off** in its settings; holding it then just hears the
+game. An extension older than 0.3.0 can't focus, so the key shows an alert.
 
 How games get slots and sound:
 
