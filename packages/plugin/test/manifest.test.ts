@@ -14,6 +14,7 @@ describe("plugin manifest", () => {
       ACTION_UUIDS.muteAll,
       ACTION_UUIDS.open,
       ACTION_UUIDS.focus,
+      ACTION_UUIDS.back,
     ]);
   });
 
@@ -27,6 +28,7 @@ describe("plugin manifest", () => {
     expect(paths[ACTION_UUIDS.slot]).toBe("ui/slot.html");
     expect(paths[ACTION_UUIDS.open]).toBe("ui/open.html");
     expect(paths[ACTION_UUIDS.focus]).toBe("ui/focus.html");
+    expect(paths[ACTION_UUIDS.back]).toBeUndefined();
     for (const path of Object.values(paths).filter(Boolean)) {
       expect(existsSync(new URL(`../${PLUGIN_UUID}.sdPlugin/${path}`, import.meta.url))).toBe(true);
     }

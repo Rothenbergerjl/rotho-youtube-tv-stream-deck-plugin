@@ -68,39 +68,58 @@ recipes are in `.github/gh-recipes.md` (project id `PVT_kwHOBLWqFc4BmmYP`, Statu
 
 ## Phase 1: Back action and "return after opening" on Open Service
 
-Status: Not started
+Status: Complete
 
-- [ ] Add `back: \`${PLUGIN_UUID}.back\`` to `ACTION_UUIDS` in `packages/shared/src/constants.ts`
-- [ ] Add `returnAfterOpenSetting(value)` to `packages/plugin/src/settings.ts`: only `true` or
+- [x] Add `back: \`${PLUGIN_UUID}.back\`` to `ACTION_UUIDS` in `packages/shared/src/constants.ts`
+- [x] Add `returnAfterOpenSetting(value)` to `packages/plugin/src/settings.ts`: only `true` or
       `"true"` means on, and missing means off (unlike the other checkboxes, which default to on)
-- [ ] `packages/plugin/src/actions/open.ts`: add `returnAfterOpen?: boolean` to `OpenSettings`. In
+- [x] `packages/plugin/src/actions/open.ts`: add `returnAfterOpen?: boolean` to `OpenSettings`. In
       `onKeyDown`, after a successful `server.send` of an `openYouTubeTv`/`openService` message
       with the setting on, call `streamDeck.profiles.switchToProfile(ev.action.device.id)`. Don't
       return for `openOptions` or on alert
-- [ ] `ui/open.html`: add a `sdpi-checkbox` with `setting="returnAfterOpen"` and the label "Return
+- [x] `ui/open.html`: add a `sdpi-checkbox` with `setting="returnAfterOpen"` and the label "Return
       to previous profile after opening", plus a line of help text saying it's for keys inside the
       Services picker
-- [ ] Add `packages/plugin/src/actions/back.ts`: a `BackAction` whose `onKeyDown` calls
+- [x] Add `packages/plugin/src/actions/back.ts`: a `BackAction` whose `onKeyDown` calls
       `streamDeck.profiles.switchToProfile(ev.action.device.id)`. Static key image
-- [ ] Add a Back action to the plugin manifest (Name "Back", Tooltip "Returns to the previous
+- [x] Add a Back action to the plugin manifest (Name "Back", Tooltip "Returns to the previous
       profile, e.g. from the Services picker.", Keypad only), with `imgs/actions/back/icon.svg`
       and `key.svg` drawn in the style of the existing action icons
-- [ ] Register `BackAction` in `packages/plugin/src/plugin.ts`
-- [ ] Tests: `returnAfterOpenSetting` cases in `test/settings.test.ts`. Update `test/manifest.test.ts`
+- [x] Register `BackAction` in `packages/plugin/src/plugin.ts`
+- [x] Tests: `returnAfterOpenSetting` cases in `test/settings.test.ts`. Update `test/manifest.test.ts`
       for the new action order (Back's manifest entry has no Property Inspector)
-- [ ] CHANGELOG `[Unreleased]`: Back key and the Open Service checkbox
+- [x] CHANGELOG `[Unreleased]`: Back key and the Open Service checkbox
 
 ### Verification Plan
 
-- `pnpm -r typecheck`: no errors
-- `pnpm -r test`: all pass, including the new settings and manifest cases
+- `pnpm typecheck`: no errors
+- `pnpm test`: all pass, including the new settings and manifest cases
 - `pnpm --filter @rotho/plugin build` then `pnpm --filter @rotho/plugin validate`: the manifest
   validates
 - `pnpm lint` and `pnpm format:check`: clean
 
+Result (2026-10-18): typecheck clean; tests 688 shared, 78 extension, 243 plugin, all passing;
+lint clean; format:check clean after wrapping one long condition in `open.ts`; build succeeded
+and `streamdeck validate` reported "Validation successful".
+
 ### Phase Summary
 
-_(write when phase completes)_
+- `ACTION_UUIDS.back` added. The Back action (`src/actions/back.ts`) has no constructor
+  dependencies and no Property Inspector. On press it calls
+  `streamDeck.profiles.switchToProfile(deviceId)` with no profile name, which returns to the
+  previous profile. Its icons are `imgs/actions/back/{icon,key}.svg`, a left arrow in the style
+  of the other icons. It's last in the manifest's `Actions` list and is registered last in
+  `plugin.ts`.
+- Open Service:
+  - **Setting:** `returnAfterOpen`, parsed by `returnAfterOpenSetting`. Only `true`/`"true"` count
+    as on.
+  - **Property Inspector:** an "After opening" item holding a checkbox labelled "Return to
+    previous profile", plus a help paragraph.
+  - **`onKeyDown`:** returns early after showing an alert. It switches profiles only when the sent
+    message isn't `openOptions` ("Turn on").
+- The return logic can't be unit tested without mocking the SDK; the existing tests don't mock
+  actions. It'll be checked by hand on the deck in Phase 3.
+- CHANGELOG `[Unreleased]` now has an `### Added` section; Phases 2 and 3 add to it.
 
 ## Phase 2: Open Service Picker action
 

@@ -61,6 +61,20 @@
           "ShowTitle": false
         }
       ]
+    },
+    {
+      "Name": "Back",
+      "UUID": "com.rotho.yttv-multiview.back",
+      "Icon": "imgs/actions/back/icon",
+      "Tooltip": "Returns to the previous profile, e.g. from the Services picker.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/back/key",
+          "TitleAlignment": "middle",
+          "ShowTitle": false
+        }
+      ]
     }
   ],
   "Category": "Rotho YTTV Multiview",

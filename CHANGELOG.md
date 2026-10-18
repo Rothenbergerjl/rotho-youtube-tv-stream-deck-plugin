@@ -5,6 +5,13 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+### Added
+
+- **Back** key: returns the deck to the previous profile, e.g. to leave the Services picker.
+- **Return to previous profile** setting on Open Service keys (off by default): after the service
+  opens, the deck goes back to where you were. If the key can't open anything, or shows "Turn on",
+  it stays put.
+
 ## [0.8.0] - 2026-10-18
 
 Hold a Game Slot key to bring its game to the front, live scores update about twice as often, and

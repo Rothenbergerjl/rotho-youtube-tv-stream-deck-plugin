@@ -50,3 +50,11 @@ export function longPressSetting(value: unknown): LongPress {
 export function serviceSetting(value: unknown): ServiceId {
   return isServiceId(value) ? value : "youtubeTv";
 }
+
+/**
+ * The Open key's "Return to previous profile" checkbox (setting `returnAfterOpen`). Unlike the
+ * other checkboxes it defaults to off: only the keys in the bundled Services profile turn it on.
+ */
+export function returnAfterOpenSetting(value: unknown): boolean {
+  return value === true || value === "true";
+}

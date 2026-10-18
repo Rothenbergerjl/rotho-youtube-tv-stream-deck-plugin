@@ -20,6 +20,13 @@
         <option value="tab">New tab</option>
       </sdpi-select>
     </sdpi-item>
+    <sdpi-item label="After opening">
+      <sdpi-checkbox
+        setting="returnAfterOpen"
+        default="false"
+        label="Return to previous profile"
+      ></sdpi-checkbox>
+    </sdpi-item>
     <sdpi-item>
       <p>
         A new tab opens in the Chrome window you used last. The new game starts muted and takes the
@@ -28,6 +35,10 @@
       <p>
         Peacock and Paramount+ are turned on in the Chrome extension's options. If the key shows
         "Turn on", pressing it opens them.
+      </p>
+      <p>
+        Return to previous profile is for keys inside the Services picker: after the service opens,
+        the deck goes back to where you were.
       </p>
     </sdpi-item>
   </body>

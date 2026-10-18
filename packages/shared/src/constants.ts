@@ -7,6 +7,7 @@ export const ACTION_UUIDS = {
   muteAll: `${PLUGIN_UUID}.muteall`,
   open: `${PLUGIN_UUID}.open`,
   focus: `${PLUGIN_UUID}.focus`,
+  back: `${PLUGIN_UUID}.back`,
 } as const;
 
 /**
