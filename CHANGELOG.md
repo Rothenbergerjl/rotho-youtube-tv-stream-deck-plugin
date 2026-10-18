@@ -5,12 +5,25 @@ All notable changes to this project are documented here. Versions follow
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-18
+
+Game Slot and Focus Heard Game keys share the score layout, and score alerts are easier to spot.
+Only the plugin changed; the extension's version moves to 0.7.0 to stay in step, with no code
+changes, so there's no need to wait for Chrome to update it.
+
 ### Changed
 
 - **Score alerts** are easier to spot: the scoring team's row and the points in the band
   ("+3 BUF") flash yellow instead of white, and faster, for about two seconds. Teams whose color
   is yellow or gold flash white. The points then stay in the team's color for 10 seconds, as
   before.
+- **Game Slot and Focus Heard Game keys share one look** for games between two teams: a row per
+  team in its colors and a band across the middle, as on keys with a score. Game Slot keys
+  without a score (Show score off, or a league without scores) show the slot, service and speaker
+  in the band, which turns green for the game you're hearing. Focus Heard Game shows the crosshair
+  and service in a green band, with no score. With Team colors off, or for teams the plugin
+  doesn't know, the rows are dark. The update arrow sits in the band on these keys, and the "@" or
+  "v" between the teams is gone.
 
 ## [0.6.0] - 2026-10-17
 

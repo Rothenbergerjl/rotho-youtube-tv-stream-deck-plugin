@@ -109,7 +109,7 @@ export function toDataUrl(svg: string): string {
 }
 
 export function slotKeySvg(view: SlotKeyView): string {
-  return scoreboardKey(view) ?? withUpdateBadge(slotKeyBody(view), view.updateAvailable);
+  return matchupKey(view) ?? withUpdateBadge(slotKeyBody(view), view.updateAvailable);
 }
 
 export function muteAllKeySvg(view: MuteAllKeyView): string {
@@ -121,7 +121,7 @@ export function openKeySvg(view: OpenKeyView): string {
 }
 
 export function focusKeySvg(view: FocusKeyView): string {
-  return withUpdateBadge(focusKeyBody(view), view.updateAvailable);
+  return focusMatchupKey(view) ?? withUpdateBadge(focusKeyBody(view), view.updateAvailable);
 }
 
 function slotKeyBody(view: SlotKeyView): string {
@@ -150,20 +150,9 @@ function slotKeyBody(view: SlotKeyView): string {
     );
   }
 
+  // Matchups are drawn by matchupKey; this is the text layout for everything else.
   const heard = view.heard === true;
   const service = view.service ?? "youtubeTv";
-  const split = view.teamColors === false ? undefined : teamSplit(view.title);
-  if (split) {
-    const tone = heard ? colors.heard : colors.text;
-    return svg(
-      split.fills[1],
-      matchupSplit(split),
-      heard ? border(colors.heard) : "",
-      badge(view.slot, heard ? colors.heard : colors.badge),
-      onDisc(SIZE - 28, 26, speaker(SIZE - 28, 26, heard ? "on" : "off", tone)),
-      serviceBadge(service),
-    );
-  }
   const label = formatMatchup(view.title) || SERVICES[service].name;
   return svg(
     heard ? colors.backgroundHeard : colors.background,
@@ -176,42 +165,71 @@ function slotKeyBody(view: SlotKeyView): string {
   );
 }
 
-// Scoreboard layout: a 60 px row per team (abbreviation left, score right) around a 24 px info
-// band with the slot, service, status and speaker.
+// Matchup layout: a 60 px row per team (abbreviation left, score right) around a 24 px info band.
+// Game Slot keys put the slot, service, status and speaker in the band; the Focus key puts the
+// crosshair and service there.
 const ROW_HEIGHT = 60;
 const ROWS = [
   { top: 0, mid: 30 },
   { top: 84, mid: 114 },
 ] as const;
 const BAND = { top: 60, height: 24, mid: 72 } as const;
+/**
+ * Centres of the band's glyphs: slot number (Focus: crosshair), service monogram, update badge,
+ * speaker (Focus: update badge).
+ */
+const BAND_X = { lead: 14, service: 35, update: 106, end: 127 } as const;
 const ROW_LEFT = 12;
 const ROW_RIGHT = SIZE - 10;
 
+/** A matchup's abbreviations and row colors, both in the title's team order. */
+interface MatchupRows {
+  abbrs: readonly [string, string];
+  fills: readonly [string, string];
+}
+
 /**
- * The scoreboard layout for a matchup with a score, or undefined to draw the normal key. Rows use
- * the team colors (dark when Team colors is off or the teams are unknown). A heard game turns the
- * band green instead of drawing the border; an update badge sits in the band, not the corner.
+ * The rows for a title that parses as a matchup, or undefined. Rows use the team colors, dark
+ * when Team colors is off (`teamColors` false) or neither team is known.
  */
-function scoreboardKey(view: SlotKeyView): string | undefined {
-  const { score } = view;
-  if (!score || !view.connected || view.mismatch || view.title === undefined) return undefined;
-  const matchup = parseTitle(view.title).matchup;
+function matchupRows(title: string, teamColors: boolean | undefined): MatchupRows | undefined {
+  const matchup = parseTitle(title).matchup;
   if (!matchup) return undefined;
-  const split = view.teamColors === false ? undefined : teamSplit(view.title);
-  const fills: readonly [string, string] = split?.fills ?? [colors.background, colors.background];
-  const abbrs = [matchup.teams[0].abbr, matchup.teams[1].abbr] as const;
-  const { alert } = score;
-  const pre = score.state === "pre";
+  const split = teamColors === false ? undefined : teamSplit(title);
+  return {
+    abbrs: [matchup.teams[0].abbr, matchup.teams[1].abbr],
+    fills: split?.fills ?? [colors.background, colors.background],
+  };
+}
+
+/**
+ * The matchup layout for a Game Slot key, or undefined to draw the normal key. A heard game turns
+ * the band green instead of drawing the border; an update badge sits in the band, not the corner.
+ */
+function matchupKey(view: SlotKeyView): string | undefined {
+  if (!view.connected || view.mismatch || view.title === undefined) return undefined;
+  const rows = matchupRows(view.title, view.teamColors);
+  if (!rows) return undefined;
+  return svg(colors.background, teamRows(rows, view.score), infoBand(view, rows));
+}
+
+/**
+ * Both team rows. Without a score, or before the game, the abbreviations draw larger and alone;
+ * a score adds the scores, the possession dot and row alerts.
+ */
+function teamRows({ abbrs, fills }: MatchupRows, score?: ScoreView): string {
+  const alert = score?.alert;
+  const pre = !score || score.state === "pre";
 
   // Scores shrink for three digits; abbreviations shrink to clear the score and possession dot.
-  const digits = Math.max(...score.scores.map((s) => String(s).length));
+  const digits = score ? Math.max(...score.scores.map((s) => String(s).length)) : 0;
   const scoreFont = Math.min(42, Math.floor(70 / (digits * 0.6)));
   const scoreWidth = pre ? 0 : digits * 0.6 * scoreFont;
   const longest = Math.max(...abbrs.map((a) => a.length));
   const abbrRoom = ROW_RIGHT - ROW_LEFT - scoreWidth - 16;
   const abbrFont = Math.min(pre ? 30 : 24, Math.floor(abbrRoom / (longest * 0.62)));
 
-  const rows = ROWS.map(({ top, mid }, i) => {
+  return ROWS.map(({ top, mid }, i) => {
     const flash = alert?.mode === "row" && alert.on && alert.team === i;
     const fill = flash ? flashFill(fills[i]!) : fills[i]!;
     const ink = inkFor(fill);
@@ -219,7 +237,7 @@ function scoreboardKey(view: SlotKeyView): string | undefined {
     let row =
       `<rect y="${top}" width="${SIZE}" height="${ROW_HEIGHT}" fill="${fill}"/>` +
       text(ROW_LEFT, mid + Math.round(abbrFont * 0.37), abbr, ink, abbrFont, "start");
-    if (!pre) {
+    if (score && !pre) {
       const own = score.scores[i]!;
       const lost = score.state === "post" && own < score.scores[1 - i]!;
       row += text(
@@ -232,23 +250,43 @@ function scoreboardKey(view: SlotKeyView): string | undefined {
         lost ? 0.5 : undefined,
       );
     }
-    if (score.state === "in" && score.possession === i) {
+    if (score?.state === "in" && score.possession === i) {
       const x = Math.round(ROW_LEFT + abbr.length * 0.62 * abbrFont + 8);
       row += `<circle cx="${x}" cy="${mid + 1}" r="4.5" fill="${ink}"/>`;
     }
     return row;
-  });
-
-  return svg(colors.background, ...rows, infoBand(view, score, fills, abbrs));
+  }).join("");
 }
 
-function infoBand(
-  view: SlotKeyView,
-  score: ScoreView,
-  fills: readonly [string, string],
-  abbrs: readonly [string, string],
-): string {
-  const callout = score.alert;
+/**
+ * The matchup layout for the Focus key, or undefined to draw the normal key: the team rows with
+ * no score, and a green band (the heard game) with the crosshair, service and any update badge.
+ */
+function focusMatchupKey(view: FocusKeyView): string | undefined {
+  if (!view.connected || view.mismatch || view.featureMissing || view.title === undefined) {
+    return undefined;
+  }
+  const rows = matchupRows(view.title, view.teamColors);
+  if (!rows) return undefined;
+  const { mid } = BAND;
+  return svg(
+    colors.background,
+    teamRows(rows),
+    bandRect(colors.heard),
+    target(BAND_X.lead, mid, colors.heardInk, 0.45),
+    monogram(BAND_X.service, mid, 8.5, view.service ?? "youtubeTv"),
+    view.updateAvailable ? bandUpdateBadge(BAND_X.end, mid) : "",
+  );
+}
+
+/** The band's background, between the two rows. */
+function bandRect(fill: string): string {
+  return `<rect y="${BAND.top}" width="${SIZE}" height="${BAND.height}" fill="${fill}"/>`;
+}
+
+/** The Game Slot band: slot, service, status (none without a score) and speaker. */
+function infoBand(view: SlotKeyView, { abbrs, fills }: MatchupRows): string {
+  const callout = view.score?.alert;
   const heard = view.heard === true && !callout;
   // The callout blinks with the row, then holds in the team's color.
   const lit = callout?.mode === "row" && callout.on;
@@ -261,22 +299,22 @@ function infoBand(
       : colors.dimBackground;
   const ink = callout ? inkFor(fill) : heard ? colors.heardInk : colors.text;
   const glyph = callout ? ink : heard ? colors.heardInk : colors.dim;
-  const { top, height, mid } = BAND;
+  const { mid } = BAND;
 
   // The status is centred between the service monogram and the update badge or speaker.
   const left = 46;
   const right = view.updateAvailable ? 97 : 117;
-  const status = callout ? `+${callout.points} ${abbrs[callout.team]}` : score.status;
+  const status = callout ? `+${callout.points} ${abbrs[callout.team]}` : (view.score?.status ?? "");
   const font = Math.min(14, Math.floor((right - left) / (Math.max(1, status.length) * 0.6)));
 
   return (
-    `<rect y="${top}" width="${SIZE}" height="${height}" fill="${fill}"/>` +
-    `<circle cx="14" cy="${mid}" r="10" fill="${heard ? colors.heardInk : colors.badge}"/>` +
-    text(14, mid + 5, String(view.slot), colors.text, 13) +
-    monogram(35, mid, 8.5, view.service ?? "youtubeTv") +
-    text((left + right) / 2, mid + Math.round(font * 0.36), status, ink, font) +
-    (view.updateAvailable ? bandUpdateBadge(106, mid) : "") +
-    speaker(127, mid, view.heard === true ? "on" : "off", glyph, 0.55)
+    bandRect(fill) +
+    `<circle cx="${BAND_X.lead}" cy="${mid}" r="10" fill="${heard ? colors.heardInk : colors.badge}"/>` +
+    text(BAND_X.lead, mid + 5, String(view.slot), colors.text, 13) +
+    monogram(BAND_X.service, mid, 8.5, view.service ?? "youtubeTv") +
+    (status ? text((left + right) / 2, mid + Math.round(font * 0.36), status, ink, font) : "") +
+    (view.updateAvailable ? bandUpdateBadge(BAND_X.update, mid) : "") +
+    speaker(BAND_X.end, mid, view.heard === true ? "on" : "off", glyph, 0.55)
   );
 }
 
@@ -380,16 +418,8 @@ function focusKeyBody(view: FocusKeyView): string {
       lines(["Nothing", "heard"], colors.dim, 22, 102),
     );
   }
+  // Matchups are drawn by focusMatchupKey; this is the text layout for everything else.
   const service = view.service ?? "youtubeTv";
-  const split = view.teamColors === false ? undefined : teamSplit(view.title);
-  if (split) {
-    return svg(
-      split.fills[1],
-      matchupSplit(split),
-      onDisc(26, 26, target(26, 26, colors.heard, 0.9)),
-      serviceBadge(service),
-    );
-  }
   const label = formatMatchup(view.title) || SERVICES[service].name;
   return svg(
     colors.background,
@@ -430,7 +460,6 @@ export function wrap(label: string, maxChars = 9): string[] {
 /** A matchup ready to draw in team colors: [first, second] for both arrays. */
 export interface TeamSplit {
   abbrs: readonly [string, string];
-  separator: "@" | "v";
   fills: readonly [string, string];
 }
 
@@ -447,7 +476,6 @@ export function teamSplit(title: string): TeamSplit | undefined {
   if (!first && !second) return undefined;
   return {
     abbrs: [matchup.teams[0].abbr, matchup.teams[1].abbr],
-    separator: matchup.separator,
     fills: pickFills(first, second),
   };
 }
@@ -500,22 +528,6 @@ export function inkFor(fill: string): string {
     return (Math.max(l, li) + 0.05) / (Math.min(l, li) + 0.05);
   };
   return contrast(colors.text) >= contrast(colors.background) ? colors.text : colors.background;
-}
-
-/**
- * Two team-colored halves with an abbreviation in each and the separator on the seam. Both
- * abbreviations sit right of centre, clear of the slot badge (top) and service badge (bottom).
- */
-function matchupSplit({ abbrs, separator, fills }: TeamSplit): string {
-  const half = SIZE / 2;
-  const font = Math.min(30, Math.floor(84 / (Math.max(...abbrs.map((a) => a.length)) * 0.62)));
-  return (
-    `<rect width="${SIZE}" height="${half}" fill="${fills[0]}"/>` +
-    text(half + 8, 60, abbrs[0], inkFor(fills[0]), font) +
-    text(half + 10, 122, abbrs[1], inkFor(fills[1]), font) +
-    `<circle cx="${half}" cy="${half}" r="11" fill="${colors.background}"/>` +
-    text(half, half + 5, separator, colors.text, 14)
-  );
 }
 
 /** Puts a glyph centred at (cx, cy) on a dark disc so it reads on any team color. */
